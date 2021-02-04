@@ -1,4 +1,7 @@
-aiogram
+aiogram~=2.11.2
 aiohttp
 aioredis
 python-dotenv
+
+gino~=1.0.1
+asyncpg~=0.21.0
