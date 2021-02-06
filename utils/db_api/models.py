@@ -16,6 +16,14 @@ class User(db.Model):
             self.chat_id, self.full_name, self.username)
 
 
+class Service(db.Model):
+    __tablename__ = 'services'
+    id = db.Column(db.Integer, db.Sequence('user_id_seq'), primary_key=True)
+    name = db.Column(db.String)
+    price = db.Column(db.String)
+    time = db.Column(db.Integer)  # Сколько времени занимает услуга
+
+
 class DBCommands:
     # Функция возвращает объект из таблицы User,
     # если такой user_id существует в БД.
