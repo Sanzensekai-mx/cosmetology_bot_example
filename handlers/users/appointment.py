@@ -49,7 +49,7 @@ async def open_appointment_start(message: Message, state: FSMContext):
     # LOG you!!!!!!!
     await message.answer('Введите своё фамилию и имя.',
                          reply_markup=ReplyKeyboardRemove())
-    await UserAppointment.AppointmentSetService.set()
+    await UserAppointment.Service.set()
     await state.update_data(
         {'name': '',
          'service': '',
@@ -60,7 +60,7 @@ async def open_appointment_start(message: Message, state: FSMContext):
     )
 
 
-@dp.message_handler(state=UserAppointment.AppointmentSetName)
+@dp.message_handler(state=UserAppointment.Name)
 async def open_appointment_enter_name(message: Message, state: FSMContext):
     data = await state.get_data()
     if not data.get('name'):
@@ -73,7 +73,7 @@ async def open_appointment_enter_name(message: Message, state: FSMContext):
         await message.answer(f'Ваше Фамилия и Имя: "{name}". '
                              '\nВыберите услугу:', )
 
-        await UserAppointment.AppointmentSetService.set()
+        await UserAppointment.Service.set()
     else:
         name = message.text.strip()
         data['name'] = name
@@ -101,6 +101,6 @@ async def open_appointment_enter_name(message: Message, state: FSMContext):
 #         await confirm_or_change(data, message)
 
 
-@dp.message_handler(state=UserAppointment.AppointmentSetMaster)
+@dp.message_handler(state=UserAppointment.Master)
 async def open_appointment_enter_master():
     pass

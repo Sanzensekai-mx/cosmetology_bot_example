@@ -13,5 +13,15 @@ admin_mailing_kb = InlineKeyboardMarkup(inline_keyboard=[
     ],
     [
         InlineKeyboardButton(text='Обычный текст', callback_data='send_text')
+    ],
+    [
+        InlineKeyboardButton(text='Отмена рассылки', callback_data='cancel_mail')
+    ]
+])
+
+
+cancel_mailing_kb = InlineKeyboardMarkup(inline_keyboard=[
+    [
+        InlineKeyboardButton(text='Отмена рассылки', callback_data='cancel_mail')
     ]
 ])

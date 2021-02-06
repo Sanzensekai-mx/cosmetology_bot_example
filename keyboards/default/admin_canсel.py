@@ -4,7 +4,7 @@ from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 admin_cancel_mail_or_confirm = ReplyKeyboardMarkup(
     keyboard=[
         [
-            KeyboardButton(text="/cancel_mail")
+            KeyboardButton(text="Отменить")
         ],
         [
             KeyboardButton(text='Подтвердить')

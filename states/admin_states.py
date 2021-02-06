@@ -8,3 +8,12 @@ class AdminMailing(StatesGroup):
     AnotherMedia = State()
     Forward = State()
     AddButton = State()
+
+
+class AdminAddService(StatesGroup):
+    Name = State()
+    Price = State()
+    Describe = State()
+    PicHref = State()
+    Time = State()
+    Confirm = State()
