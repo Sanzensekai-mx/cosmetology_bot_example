@@ -1,13 +1,14 @@
 import logging
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters import Text
-from aiogram.types import Message, ReplyKeyboardRemove, InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types import Message, ReplyKeyboardRemove, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 
 from keyboards.default import main_menu_no_orders
+from keyboards.inline import cancel_appointment
 from loader import dp
 from states.user_states import UserAppointment
 from utils.db_api.models import DBCommands
-from data.config import admins
+from data.config import admins, masters_and_id
 
 db = DBCommands()
 
@@ -19,27 +20,24 @@ logging.basicConfig(format=u'%(filename)s [LINE:%(lineno)d] '
 async def confirm_or_change(data, mes):
     kb_confirm = InlineKeyboardMarkup(row_width=4)
     for key in data.keys():
-        if key == 'is_meme_in_db':
+        if key == 'is_this_log_5_in_db':
             break
         change_button = InlineKeyboardButton(f'Изменить {key}', callback_data=f'change:{key}')
         kb_confirm.add(change_button)
     kb_confirm.add(InlineKeyboardButton('Подтвердить', callback_data='сonfirm'))
-    await mes.answer(f'''
-ВНИМАНИЕ. Если вы хотите обновить название мема,
-то сначала удалите исходный мем и введите новые данные.
-\n/cancel_meme для отмены Добавления/Изменения мема. 
+    await mes.answer(f''' 
 Проверьте введенные данные.\n
 Название - {data.get("name")}\n
 Ссылка на картинку - {data.get("pic_href")}\n
 Описание - {data.get("describe")}\n
 Ссылка - {data.get("meme_href")}\n''', reply_markup=kb_confirm)
-    await AdminNewMeme.Confirm.set()
+    await UserAppointment.Confirm.set()
 
 
-@dp.message_handler(chat_id=admins, commands=['cancel_appointment'], state=UserAppointment)
-async def cancel_mail(message: Message, state: FSMContext):
-    logging.info(f'from: {message.chat.full_name}, text: {message.text}, info: Отмена рассылки.')
-    await message.answer('Отмена рассылки.', reply_markup=main_menu_no_orders)
+@dp.callback_query_handler(chat_id=admins, state=UserAppointment, text_contains='cancel_appointment')
+async def process_cancel_add_service(call: CallbackQuery, state: FSMContext):
+    logging.info(f'from: {call.message.chat.full_name}, text: {call.message.text}, info: Отмена записи.')
+    await call.message.answer('Отмена записи.', reply_markup=main_menu_no_orders)  # Добавить reply_markup
     await state.reset_state()
 
 
@@ -47,15 +45,18 @@ async def cancel_mail(message: Message, state: FSMContext):
 async def open_appointment_start(message: Message, state: FSMContext):
     logging.info(f'from: {message.chat.first_name}, text: {message.text}')
     # LOG you!!!!!!!
-    await message.answer('Введите своё фамилию и имя.',
-                         reply_markup=ReplyKeyboardRemove())
-    await UserAppointment.Service.set()
+    await message.answer('Введите своё фамилию и имя. Например: Петрина Кристина',
+                         reply_markup=cancel_appointment)
+    await UserAppointment.Name.set()
     await state.update_data(
-        {'name': '',
+        {'name_client': '',
+         'name_master': '',
          'service': '',
-         'master': '',
+         'user_id': '',
          'date': '',
-         'time': ''
+         'time': '',
+         'phone_number': '',
+         'is_this_log_5_in_db': ''
          }
     )
 
@@ -63,44 +64,92 @@ async def open_appointment_start(message: Message, state: FSMContext):
 @dp.message_handler(state=UserAppointment.Name)
 async def open_appointment_enter_name(message: Message, state: FSMContext):
     data = await state.get_data()
-    if not data.get('name'):
-        name = message.text.strip()
-        data['name'] = name
-        data['is_meme_in_db'] = 'Мем уже существует в БД.' if await db.is_this_meme_in_db(name) \
-            else 'Такого мема нет в БД.'
-        is_meme_in_db = data.get('is_meme_in_db')
+    if not data.get('name_client'):
+        name_client = message.text.strip()
+        data['name_client'] = name_client
+        data['is_this_log_5_in_db'] = '5 записей с вашего аккаунта уже существует в БД. Больше нельзя.' \
+            if await db.is_this_log_5_in_db(name_client) \
+            else 'Запись возможна.'
+        is_this_log_5_in_db = data.get('is_this_log_5_in_db')
+        if is_this_log_5_in_db is True:
+            await message.answer(f'{is_this_log_5_in_db}')
+            await state.finish()
         await state.update_data(data)
-        await message.answer(f'Ваше Фамилия и Имя: "{name}". '
-                             '\nВыберите услугу:', )
+        await UserAppointment.Master.set()
+        cancel_appointment_choice_master = InlineKeyboardMarkup()
+        for master in masters_and_id.keys():
+            cancel_appointment_choice_master.add(InlineKeyboardButton(f'{master}',
+                                                                      callback_data=f'm_{master}'))
+        cancel_appointment_choice_master.add(InlineKeyboardButton('Отмена записи',
+                                                                  callback_data='cancel_appointment'))
+        await message.answer(f'Ваше Фамилия и Имя: "{data.get("name_client")}". '
+                             '\nВыберите мастера:', reply_markup=cancel_appointment_choice_master)
 
-        await UserAppointment.Service.set()
     else:
-        name = message.text.strip()
-        data['name'] = name
+        name_client = message.text.strip()
+        data['name_client'] = name_client
         await state.update_data(data)
         await confirm_or_change(data, message)
 
 
-# @dp.message_handler(state=UserAppointment.AppointmentSetService)
-# async def open_appointment_enter_service(message: Message, state: FSMContext):
+# @dp.message_handler(state=UserAppointment.Master)
+# async def open_appointment_enter_master(message: Message, state: FSMContext):
 #     data = await state.get_data()
-#     if not data.get('service'):
-#          = message.text.strip()
-#         data['service'] = name
-#         data['is_meme_in_db'] = 'Запись на ваше имя уже существует.' if await db.is_this_meme_in_db(name) \
-#             else 'Такого мема нет в БД.'
-#         is_meme_in_db = data.get('is_meme_in_db')
-#         await state.update_data(data)
-#         await message.answer('Выберите мастера')
-#
-#         await UserAppointment.AppointmentSetMaster.set()
-#     else:
-#         name = message.text.strip()
-#         data['name'] = name
-#         await state.update_data(data)
-#         await confirm_or_change(data, message)
+    # cancel_appointment_choice_master = InlineKeyboardMarkup()
+    # for master in masters_and_id.keys():
+    #     cancel_appointment_choice_master.add(InlineKeyboardButton(f'{master}',
+    #                                                               callback_data=f'm_{master}'))
+    # cancel_appointment_choice_master.add(InlineKeyboardButton('Отмена записи',
+    #                                                           callback_data='cancel_appointment'))
+    # if not data.get('name_master'):
+    # await message.answer(f'Ваше Фамилия и Имя: "{data.get("name_client")}". '
+    #                      '\nВыберите мастера:', reply_markup=cancel_appointment_choice_master)
+
+    # else:
+    #     name_master = message.text.strip()
+    #     data['name_master'] = name_master
+    #     await state.update_data(data)
+    #     await confirm_or_change(data, message)
+async def service_process_enter(call, state):
+    data = await state.get_data()
+    cancel_appointment_choice_service = InlineKeyboardMarkup()
+    services = await db.all_services()
+    for service in services:
+        service_name = service.name
+        service_price = service.price
+        service_time = service.time
+        cancel_appointment_choice_service.add(InlineKeyboardButton(f'{service_name} {service_price}',
+                                                                   callback_data=f's_{service_name}'))
+    cancel_appointment_choice_service.add(InlineKeyboardButton('Отмена записи',
+                                                               callback_data='cancel_appointment'))
+    await call.message.answer(f'Ваше Фамилия и Имя: "{data.get("name_client")}". '
+                              '\nВыберите услугу:', reply_markup=cancel_appointment_choice_service)
 
 
-@dp.message_handler(state=UserAppointment.Master)
-async def open_appointment_enter_master():
-    pass
+@dp.callback_query_handler(state=UserAppointment.Master, text_contains='m_')
+async def choice_master(call: CallbackQuery, state: FSMContext):
+    data = await state.get_data()
+    name_master = call.data.split('_')[1]
+    if not data.get('name_master'):
+        data['name_master'] = name_master
+        await state.update_data(data)
+        await UserAppointment.Service.set()
+        await service_process_enter(call, state)
+    else:
+        data['name_master'] = name_master
+        await state.update_data(data)
+        await confirm_or_change(data, call.message)
+
+
+@dp.callback_query_handler(state=UserAppointment.Service, text_contains='s_')
+async def choice_master(call: CallbackQuery, state: FSMContext):
+    data = await state.get_data()
+    service = call.data.split('_')[1]
+    if not data.get('service'):
+        data['service'] = service
+        await state.update_data(data)
+        await UserAppointment.Date.set()
+    else:
+        data['service'] = service
+        await state.update_data(data)
+        await confirm_or_change(data, call.message)

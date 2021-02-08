@@ -14,4 +14,5 @@ DATABASE = str(os.getenv("DATABASE"))  # имя БД в pgAdmin
 
 # Ссылка подключения к базе данных
 POSTGRES_URI = f"postgresql://{PG_USER}:{PG_PASS}@{host}/{DATABASE}"
-
+masters = ['Sanzensekai']
+masters_and_id = {master: admin_id for master in masters for admin_id in admins}

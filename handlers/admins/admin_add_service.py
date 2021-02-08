@@ -2,7 +2,7 @@ import logging
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters import Text
 from aiogram.types import Message, ReplyKeyboardRemove, InlineKeyboardMarkup, InlineKeyboardButton, \
-    CallbackQuery, ContentType, InputMediaPhoto
+    CallbackQuery, ContentType
 
 from keyboards.default import main_menu_no_orders
 from keyboards.inline import cancel_add_service

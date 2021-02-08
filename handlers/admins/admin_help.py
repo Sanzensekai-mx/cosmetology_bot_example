@@ -11,8 +11,6 @@ async def admin_help(message: Message):
     text = [
         'Список команд администратора: ',
         '/mail - рассылка всем пользователям бота.',
-        '/cancel_mail - отмена рассылки.',
-        '/add_service',
-        '/cancel_add_service',
+        '/add_service - добавить услугу в БД.',
     ]
     await message.answer('\n'.join(text))
