@@ -95,7 +95,7 @@ async def add_price_service(message: Message, state: FSMContext):
         await message.answer(f'Название: "{data.get("name")}". '
                              f'\n{data.get("is_meme_in_db")}'
                              f'\nЦена услуги: {price}'
-                             '\nПришлите ССЫЛКУ на фотографию услуги.',
+                             '\nПришлите фотографию услуги.',
                              reply_markup=cancel_add_service)
         await AdminAddService.PicHref.set()
     else:
@@ -135,6 +135,7 @@ async def add_price_service(message: Message, state: FSMContext):
         await message.answer(f'Название: "{data.get("name")}". '
                              f'\n{data.get("is_meme_in_db")}'
                              f'\nЦена услуги: {data.get("price")}'
+                             f'\nВремя оказание услуги: {data.get("time")}'
                              '\nПришлите описание услуги.',
                              reply_markup=cancel_add_service)
         await AdminAddService.Describe.set()
