@@ -121,6 +121,7 @@ async def service_process_enter(call, state):
 async def choice_master(call: CallbackQuery, state: FSMContext):
     data = await state.get_data()
     name_master = call.data.split('_')[1]
+    await call.answer(cache_time=60)
     if not data.get('name_master'):
         # Принятие выбора мастера
         data['name_master'] = name_master
@@ -152,7 +153,7 @@ async def date_process_enter(call, state):
         inline_calendar.insert(InlineKeyboardButton(week_day, callback_data=week_day))
     for day in [date for date in c.itermonthdays(current_date.year, current_date.month)]:
         if day == 0 or current_date.day > day:
-            inline_calendar.insert(InlineKeyboardButton(' ', callback_data=f'date_{day}'))
+            inline_calendar.insert(InlineKeyboardButton(' ', callback_data=f'wrong_date'))
             continue
         inline_calendar.insert(InlineKeyboardButton(day, callback_data=f'date_{day}'))
     inline_calendar.add(InlineKeyboardButton('Отмена записи', callback_data='cancel_appointment'))
@@ -170,6 +171,7 @@ async def date_process_enter(call, state):
 async def choice_master(call: CallbackQuery, state: FSMContext):
     data = await state.get_data()
     service = call.data.split('_')[1]
+    await call.answer(cache_time=60)
     if not data.get('service'):
         # Принятие выбора услуги
         data['service'] = service
@@ -180,5 +182,39 @@ async def choice_master(call: CallbackQuery, state: FSMContext):
         await date_process_enter(call, state)
     else:
         data['service'] = service
+        await state.update_data(data)
+        await confirm_or_change(data, call.message)
+
+
+async def time_process_enter(call, state):
+    data = await state.get_data()
+    await call.message.answer(f'Ваше Фамилия и Имя: "{data.get("name_client")}". '
+                              f'\nМастер: "{data.get("name_master")}"'
+                              f'\nУслуга: "{data.get("service")}"'
+                              f'\nДата: {data.get("date")}')
+
+
+@dp.callback_query_handler(state=UserAppointment.Date, text_contains='wrong_date')
+async def wrong_date_process(call: CallbackQuery, state: FSMContext):
+    await call.answer(cache_time=60)
+    await call.message.answer('Дата неактуальна, выберите не пустую дату.')
+    # await state.finish()
+
+
+@dp.callback_query_handler(state=UserAppointment.Date, text_contains='date_')
+async def choice_date(call: CallbackQuery, state: FSMContext):
+    data = await state.get_data()
+    date = call.data.split('_')[1]
+    await call.answer(cache_time=60)
+    if not data.get('date'):
+        # Принятие выбора услуги
+        data['date'] = date
+        await state.update_data(data)
+        # print(await state.get_data())
+        await UserAppointment.Time.set()
+        # Выбор даты, функция
+        await time_process_enter(call, state)
+    else:
+        data['date'] = date
         await state.update_data(data)
         await confirm_or_change(data, call.message)
