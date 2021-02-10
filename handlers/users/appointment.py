@@ -142,26 +142,27 @@ async def date_process_enter(call, state):
     print_c = c.formatmonth(current_date.year, current_date.month)
     # time_service = service.time
     inline_calendar = InlineKeyboardMarkup(row_width=7)
-    inline_calendar.add(InlineKeyboardButton('<', callback_data='<'))
+    # inline_calendar.add(InlineKeyboardButton('<', callback_data='month_previous'))
     inline_calendar.insert(InlineKeyboardButton(f'{print_c.split()[0]} {print_c.split()[1]}', callback_data='month'))
-    inline_calendar.insert(InlineKeyboardButton('>', callback_data='>'))
+    inline_calendar.insert(InlineKeyboardButton('>', callback_data='month_next'))
     for week_day in [item for item in print_c.split()][2:9]:
         if week_day == 'Mo':
             inline_calendar.add(InlineKeyboardButton(week_day, callback_data=week_day))
             continue
         inline_calendar.insert(InlineKeyboardButton(week_day, callback_data=week_day))
     for day in [date for date in c.itermonthdays(current_date.year, current_date.month)]:
-        if day == 0:
-            inline_calendar.insert(InlineKeyboardButton(' ', callback_data=day))
+        if day == 0 or current_date.day > day:
+            inline_calendar.insert(InlineKeyboardButton(' ', callback_data=f'date_{day}'))
             continue
-        inline_calendar.insert(InlineKeyboardButton(day, callback_data=day))
-    print(type([date for date in c.itermonthdays(current_date.year, current_date.month)][-1]))
+        inline_calendar.insert(InlineKeyboardButton(day, callback_data=f'date_{day}'))
+    inline_calendar.add(InlineKeyboardButton('Отмена записи', callback_data='cancel_appointment'))
+    # print(type([date for date in c.itermonthdays(current_date.year, current_date.month)]))
     print(print_c)
     # print(print_c.split())
-    await call.message.answer('Календарь', reply_markup=inline_calendar)
-    # await call.message.answer(f'Ваше Фамилия и Имя: "{data.get("name_client")}". '
-    #                           f'\nМастер: "{data.get("name_master")}"'
-    #                           f'\nУслуга: "{service.name}"', reply_markup=inline_calendar)
+    # await call.message.answer('Календарь', reply_markup=inline_calendar)
+    await call.message.answer(f'Ваше Фамилия и Имя: "{data.get("name_client")}". '
+                              f'\nМастер: "{data.get("name_master")}"'
+                              f'\nУслуга: "{service.name}"', reply_markup=inline_calendar)
 
 
 # Обработка выбранной услуги и занесение ее в state data
