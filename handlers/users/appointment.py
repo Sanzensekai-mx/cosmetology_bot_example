@@ -1,4 +1,6 @@
 import logging
+import datetime
+import calendar
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters import Text
 from aiogram.types import Message, ReplyKeyboardRemove, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
@@ -68,6 +70,7 @@ async def open_appointment_enter_name(message: Message, state: FSMContext):
         # Принятие ввода имени клиента
         name_client = message.text.strip()
         data['name_client'] = name_client
+        data['user_id'] = message.chat.id
         data['is_this_log_5_in_db'] = '5 записей с вашего аккаунта уже существует в БД. Больше нельзя.' \
             if await db.is_this_log_5_in_db(name_client) \
             else 'Запись возможна.'
@@ -94,6 +97,8 @@ async def open_appointment_enter_name(message: Message, state: FSMContext):
         await confirm_or_change(data, message)
 
 
+# !!!!!!!!! Вывод списка услуг в сообщении? Кнопки с цифрами, иначе все длина
+# какой-нибудь услуги может не уместиться в область кнопки
 async def service_process_enter(call, state):
     data = await state.get_data()
     cancel_appointment_choice_service = InlineKeyboardMarkup()
@@ -111,6 +116,7 @@ async def service_process_enter(call, state):
                               '\nВыберите услугу:', reply_markup=cancel_appointment_choice_service)
 
 
+# Обработка выбранного мастера и занесение его в state data, запуск функции для выдачи кнопок с услугами
 @dp.callback_query_handler(state=UserAppointment.Master, text_contains='m_')
 async def choice_master(call: CallbackQuery, state: FSMContext):
     data = await state.get_data()
@@ -129,9 +135,36 @@ async def choice_master(call: CallbackQuery, state: FSMContext):
 
 # Сделать
 async def date_process_enter(call, state):
-    pass
+    data = await state.get_data()
+    service = await db.get_service(data.get('service'))
+    c = calendar.TextCalendar(calendar.MONDAY)
+    current_date = datetime.date.today()
+    print_c = c.formatmonth(current_date.year, current_date.month)
+    # time_service = service.time
+    inline_calendar = InlineKeyboardMarkup(row_width=7)
+    inline_calendar.add(InlineKeyboardButton('<', callback_data='<'))
+    inline_calendar.insert(InlineKeyboardButton(f'{print_c.split()[0]} {print_c.split()[1]}', callback_data='month'))
+    inline_calendar.insert(InlineKeyboardButton('>', callback_data='>'))
+    for week_day in [item for item in print_c.split()][2:9]:
+        if week_day == 'Mo':
+            inline_calendar.add(InlineKeyboardButton(week_day, callback_data=week_day))
+            continue
+        inline_calendar.insert(InlineKeyboardButton(week_day, callback_data=week_day))
+    for day in [date for date in c.itermonthdays(current_date.year, current_date.month)]:
+        if day == 0:
+            inline_calendar.insert(InlineKeyboardButton(' ', callback_data=day))
+            continue
+        inline_calendar.insert(InlineKeyboardButton(day, callback_data=day))
+    print(type([date for date in c.itermonthdays(current_date.year, current_date.month)][-1]))
+    print(print_c)
+    # print(print_c.split())
+    await call.message.answer('Календарь', reply_markup=inline_calendar)
+    # await call.message.answer(f'Ваше Фамилия и Имя: "{data.get("name_client")}". '
+    #                           f'\nМастер: "{data.get("name_master")}"'
+    #                           f'\nУслуга: "{service.name}"', reply_markup=inline_calendar)
 
 
+# Обработка выбранной услуги и занесение ее в state data
 @dp.callback_query_handler(state=UserAppointment.Service, text_contains='s_')
 async def choice_master(call: CallbackQuery, state: FSMContext):
     data = await state.get_data()
@@ -140,6 +173,7 @@ async def choice_master(call: CallbackQuery, state: FSMContext):
         # Принятие выбора услуги
         data['service'] = service
         await state.update_data(data)
+        # print(await state.get_data())
         await UserAppointment.Date.set()
         # Выбор даты, функция
         await date_process_enter(call, state)
