@@ -36,9 +36,10 @@ async def confirm_or_change(data, mes):
     await UserAppointment.Confirm.set()
 
 
-@dp.callback_query_handler(chat_id=admins, state=UserAppointment, text_contains='cancel_appointment')
+@dp.callback_query_handler(state=UserAppointment, text_contains='cancel_appointment')
 async def process_cancel_add_service(call: CallbackQuery, state: FSMContext):
     logging.info(f'from: {call.message.chat.full_name}, text: {call.message.text}, info: Отмена записи.')
+    await call.answer(cache_time=60)
     await call.message.answer('Отмена записи.', reply_markup=main_menu_no_orders)  # Добавить reply_markup
     await state.reset_state()
 
@@ -180,7 +181,7 @@ async def date_process_enter(call, state, year, month, day):
     # print([date for date in c.itermonthdays(current_date.year, current_date.month)])
     # print([date for date in c.itermonthdays2(current_date.year, current_date.month)])
     # print([date for date in c.itermonthdays3(current_date.year, current_date.month)])
-    print([date for date in c.itermonthdays4(year, month)])
+    # print([date for date in c.itermonthdays4(year, month)])
     # print(print_c)
     # print(print_c.split())
     await call.message.answer(f'Ваше Фамилия и Имя: "{data.get("name_client")}". '

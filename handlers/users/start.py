@@ -1,6 +1,8 @@
 import logging
 from aiogram import types
 from aiogram.dispatcher.filters import CommandStart
+
+from keyboards.default import main_menu_no_orders
 from loader import dp
 from utils.db_api.models import DBCommands
 from data.config import admins
@@ -37,4 +39,4 @@ async def bot_start(message: types.Message):
         await message.answer(f'''
 Привет, {name_user}!
 ''')
-    await message.answer('Нажми кнопку ниже для того, чтобы начать!')
+    await message.answer('Нажми кнопку ниже для того, чтобы начать!', reply_markup=main_menu_no_orders)
