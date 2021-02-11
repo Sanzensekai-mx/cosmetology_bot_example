@@ -142,12 +142,17 @@ async def date_process_enter(call, state, year, month, day):
     c = calendar.LocaleTextCalendar(calendar.MONDAY, locale='Russian_Russia')
     service = await db.get_service(data.get('service'))
     current_date = datetime.date.today()
+    if month == current_date.month and year == current_date.year:
+        month = current_date.month
+        year = current_date.year
+        day = current_date.day
     # print(c.formatyear(current_date.year))
     print_c = c.formatmonth(year, month)
     # time_service = service.time
     inline_calendar = InlineKeyboardMarkup(row_width=7)
     if (month != current_date.month and year == current_date.year) \
-            or (month != current_date.month and year != current_date.year):
+            or ((month != current_date.month or month == current_date.month)
+                and year != current_date.year):
         inline_calendar.add(InlineKeyboardButton('<', callback_data='month_previous'))
     data['current_choice_month'] = month
     data['current_choice_year'] = year
@@ -237,9 +242,9 @@ async def change_month_process(call: CallbackQuery, state: FSMContext):
                                  month=choice_month,
                                  day=1)
     elif result == 'previous':
-        if choice_month == 12:
-            choice_year = current_date.year - 1
-            choice_month = 1
+        if choice_month == 1:
+            choice_year = choice_year - 1
+            choice_month = 12
         else:
             choice_month = int(choice_month) - 1
         data['current_choice_year'] = choice_year
