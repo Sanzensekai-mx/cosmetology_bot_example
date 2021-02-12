@@ -3,10 +3,11 @@ import datetime
 import calendar
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters import Text
-from aiogram.types import Message, ReplyKeyboardRemove, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
+from aiogram.types import Message, ReplyKeyboardRemove, InlineKeyboardMarkup, \
+    InlineKeyboardButton, CallbackQuery, ContentType
 
-from keyboards.default import main_menu_no_orders
-from keyboards.inline import cancel_appointment
+from keyboards.default import main_menu_no_orders, phone_number
+from keyboards.inline import cancel_appointment, cancel_appointment_or_confirm
 from loader import dp
 from states.user_states import UserAppointment
 from utils.db_api.models import DBCommands
@@ -48,6 +49,7 @@ async def process_cancel_add_service(call: CallbackQuery, state: FSMContext):
 async def open_appointment_start(message: Message, state: FSMContext):
     logging.info(f'from: {message.chat.first_name}, text: {message.text}')
     # LOG you!!!!!!!
+    await message.answer('Начало записи.', reply_markup=ReplyKeyboardRemove())
     await message.answer('Введите своё фамилию и имя. Например: Петрина Кристина',
                          reply_markup=cancel_appointment)
     await UserAppointment.Name.set()
@@ -56,6 +58,7 @@ async def open_appointment_start(message: Message, state: FSMContext):
          'name_master': '',
          'service': '',
          'user_id': '',
+         'full_datetime': '',
          'date': '',
          'time': '',
          'phone_number': '',
@@ -213,14 +216,6 @@ async def choice_master(call: CallbackQuery, state: FSMContext):
         await confirm_or_change(data, call.message)
 
 
-async def time_process_enter(call, state):
-    data = await state.get_data()
-    await call.message.answer(f'Ваше Фамилия и Имя: "{data.get("name_client")}". '
-                              f'\nМастер: "{data.get("name_master")}"'
-                              f'\nУслуга: "{data.get("service")}"'
-                              f'\nДата: {data.get("date")}')
-
-
 @dp.callback_query_handler(state=UserAppointment.Date, text_contains='month_')
 async def change_month_process(call: CallbackQuery, state: FSMContext):
     data = await state.get_data()
@@ -261,7 +256,6 @@ async def change_month_process(call: CallbackQuery, state: FSMContext):
 async def wrong_date_process(call: CallbackQuery, state: FSMContext):
     await call.answer(cache_time=60)
     await call.message.answer('Дата неактуальна, выберите не пустую дату.')
-    # await state.finish()
 
 
 @dp.callback_query_handler(state=UserAppointment.Date, text_contains='date_')
@@ -274,6 +268,7 @@ async def choice_date(call: CallbackQuery, state: FSMContext):
         data['date'] = date
         await state.update_data(data)
         # print(await state.get_data())
+        await db.add_log_datetime(data.get('date'))
         await UserAppointment.Time.set()
         # Выбор даты, функция
         await time_process_enter(call, state)
@@ -281,3 +276,83 @@ async def choice_date(call: CallbackQuery, state: FSMContext):
         data['date'] = date
         await state.update_data(data)
         await confirm_or_change(data, call.message)
+
+
+async def time_process_enter(call, state):
+    data = await state.get_data()
+    time_dict = await db.get_dict_of_time(data.get('date'))
+    time_kb = InlineKeyboardMarkup(row_width=5)
+    for time, val in time_dict.items():
+        if val is False:
+            if time == '10:00':
+                time_kb.add(InlineKeyboardButton(f'{time}', callback_data=f'time_{time}'))
+            time_kb.insert(InlineKeyboardButton(f'{time}', callback_data=f'time_{time}'))
+    await call.message.answer(f'Ваше Фамилия и Имя: "{data.get("name_client")}". '
+                              f'\nМастер: "{data.get("name_master")}"'
+                              f'\nУслуга: "{data.get("service")}"'
+                              f'\nДата: {data.get("date")}', reply_markup=time_kb)  # reply_markup
+
+
+@dp.callback_query_handler(state=UserAppointment.Time, text_contains='time_')
+async def choice_date(call: CallbackQuery, state: FSMContext):
+    data = await state.get_data()
+    time = call.data.split('_')[1]
+    await call.answer(cache_time=60)
+    if not data.get('time'):
+        # Принятие выбора услуги
+        data['time'] = time
+        data['full_datetime'] = f'{data.get("date")} {data.get("time")}'
+        await state.update_data(data)
+        # print(await state.get_data())
+        await UserAppointment.PhoneNumber.set()
+        await call.message.answer('Нажмите на кнопку ниже, чтобы отправить номер телефона.',
+                                  reply_markup=phone_number)
+        # Выбор даты, функция
+        # await time_process_enter(call, state)
+    else:
+        data['time'] = time
+        await state.update_data(data)
+        await confirm_or_change(data, call.message)
+
+
+@dp.message_handler(content_types=ContentType.CONTACT,
+                    state=UserAppointment.PhoneNumber)
+async def choice_date(message: Message, state: FSMContext):
+    data = await state.get_data()
+    number = message.contact.phone_number
+    # time = call.data.split('_')[1]
+    # await call.answer(cache_time=60)
+    if not data.get('phone_number'):
+        # Принятие выбора услуги
+        data['phone_number'] = number
+        await state.update_data(data)
+        # print(await state.get_data())
+        await UserAppointment.Confirm.set()
+        await message.answer('Нажмите кнопку, чтобы записаться', reply_markup=cancel_appointment_or_confirm)
+        # Выбор даты, функция
+        # await time_process_enter(call, state)
+    else:
+        data['phone_number'] = number
+        await state.update_data(data)
+        await confirm_or_change(data, message)
+
+
+@dp.callback_query_handler(text_contains='confirm_appointment', state=UserAppointment.Confirm)
+async def confirm_to_db(call: CallbackQuery, state: FSMContext):
+    data = await state.get_data()
+    await db.add_update_date(datetime=data.get('date'),
+                             time=data.get('time'))
+    await db.add_log(
+                user_id=data.get('user_id'),
+                name_client=data.get('name_client'),
+                name_master=data.get('name_master'),
+                service=data.get('service'),
+                full_datetime=data.get('full_datetime'),
+                date=data.get('date'),
+                time=data.get('time'),
+                phone_number=data.get('phone_number'))
+    await call.message.answer('Вы записаны.', reply_markup=main_menu_no_orders)  # Исправить reply_markup
+    # Тест отправки
+    # pic = await db.show_service_test()
+    # await bot.send_photo(chat_id=591763264, photo=pic.pic_file_id)
+    await state.finish()
