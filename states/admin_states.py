@@ -17,3 +17,10 @@ class AdminAddService(StatesGroup):
     PicHref = State()
     Time = State()
     Confirm = State()
+
+
+class AdminCheckLog(StatesGroup):
+    ChoiceRange = State()
+    CheckToday = State()
+    CheckWeek = State()
+    CheckMonths = State()

@@ -131,6 +131,11 @@ class DBCommands:
         log = await Log.query.where(Log.full_datetime == full_datetime).gino.first()
         return log
 
+    @staticmethod
+    async def get_logs_only_date(date):
+        log = await Log.query.where(Log.date == date).gino.all()
+        return log
+
     async def is_this_log_in_db(self, name_client):
         log = await self.get_log(name_client)
         if log:

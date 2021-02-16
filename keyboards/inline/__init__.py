@@ -1,3 +1,4 @@
-from .admin_mailing import admin_mailing_kb, cancel_mailing_kb
-from .admin_add_service import cancel_add_service
-from .user_appointment import cancel_appointment, cancel_appointment_or_confirm
+from .admin_mailing_kb import admin_mailing_kb, cancel_mailing_kb
+from .admin_add_service_kb import cancel_add_service
+from .user_appointment_kb import cancel_appointment, cancel_appointment_or_confirm
+from .admin_check_log_kb import check_logs_choice_range
