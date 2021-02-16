@@ -11,7 +11,7 @@ from keyboards.inline import cancel_appointment, cancel_appointment_or_confirm
 from loader import dp
 from states.user_states import UserAppointment
 from utils.db_api.models import DBCommands
-from data.config import admins, masters_and_id
+from data.config import masters_and_id
 
 db = DBCommands()
 
