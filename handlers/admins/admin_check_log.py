@@ -11,7 +11,7 @@ from keyboards.inline import check_logs_choice_range
 from loader import dp
 from states.admin_states import AdminCheckLog
 from utils.db_api.models import DBCommands
-from data.config import admins
+from data.config import masters_and_id
 
 db = DBCommands()
 
@@ -20,13 +20,13 @@ logging.basicConfig(format=u'%(filename)s [LINE:%(lineno)d] '
                     level=logging.INFO)
 
 
-@dp.message_handler(commands=['check_logs'], chat_id=admins)
+@dp.message_handler(commands=['check_logs'], chat_id=masters_and_id.values())
 async def start_check_logs(message: Message):
     await message.answer('Просмотр записи клиентов.', reply_markup=check_logs_choice_range)
     await AdminCheckLog.ChoiceRange.set()
 
 
-@dp.callback_query_handler(text_contains='datetime_', chat_id=admins, state=AdminCheckLog.CheckToday)
+@dp.callback_query_handler(text_contains='datetime_', chat_id=masters_and_id.values(), state=AdminCheckLog.CheckToday)
 async def process_choice_time(call: CallbackQuery):
     full_datetime = call.data.split('_')[1]
     log = await db.get_log(full_datetime)
@@ -61,7 +61,7 @@ async def process_choice_day(call, date_time):
     # await call.message.answer(all_today_logs)
 
 
-@dp.callback_query_handler(state=AdminCheckLog.ChoiceRange, chat_id=admins, text_contains='logs_')
+@dp.callback_query_handler(state=AdminCheckLog.ChoiceRange, chat_id=masters_and_id.values(), text_contains='logs_')
 async def choice_range_log(call: CallbackQuery):
     result = call.data.split('_')[1]
     await call.answer(cache_time=60)

@@ -46,6 +46,7 @@ class Datetime(db.Model):
     # year = db.Column(db.Integer)
     # month = db.Column(db.Integer)
     # day = db.Column(db.Integer)
+    master = db.Column(db.String)
     datetime = db.Column(db.String)
     time = db.Column(db.JSON, nullable=False, server_default="{}")
 
@@ -183,20 +184,24 @@ class DBCommands:
 
     # Мeтоды для таблицы datetime
     @staticmethod
-    async def get_datetime(datetime):
-        datetime = await Datetime.query.where(Datetime.datetime == datetime).gino.first()
-        return datetime
+    async def get_datetime(datetime, master):
+        datetime_list = await Datetime.query.where(Datetime.datetime == datetime).gino.all()
+        # datetime_with_master =
+        for line in datetime_list:
+            if line.master == master:
+                return line
 
-    async def get_dict_of_time(self, datetime):
-        datetime_one = await self.get_datetime(datetime)
+    async def get_dict_of_time(self, datetime, master):
+        datetime_one = await self.get_datetime(datetime, master)
         return datetime_one.time
 
-    async def add_log_datetime(self, datetime):
-        datetime_one = await self.get_datetime(datetime)
+    async def add_log_datetime(self, datetime, master):
+        datetime_one = await self.get_datetime(datetime, master)
         if datetime_one:
             return datetime_one
         datetime_one = Datetime()
         datetime_one.datetime = datetime
+        datetime_one.master = master
         datetime_one.time = {'10:00': False, '10:30': False, '11:00': False, '11:30': False,
                              '12:00': False, '12:30': False, '13:00': False, '13:30': False,
                              '14:00': False, '14:30': False, '15:00': False, '15:30': False,
@@ -204,8 +209,8 @@ class DBCommands:
         await datetime_one.create()
         return datetime_one
 
-    async def add_update_date(self, datetime, time):
-        datetime_one = await self.get_datetime(datetime)
+    async def add_update_date(self, datetime, time, master):
+        datetime_one = await self.get_datetime(datetime, master)
         dict_time = datetime_one.time
         dict_time[time] = True
         if datetime_one:
@@ -213,11 +218,13 @@ class DBCommands:
             dict_time[time] = True
             await datetime_one.update(
                 id=datetime_one.id,
+                master=datetime_one.master,
                 datetime=datetime_one.datetime,
                 time=dict_time
             ).apply()
             return datetime_one
         datetime_one = Datetime()
+        datetime_one.master = master
         datetime_one.datetime = datetime
         datetime_one.time = time
         await datetime_one.create()

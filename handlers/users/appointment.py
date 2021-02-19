@@ -268,7 +268,7 @@ async def choice_date(call: CallbackQuery, state: FSMContext):
         data['date'] = date
         await state.update_data(data)
         # print(await state.get_data())
-        await db.add_log_datetime(data.get('date'))
+        await db.add_log_datetime(data.get('date'), data.get('name_master'))
         await UserAppointment.Time.set()
         # Выбор даты, функция
         await time_process_enter(call, state)
@@ -280,7 +280,7 @@ async def choice_date(call: CallbackQuery, state: FSMContext):
 
 async def time_process_enter(call, state):
     data = await state.get_data()
-    time_dict = await db.get_dict_of_time(data.get('date'))
+    time_dict = await db.get_dict_of_time(data.get('date'), data.get('name_master'))
     time_kb = InlineKeyboardMarkup(row_width=5)
     for time, val in time_dict.items():
         if val is False:
@@ -341,7 +341,7 @@ async def choice_date(message: Message, state: FSMContext):
 async def confirm_to_db(call: CallbackQuery, state: FSMContext):
     data = await state.get_data()
     await db.add_update_date(datetime=data.get('date'),
-                             time=data.get('time'))
+                             time=data.get('time'), master=data.get('name_master'))
     await db.add_log(
                 user_id=data.get('user_id'),
                 name_client=data.get('name_client'),
