@@ -128,23 +128,45 @@ class DBCommands:
     #     return service
     # Методы для таблицы log
     @staticmethod
-    async def get_log(full_datetime):
-        log = await Log.query.where(Log.full_datetime == full_datetime).gino.first()
+    async def get_log_by_client(name_client):
+        log = await Log.query.where(Log.name_client == name_client).gino.first()
         return log
 
     @staticmethod
-    async def get_logs_only_date(date):
-        log = await Log.query.where(Log.date == date).gino.all()
-        return log
+    async def get_log_by_full_datetime(full_datetime, master=None):
+        logs = await Log.query.where(Log.full_datetime == full_datetime).gino.all()
+        # log = await Log.query.where(Log.name_master == master).gino.first()
+        if logs:
+            for log in logs:
+                if log.full_datetime == full_datetime:
+                    return log
+        # return log
+
+    @staticmethod
+    async def get_logs_only_date(date, master):
+        logs_list = await Log.query.where(Log.date == date).gino.all()
+        return_logs = []
+        for line in logs_list:
+            if line.name_master == master and line.date == date:
+                return_logs.append(line)
+        return return_logs
+
+    @staticmethod
+    async def is_client_full_datetime_in_db(full_datetime, name_client):
+        logs = await Log.query.where(Log.full_datetime == full_datetime).gino.all()
+        for log in logs:
+            if log.name_client == name_client:
+                return True
+        return False
 
     async def is_this_log_in_db(self, name_client):
-        log = await self.get_log(name_client)
+        log = await self.get_log_by_full_datetime(name_client)
         if log:
             return True
         return False
 
     async def is_this_log_5_in_db(self, name_client):
-        log = await self.get_log(name_client)
+        log = await self.get_log_by_client(name_client)
         if log:
             num_one_user_id = 0
             for i in [log.user_id for log in await Log.query.gino.all()]:
@@ -155,7 +177,7 @@ class DBCommands:
         return False
 
     async def add_log(self, user_id, name_client, name_master, service, full_datetime, date, time, phone_number):
-        log_one = await self.get_log(name_client)
+        log_one = await self.get_log_by_full_datetime(full_datetime, name_master)
         # full_log_one = await self.full_get_log(user_id, name_client, name_master, service, date, time, phone_number)
         if log_one:
             await log_one.update(
@@ -185,10 +207,11 @@ class DBCommands:
     # Мeтоды для таблицы datetime
     @staticmethod
     async def get_datetime(datetime, master):
-        datetime_list = await Datetime.query.where(Datetime.datetime == datetime).gino.all()
+        # datetime_list = await Datetime.query.where(Datetime.datetime == datetime).gino.all()
+        datetime_list = await Datetime.query.where(Datetime.master == master).gino.all()
         # datetime_with_master =
         for line in datetime_list:
-            if line.master == master:
+            if line.datetime == datetime:
                 return line
 
     async def get_dict_of_time(self, datetime, master):
@@ -198,7 +221,7 @@ class DBCommands:
     async def add_log_datetime(self, datetime, master):
         datetime_one = await self.get_datetime(datetime, master)
         if datetime_one:
-            return datetime_one
+            return True
         datetime_one = Datetime()
         datetime_one.datetime = datetime
         datetime_one.master = master
@@ -207,12 +230,12 @@ class DBCommands:
                              '14:00': False, '14:30': False, '15:00': False, '15:30': False,
                              '16:00': False, '16:30': False, '17:00': False}
         await datetime_one.create()
-        return datetime_one
+        return False
 
     async def add_update_date(self, datetime, time, master):
         datetime_one = await self.get_datetime(datetime, master)
-        dict_time = datetime_one.time
-        dict_time[time] = True
+        # dict_time = datetime_one.time
+        # dict_time[time] = True
         if datetime_one:
             dict_time = datetime_one.time
             dict_time[time] = True

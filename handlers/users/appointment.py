@@ -81,6 +81,7 @@ async def open_appointment_enter_name(message: Message, state: FSMContext):
             if await db.is_this_log_5_in_db(name_client) \
             else 'Запись возможна.'
         is_this_log_5_in_db = data.get('is_this_log_5_in_db')
+        await message.answer(is_this_log_5_in_db)
         # Если существует 5 записей с одного chat_id, то выводится предупреждение и состояние сбрасывается
         if is_this_log_5_in_db is True:
             await message.answer(f'{is_this_log_5_in_db}')
@@ -286,7 +287,8 @@ async def time_process_enter(call, state):
         if val is False:
             if time == '10:00':
                 time_kb.add(InlineKeyboardButton(f'{time}', callback_data=f'time_{time}'))
-            time_kb.insert(InlineKeyboardButton(f'{time}', callback_data=f'time_{time}'))
+            else:
+                time_kb.insert(InlineKeyboardButton(f'{time}', callback_data=f'time_{time}'))
     await call.message.answer(f'Ваше Фамилия и Имя: "{data.get("name_client")}". '
                               f'\nМастер: "{data.get("name_master")}"'
                               f'\nУслуга: "{data.get("service")}"'
@@ -303,10 +305,15 @@ async def choice_date(call: CallbackQuery, state: FSMContext):
         data['time'] = time
         data['full_datetime'] = f'{data.get("date")} {data.get("time")}'
         await state.update_data(data)
+        if await db.is_client_full_datetime_in_db(data.get('full_datetime'), data.get('name_client')):
+            await call.message.answer('Вы уже записаны на это время у другого мастера',
+                                      reply_markup=main_menu_no_orders)
+            await state.finish()
         # print(await state.get_data())
-        await UserAppointment.PhoneNumber.set()
-        await call.message.answer('Нажмите на кнопку ниже, чтобы отправить номер телефона.',
-                                  reply_markup=phone_number)
+        else:
+            await UserAppointment.PhoneNumber.set()
+            await call.message.answer('Нажмите на кнопку ниже, чтобы отправить номер телефона.',
+                                      reply_markup=phone_number)
         # Выбор даты, функция
         # await time_process_enter(call, state)
     else:
