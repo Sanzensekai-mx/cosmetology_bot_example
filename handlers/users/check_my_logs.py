@@ -25,14 +25,18 @@ async def check_users_logs(message: Message, state: FSMContext):
     logging.info(f'from: {message.chat.first_name}, text: {message.text}')
     logs_list = await db.get_all_logs_by_user_id(message.chat.id)
     kb_logs = InlineKeyboardMarkup(row_width=5)
-    print(logs_list[0].full_datetime)
-    print(type(logs_list[0].full_datetime))
-    for log in logs_list:
+    # print(logs_list[0].full_datetime)
+    # print(type(logs_list[0].full_datetime))
+    if logs_list:
+        for log in logs_list:
         # Список вида (2021, 2, 22, 0) 10:00
-        date = [x.strip('()').strip() for x in log.date.split(',')]
-        kb_logs.add(InlineKeyboardButton(f'Дата: {date[2]}/{date[1]}/{date[0]} Время: {log.time}',
-                                         callback_data=f'user:datetime_{log.full_datetime}_{log.name_master}'))
-    await message.answer('Ваши записи:', reply_markup=kb_logs)
+            date = [x.strip('()').strip() for x in log.date.split(',')]
+            kb_logs.add(InlineKeyboardButton(f'Дата: {date[2]}/{date[1]}/{date[0]} Время: {log.time}',
+                                             callback_data=f'user:datetime_{log.full_datetime}_{log.name_master}'))
+        await message.answer('Ваши записи:', reply_markup=kb_logs)
+    else:
+        await message.answer('Вы еще не записывались. \nДля записи нажмите кнопку "Запись"',
+                             reply_markup=main_menu_client)
 
 
 @dp.callback_query_handler(text_contains='user:datetime_')
