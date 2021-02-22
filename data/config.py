@@ -1,17 +1,21 @@
 import os
+from dotenv import load_dotenv
 
-# load_dotenv()
-BOT_TOKEN = str(os.environ.get('BOT_TOKEN'))
-admins = str(os.environ.get('admins')).split(', ')
-POSTGRES_URI = str(os.environ.get('DATABASE_URL'))  # Для Heroku
+load_dotenv()
+BOT_TOKEN = os.getenv('BOT_TOKEN')
+admins = str(os.getenv('admins')).split(', ')
+masters_id = str(os.getenv('masters_id')).split(', ')
+masters_username = [name.encode('windows-1251').decode('utf-8')
+                    for name in str(os.getenv("masters_username")).split(', ')]
 
-# host = str(os.environ.get("PG_HOST"))  # хост базы данных
-# PG_USER = str(os.environ.get("PG_USER"))  # имя владельца базы данных
-# PG_PASS = str(os.environ.get("PG_PASS"))  # пароль бд
-# DATABASE = str(os.environ.get("DATABASE"))  # имя БД в pgAdmin
-#
-# # ip = str(os.environ.get("ip"))
-#
-# # Ссылка подключения к базе данных
-# POSTGRES_URI = f"postgresql://{PG_USER}:{PG_PASS}@{host}/{DATABASE}"
+host = str(os.getenv("PG_HOST"))  # хост базы данных
+PG_USER = str(os.getenv("PG_USER"))  # имя владельца базы данных
+PG_PASS = str(os.getenv("PG_PASS"))  # пароль бд
+DATABASE = str(os.getenv("DATABASE"))  # имя БД в pgAdmin
 
+# ip = str(os.environ.get("ip"))
+
+# Ссылка подключения к базе данных
+POSTGRES_URI = f"postgresql://{PG_USER}:{PG_PASS}@{host}/{DATABASE}"
+# masters_and_id = {m_name: m_id for m_name in masters_username for m_id in masters_id}
+masters_and_id = dict(zip(masters_username, masters_id))
