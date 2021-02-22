@@ -77,25 +77,29 @@ async def open_appointment_enter_name(message: Message, state: FSMContext):
         name_client = message.text.strip()
         data['name_client'] = name_client
         data['user_id'] = message.chat.id
-        data['is_this_log_5_in_db'] = '5 записей с вашего аккаунта уже существует в БД. Больше нельзя.' \
-            if await db.is_this_log_5_in_db(name_client) \
-            else 'Запись возможна.'
-        is_this_log_5_in_db = data.get('is_this_log_5_in_db')
-        await message.answer(is_this_log_5_in_db)
-        # Если существует 5 записей с одного chat_id, то выводится предупреждение и состояние сбрасывается
-        if is_this_log_5_in_db is True:
-            await message.answer(f'{is_this_log_5_in_db}')
-            await state.finish()
+        # data['is_this_log_5_in_db'] = '5 записей с вашего аккаунта уже существует в БД. Больше нельзя.' \
+        #     if await db.is_this_log_5_in_db(message.chat.id) \
+        #     else 'Запись возможна.'
+        data['is_this_log_5_in_db'] = await db.is_this_log_5_in_db(message.chat.id)
         await state.update_data(data)
-        await UserAppointment.Master.set()
-        cancel_appointment_choice_master = InlineKeyboardMarkup()
-        for master in masters_and_id.keys():
-            cancel_appointment_choice_master.add(InlineKeyboardButton(f'{master}',
-                                                                      callback_data=f'm_{master}'))
-        cancel_appointment_choice_master.add(InlineKeyboardButton('Отмена записи',
-                                                                  callback_data='cancel_appointment'))
-        await message.answer(f'Ваше Фамилия и Имя: "{data.get("name_client")}". '
-                             '\nВыберите мастера:', reply_markup=cancel_appointment_choice_master)
+        is_this_log_5_in_db = data.get('is_this_log_5_in_db')
+        # Если существует 5 записей с одного chat_id, то выводится предупреждение и состояние сбрасывается
+        if data.get('is_this_log_5_in_db') is True:
+            await message.answer('5 записей с вашего аккаунта уже существует в БД. Больше нельзя.',
+                                 reply_markup=main_menu_no_orders)
+            await state.finish()
+        # await message.answer(is_this_log_5_in_db)
+        # await state.update_data(data)
+        else:
+            await UserAppointment.Master.set()
+            cancel_appointment_choice_master = InlineKeyboardMarkup()
+            for master in masters_and_id.keys():
+                cancel_appointment_choice_master.add(InlineKeyboardButton(f'{master}',
+                                                                          callback_data=f'm_{master}'))
+            cancel_appointment_choice_master.add(InlineKeyboardButton('Отмена записи',
+                                                                      callback_data='cancel_appointment'))
+            await message.answer(f'Ваше Фамилия и Имя: "{data.get("name_client")}". '
+                                 '\nВыберите мастера:', reply_markup=cancel_appointment_choice_master)
 
     else:
         name_client = message.text.strip()
