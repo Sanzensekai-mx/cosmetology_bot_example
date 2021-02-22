@@ -6,7 +6,7 @@ from aiogram.dispatcher.filters import Text
 from aiogram.types import Message, ReplyKeyboardRemove, InlineKeyboardMarkup, \
     InlineKeyboardButton, CallbackQuery, ContentType
 
-from keyboards.default import main_menu_client, main_menu_admin
+from keyboards.default import main_menu_admin, main_menu_master
 from keyboards.inline import check_logs_choice_range
 from loader import dp
 from states.admin_states import AdminCheckLog
@@ -33,11 +33,13 @@ async def process_cancel_add_service(call: CallbackQuery, state: FSMContext):
     if str(call.message.chat.id) in admins and str(call.message.chat.id) in masters_and_id.values():
         await call.message.answer('Отмена.', reply_markup=main_menu_admin)  # Добавить reply_markup
     else:
-        await call.message.answer('Отмена.', reply_markup=ReplyKeyboardRemove())  # Вставить меню мастера
+        await call.message.answer('Отмена.', reply_markup=main_menu_master)  # Вставить меню мастера
     await state.reset_state()
 
 
-@dp.message_handler(Text('Посмотреть записи ко мне'), chat_id=masters_and_id.values())
+@dp.message_handler(Text(equals=['Посмотреть записи ко мне',
+                                 'Посмотреть записи ко мне (супер-мастер)',
+                                 'Посмотреть записи ко мне (мастер)']), chat_id=masters_and_id.values())
 async def start_check_logs(message: Message):
     await message.answer('Просмотр записи клиентов.', reply_markup=check_logs_choice_range)
     await AdminCheckLog.ChoiceRange.set()
