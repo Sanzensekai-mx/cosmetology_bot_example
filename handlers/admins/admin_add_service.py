@@ -4,7 +4,7 @@ from aiogram.dispatcher.filters import Text
 from aiogram.types import Message, ReplyKeyboardRemove, InlineKeyboardMarkup, InlineKeyboardButton, \
     CallbackQuery, ContentType
 
-from keyboards.default import main_menu_no_orders
+from keyboards.default import main_menu_client
 from keyboards.inline import cancel_add_service
 from loader import dp, bot
 from states.admin_states import AdminAddService
@@ -44,7 +44,7 @@ async def process_cancel_add_service(call: CallbackQuery, state: FSMContext):
     await state.reset_state()
 
 
-@dp.message_handler(chat_id=admins, commands=['add_service'])
+@dp.message_handler(Text(equals='Добавить услугу'), chat_id=admins)
 async def start_add_service(message: Message, state: FSMContext):
     logging.info(f'from: {message.chat.full_name}, text: {message.text}')
     await message.answer('Введите название новой услуги или услуги, который уже существует, '

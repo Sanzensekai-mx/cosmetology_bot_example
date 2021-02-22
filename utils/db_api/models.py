@@ -165,17 +165,6 @@ class DBCommands:
             return True
         return False
 
-    # async def is_this_log_5_in_db(self, name_client):
-    #     log = await self.get_log_by_client(name_client)
-    #     if log:
-    #         num_one_user_id = 0
-    #         for i in [log.user_id for log in await Log.query.gino.all()]:
-    #             if i == log.user_id:
-    #                 num_one_user_id += 1
-    #             if num_one_user_id == 5:
-    #                 return True
-    #     return False
-
     @staticmethod
     async def is_this_log_5_in_db(user_id):
         log = await Log.query.where(Log.user_id == user_id).gino.first()
@@ -187,6 +176,11 @@ class DBCommands:
                 if num_one_user_id == 5:
                     return True
         return False
+
+    @staticmethod
+    async def get_all_logs_by_user_id(user_id):
+        logs = await Log.query.where(Log.user_id == user_id).gino.all()
+        return logs
 
     async def add_log(self, user_id, name_client, name_master, service, full_datetime, date, time, phone_number):
         log_one = await self.get_log_by_full_datetime(full_datetime, name_master)

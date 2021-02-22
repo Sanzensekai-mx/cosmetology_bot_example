@@ -3,5 +3,6 @@ from .start import dp
 from .appointment import dp
 from .about import dp
 from .stocks import dp
+from .check_my_logs import dp
 
 __all__ = ["dp"]

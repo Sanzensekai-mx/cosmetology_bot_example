@@ -6,12 +6,12 @@ from aiogram.dispatcher.filters import Text
 from aiogram.types import Message, ReplyKeyboardRemove, InlineKeyboardMarkup, \
     InlineKeyboardButton, CallbackQuery, ContentType
 
-from keyboards.default import main_menu_no_orders
+from keyboards.default import main_menu_client, main_menu_admin
 from keyboards.inline import check_logs_choice_range
 from loader import dp
 from states.admin_states import AdminCheckLog
 from utils.db_api.models import DBCommands
-from data.config import masters_and_id
+from data.config import masters_and_id, admins
 
 db = DBCommands()
 
@@ -27,20 +27,31 @@ logging.basicConfig(format=u'%(filename)s [LINE:%(lineno)d] '
                     level=logging.INFO)
 
 
-@dp.message_handler(commands=['check_logs'], chat_id=masters_and_id.values())
+@dp.callback_query_handler(text_contains='cancel_check', chat_id=masters_and_id.values(), state=AdminCheckLog)
+async def process_cancel_add_service(call: CallbackQuery, state: FSMContext):
+    logging.info(f'from: {call.message.chat.full_name}, text: {call.message.text}, info: Отмена рассылки.')
+    if str(call.message.chat.id) in admins and str(call.message.chat.id) in masters_and_id.values():
+        await call.message.answer('Отмена.', reply_markup=main_menu_admin)  # Добавить reply_markup
+    else:
+        await call.message.answer('Отмена.', reply_markup=ReplyKeyboardRemove())  # Вставить меню мастера
+    await state.reset_state()
+
+
+@dp.message_handler(Text('Посмотреть записи ко мне'), chat_id=masters_and_id.values())
 async def start_check_logs(message: Message):
     await message.answer('Просмотр записи клиентов.', reply_markup=check_logs_choice_range)
     await AdminCheckLog.ChoiceRange.set()
 
 
-@dp.callback_query_handler(text_contains='datetime_', chat_id=masters_and_id.values(), state=AdminCheckLog.CheckToday)
+@dp.callback_query_handler(text_contains='admin:datetime_', chat_id=masters_and_id.values(),
+                           state=AdminCheckLog.CheckToday)
 async def process_choice_time(call: CallbackQuery, state: FSMContext):
     full_datetime = call.data.split('_')[1]
     log = await db.get_log_by_full_datetime(full_datetime,
                                             get_key(masters_and_id, str(call.message.chat.id)))
     date = log.date.strip('()').split(',')
     await call.message.answer(f'Время - {log.time}'
-                              f'\nДата - {date[0]} {date[1]} {date[2]}'
+                              f'\nДата - {date[2]}/{date[1]}/{date[0]}'
                               f'\nМастер - {log.name_master}'
                               f'\nКлиент - {log.name_client}'
                               f'\nУслуга - {log.service}')
@@ -62,7 +73,8 @@ async def process_choice_day(call, date_time, state):
         kb_time = InlineKeyboardMarkup(row_width=5)
         for log in all_today_logs:
             kb_time.insert(InlineKeyboardButton(f'{log.time}',
-                                                callback_data=f'datetime_{datetime_with_weekdays} {log.time}'))
+                                                callback_data=f'admin:datetime_{datetime_with_weekdays} {log.time}'))
+        kb_time.add(InlineKeyboardButton('Отмена просмотра', callback_data='cancel_check'))
         await call.message.answer('Выберите время записи, чтобы просмотреть кто записался.', reply_markup=kb_time)
     else:
         await call.message.answer('Никто не записывался на этот день.')

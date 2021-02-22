@@ -3,7 +3,7 @@ import logging
 from aiogram.dispatcher.filters import Text
 
 from aiogram.types import Message
-from keyboards.default import main_menu_no_orders
+from keyboards.default import main_menu_client
 from loader import dp
 
 
@@ -18,6 +18,6 @@ async def show_about(message: Message):
     await message.answer('Акции...'
                          '\n...'
                          '\n...',
-                         reply_markup=main_menu_no_orders)
+                         reply_markup=main_menu_client)
 
 # Добавление акций через панель администратора, сохранение в бд?

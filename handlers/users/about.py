@@ -3,7 +3,7 @@ import logging
 from aiogram.dispatcher.filters import Text
 
 from aiogram.types import Message
-from keyboards.default import main_menu_no_orders
+from keyboards.default import main_menu_client
 from loader import dp
 
 
@@ -16,4 +16,4 @@ logging.basicConfig(format=u'%(filename)s [LINE:%(lineno)d] '
 async def show_about(message: Message):
     logging.info('About show')
     await message.answer('Размещение информации о салоне, контакты, местоположение и т.д.',
-                         reply_markup=main_menu_no_orders)
+                         reply_markup=main_menu_client)

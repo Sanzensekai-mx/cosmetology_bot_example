@@ -6,7 +6,7 @@ from aiogram.dispatcher.filters import Text
 from aiogram.types import Message, ReplyKeyboardRemove, InlineKeyboardMarkup, \
     InlineKeyboardButton, CallbackQuery, ContentType
 
-from keyboards.default import main_menu_no_orders, phone_number
+from keyboards.default import main_menu_client, phone_number
 from keyboards.inline import cancel_appointment, cancel_appointment_or_confirm
 from loader import dp
 from states.user_states import UserAppointment
@@ -41,7 +41,7 @@ async def confirm_or_change(data, mes):
 async def process_cancel_add_service(call: CallbackQuery, state: FSMContext):
     logging.info(f'from: {call.message.chat.full_name}, text: {call.message.text}, info: Отмена записи.')
     await call.answer(cache_time=60)
-    await call.message.answer('Отмена записи.', reply_markup=main_menu_no_orders)  # Добавить reply_markup
+    await call.message.answer('Отмена записи.', reply_markup=main_menu_client)  # Добавить reply_markup
     await state.reset_state()
 
 
@@ -86,7 +86,7 @@ async def open_appointment_enter_name(message: Message, state: FSMContext):
         # Если существует 5 записей с одного chat_id, то выводится предупреждение и состояние сбрасывается
         if data.get('is_this_log_5_in_db') is True:
             await message.answer('5 записей с вашего аккаунта уже существует в БД. Больше нельзя.',
-                                 reply_markup=main_menu_no_orders)
+                                 reply_markup=main_menu_client)
             await state.finish()
         # await message.answer(is_this_log_5_in_db)
         # await state.update_data(data)
@@ -311,7 +311,7 @@ async def choice_date(call: CallbackQuery, state: FSMContext):
         await state.update_data(data)
         if await db.is_client_full_datetime_in_db(data.get('full_datetime'), data.get('name_client')):
             await call.message.answer('Вы уже записаны на это время у другого мастера',
-                                      reply_markup=main_menu_no_orders)
+                                      reply_markup=main_menu_client)
             await state.finish()
         # print(await state.get_data())
         else:
@@ -362,7 +362,7 @@ async def confirm_to_db(call: CallbackQuery, state: FSMContext):
                 date=data.get('date'),
                 time=data.get('time'),
                 phone_number=data.get('phone_number'))
-    await call.message.answer('Вы записаны.', reply_markup=main_menu_no_orders)  # Исправить reply_markup
+    await call.message.answer('Вы записаны.', reply_markup=main_menu_client)  # Исправить reply_markup
     # Тест отправки
     # pic = await db.show_service_test()
     # await bot.send_photo(chat_id=591763264, photo=pic.pic_file_id)

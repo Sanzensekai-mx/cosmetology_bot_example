@@ -2,6 +2,7 @@ import logging
 from asyncio import sleep
 
 from aiogram.dispatcher import FSMContext
+from aiogram.dispatcher.filters import Text
 from aiogram.types import Message, CallbackQuery, ContentType, \
     InputMediaPhoto, InputMediaVideo, ReplyKeyboardRemove
 from loader import dp, bot
@@ -22,10 +23,10 @@ logging.basicConfig(format=u'%(filename)s [LINE:%(lineno)d] '
                     level=logging.ERROR)
 
 
-@dp.callback_query_handler(chat_id=admins, state=AdminMailing, text_contains='cancel_mail')
+@dp.callback_query_handler(text_contains='cancel_mail', chat_id=admins, state=AdminMailing)
 async def process_cancel_add_service(call: CallbackQuery, state: FSMContext):
     logging.info(f'from: {call.message.chat.full_name}, text: {call.message.text}, info: Отмена рассылки.')
-    await call.message.answer('Отмена рассылки.', reply_markup=ReplyKeyboardRemove())  # Добавить reply_markup
+    await call.message.answer('Отмена рассылки.')  # Добавить reply_markup
     await state.reset_state()
 
 
@@ -36,7 +37,7 @@ async def process_cancel_add_service(call: CallbackQuery, state: FSMContext):
 #     await state.reset_state()
 
 
-@dp.message_handler(chat_id=admins, commands=["mail"])
+@dp.message_handler(Text(equals='Рассылка'), chat_id=admins)
 async def mailing(message: Message):
     count_users = await db.count_users()
     logging.info(f'from: {message.chat.full_name}, text: {message.text}')
