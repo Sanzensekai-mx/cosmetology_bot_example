@@ -21,7 +21,7 @@ logging.basicConfig(format=u'%(filename)s [LINE:%(lineno)d] '
 
 
 @dp.message_handler(Text(equals='Мои записи'))
-async def check_users_logs(message: Message, state: FSMContext):
+async def check_users_logs(message: Message):
     logging.info(f'from: {message.chat.first_name}, text: {message.text}')
     logs_list = await db.get_all_logs_by_user_id(message.chat.id)
     kb_logs = InlineKeyboardMarkup(row_width=5)

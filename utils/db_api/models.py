@@ -133,12 +133,13 @@ class DBCommands:
         return log
 
     @staticmethod
-    async def get_log_by_full_datetime(full_datetime, master=None):
+    async def get_log_by_full_datetime(full_datetime, master):
         logs = await Log.query.where(Log.full_datetime == full_datetime).gino.all()
         # log = await Log.query.where(Log.name_master == master).gino.first()
         if logs:
             for log in logs:
-                if log.full_datetime == full_datetime:
+                # if log.full_datetime == full_datetime:
+                if log.name_master == master:
                     return log
         # return log
 
