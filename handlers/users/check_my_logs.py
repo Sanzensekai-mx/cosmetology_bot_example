@@ -41,6 +41,7 @@ async def check_users_logs(message: Message):
 
 @dp.callback_query_handler(text_contains='user:datetime_')
 async def process_one_log(call: CallbackQuery):
+    await call.answer(cache_time=60)
     result = call.data.split('_')
     choice_log_datetime, choice_master = result[1], result[2]
     log = await db.get_log_by_full_datetime(choice_log_datetime, choice_master)

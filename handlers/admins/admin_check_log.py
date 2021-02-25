@@ -51,7 +51,8 @@ async def process_choice_time_callback(call, state):
     master_username = get_key(masters_and_id, str(call.message.chat.id))
     log = await db.get_log_by_full_datetime(full_datetime,
                                             master_username)
-    date = log.date.strip('()').strip().split(',')
+    date = [int(d.strip()) for d in log.date.strip('()').split(',')]
+    date_to = datetime.date(date[0], date[1], date[2])
     await call.message.answer(f'Время - {log.time}'
                               # День, месяц, год
                               f'\nДата - {date[2]}/{date[1]}/{date[0]}'
@@ -61,9 +62,16 @@ async def process_choice_time_callback(call, state):
     kb = InlineKeyboardMarkup()
     # написать callback
     kb.add(InlineKeyboardButton(f'Вернуться записям на {date[2]} число',
-                                callback_data=f'back:to:time_{full_datetime}_{master_username}'))
+                                callback_data=f'back:to:time_{date_to}_{master_username}'))
     kb.add(InlineKeyboardButton('Отмена просмотра', callback_data='cancel_check'))
     await call.message.answer(f'{log.phone_number}', reply_markup=kb)
+
+
+@dp.callback_query_handler(text_contains='back:to:time_', state=AdminCheckLog.CheckWeek)
+async def back_to_date_timetable(call: CallbackQuery, state: FSMContext):
+    date = [int(i) for i in call.data.split('_')[1].split('-')]
+    res = datetime.date(date[0], date[1], date[2])
+    await process_choice_day(call, res, state)
 
 
 @dp.callback_query_handler(text_contains='admin:datetime_', chat_id=masters_and_id.values(),
@@ -126,11 +134,11 @@ async def process_choice_week(call, date_time, state):
     c = calendar.LocaleTextCalendar(calendar.MONDAY, locale='Russian_Russia')
     month_c = calendar.monthcalendar(current_date.year, current_date.month)
     print_month_c = c.formatmonth(current_date.year, current_date.month)
-    print(month_c)
+    # print(month_c)
     # Дни недели в текущей неделе
-    print([day for seq in month_c for day in seq if current_date.day in seq])
+    # print([day for seq in month_c for day in seq if current_date.day in seq])
     current_week_days = [day for seq in month_c for day in seq if current_date.day in seq]
-    print(current_week_days)
+    # print(current_week_days)
     kb_week = InlineKeyboardMarkup(row_width=7)
     for week_day in [item for item in print_month_c.split()][2:9]:
         if week_day == 'Пн':
