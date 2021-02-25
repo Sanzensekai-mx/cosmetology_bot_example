@@ -52,13 +52,15 @@ async def process_choice_time_callback(call, state):
     log = await db.get_log_by_full_datetime(full_datetime,
                                             master_username)
     date = [int(d.strip()) for d in log.date.strip('()').split(',')]
+    # День, месяц, год
     date_to = datetime.date(date[0], date[1], date[2])
-    await call.message.answer(f'Время - {log.time}'
-                              # День, месяц, год
-                              f'\nДата -  {date[2]} / {date[1]} / {date[0]}'
-                              f'\nМастер - {log.name_master}'
-                              f'\nКлиент - {log.name_client}'
-                              f'\nУслуга - {log.service}', reply_markup=ReplyKeyboardRemove())
+    await call.message.answer(
+        f'''
+Время - {log.time}\n
+Дата -  {date[2]} / {date[1]} / {date[0]}\n
+Мастер - {log.name_master}\n
+Клиент - {log.name_client}\n
+Услуга - {log.service}''', reply_markup=ReplyKeyboardRemove())
     kb = InlineKeyboardMarkup()
     # написать callback
     kb.add(InlineKeyboardButton(f'Вернуться записям на {date[2]} число',

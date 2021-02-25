@@ -47,10 +47,12 @@ async def process_one_log(call: CallbackQuery):
     log = await db.get_log_by_full_datetime(choice_log_datetime, choice_master)
     date = [int(d.strip()) for d in log.date.strip('()').split(',')]
     service = await db.get_service(log.service)
-    await call.message.answer(f'Время - {log.time}'
-                              f'\nДата - {date[2]} / {date[1]} / {date[0]}'
-                              f'\nИмя клиента - {log.name_client}'
-                              f'\nМастер - {choice_master}'
-                              f'\nУслуга - {log.service}'
-                              f'\nСтоимость - {service.price}')
+    await call.message.answer(
+        f'''
+Время - {log.time}\n
+Дата - {date[2]} / {date[1]} / {date[0]}\n
+Имя клиента - {log.name_client}\n
+Мастер - {choice_master}\n
+Услуга - {log.service}\n
+Стоимость - {service.price}''')
     # Добавить кнопку-ссылку на пост в инстаграмм об услуге или показать описание услуги

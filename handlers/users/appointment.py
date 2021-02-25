@@ -29,7 +29,6 @@ async def confirm_or_change(data, mes):
                    'current_choice_year', 'user_id', 'full_datetime',
                    'current_services_dict', 'phone_number']:
             continue
-        # else:
         change_button = InlineKeyboardButton(f'Изменить {for_kb_name_items.get(key)}', callback_data=f'change:{key}')
         kb_confirm.add(change_button)
     kb_confirm.add(InlineKeyboardButton('Подтвердить', callback_data='confirm_appointment'))
@@ -42,27 +41,6 @@ async def confirm_or_change(data, mes):
 Время - {data.get("time")}\n
 Номер телефона - {data.get("phone_number")}''', reply_markup=kb_confirm)
     await UserAppointment.Confirm.set()
-
-
-#
-# async def confirm_or_change(data, mes):
-#     kb_confirm = InlineKeyboardMarkup(row_width=4)
-#     for key in data.keys():
-#         if key == 'is_meme_in_db':
-#             break
-#         change_button = InlineKeyboardButton(f'Изменить {key}', callback_data=f'change:{key}')
-#         kb_confirm.add(change_button)
-#     kb_confirm.add(InlineKeyboardButton('Подтвердить', callback_data='сonfirm'))
-#     await mes.answer(f'''
-# ВНИМАНИЕ. Если вы хотите обновить название мема,
-# то сначала удалите исходный мем и введите новые данные.
-# \n/cancel_meme для отмены Добавления/Изменения мема.
-# Проверьте введенные данные.\n
-# Название - {data.get("name")}\n
-# Ссылка на картинку - {data.get("pic_href")}\n
-# Описание - {data.get("describe")}\n
-# Ссылка - {data.get("meme_href")}\n''', reply_markup=kb_confirm)
-#     await AdminNewMeme.Confirm.set()
 
 
 @dp.callback_query_handler(state=UserAppointment, text_contains='cancel_appointment')
@@ -116,9 +94,6 @@ async def open_appointment_enter_name(message: Message, state: FSMContext):
         name_client = message.text.strip()
         data['name_client'] = name_client
         data['user_id'] = message.chat.id
-        # data['is_this_log_5_in_db'] = '5 записей с вашего аккаунта уже существует в БД. Больше нельзя.' \
-        #     if await db.is_this_log_5_in_db(message.chat.id) \
-        #     else 'Запись возможна.'
         data['is_this_log_5_in_db'] = await db.is_this_log_5_in_db(message.chat.id)
         await state.update_data(data)
         is_this_log_5_in_db = data.get('is_this_log_5_in_db')
