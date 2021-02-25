@@ -26,8 +26,10 @@ async def confirm_or_change(data, mes):
                          'service': 'услугу', 'date': 'дату', 'time': 'время'}
     for key in data.keys():
         if key in ['is_this_log_5_in_db', 'current_choice_month',
-                   'current_choice_year', 'user_id', 'full_datetime', 'current_services_dict']:
-            break
+                   'current_choice_year', 'user_id', 'full_datetime',
+                   'current_services_dict', 'phone_number']:
+            continue
+        # else:
         change_button = InlineKeyboardButton(f'Изменить {for_kb_name_items.get(key)}', callback_data=f'change:{key}')
         kb_confirm.add(change_button)
     kb_confirm.add(InlineKeyboardButton('Подтвердить', callback_data='confirm_appointment'))
