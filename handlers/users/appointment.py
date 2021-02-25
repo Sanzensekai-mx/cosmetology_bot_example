@@ -293,10 +293,13 @@ async def time_process_enter(call, state):
                 time_kb.add(InlineKeyboardButton(f'{time}', callback_data=f'time_{time}'))
             else:
                 time_kb.insert(InlineKeyboardButton(f'{time}', callback_data=f'time_{time}'))
+    time_kb.add(InlineKeyboardButton('Отмена записи', callback_data='cancel_appointment'))
+    # Формат даты День/месяц/год
+    date = [d.strip() for d in data.get("date").strip("()").split(",")]
     await call.message.answer(f'Ваше Фамилия и Имя: "{data.get("name_client")}". '
                               f'\nМастер: "{data.get("name_master")}"'
                               f'\nУслуга: "{data.get("service")}"'
-                              f'\nДата: {data.get("date")}', reply_markup=time_kb)  # reply_markup
+                              f'\nДата:  {date[2]} / {date[1]} / {date[0]}', reply_markup=time_kb)  # reply_markup
 
 
 @dp.callback_query_handler(state=UserAppointment.Time, text_contains='time_')
@@ -316,6 +319,12 @@ async def choice_date(call: CallbackQuery, state: FSMContext):
         # print(await state.get_data())
         else:
             await UserAppointment.PhoneNumber.set()
+            date = [d.strip() for d in data.get("date").strip("()").split(",")]
+            await call.message.answer(f'Ваше Фамилия и Имя: "{data.get("name_client")}". '
+                                      f'\nМастер: "{data.get("name_master")}"'
+                                      f'\nУслуга: "{data.get("service")}"'
+                                      f'\nДата:  {date[2]} / {date[1]} / {date[0]}'
+                                      f'\nВремя:  {data.get("time")}', reply_markup=cancel_appointment)
             await call.message.answer('Нажмите на кнопку ниже, чтобы отправить номер телефона.',
                                       reply_markup=phone_number)
         # Выбор даты, функция
@@ -362,7 +371,8 @@ async def confirm_to_db(call: CallbackQuery, state: FSMContext):
                 date=data.get('date'),
                 time=data.get('time'),
                 phone_number=data.get('phone_number'))
-    await call.message.answer('Вы записаны.', reply_markup=main_menu_client)  # Исправить reply_markup
+    await call.message.answer('Вы записаны. Нажмите на кнопку \"Мои записи\", чтобы увидеть подробности записи',
+                              reply_markup=main_menu_client)  # Исправить reply_markup
     # Тест отправки
     # pic = await db.show_service_test()
     # await bot.send_photo(chat_id=591763264, photo=pic.pic_file_id)

@@ -55,7 +55,7 @@ async def process_choice_time_callback(call, state):
     date_to = datetime.date(date[0], date[1], date[2])
     await call.message.answer(f'Время - {log.time}'
                               # День, месяц, год
-                              f'\nДата - {date[2]}/{date[1]}/{date[0]}'
+                              f'\nДата -  {date[2]} / {date[1]} / {date[0]}'
                               f'\nМастер - {log.name_master}'
                               f'\nКлиент - {log.name_client}'
                               f'\nУслуга - {log.service}', reply_markup=ReplyKeyboardRemove())
@@ -67,7 +67,7 @@ async def process_choice_time_callback(call, state):
     await call.message.answer(f'{log.phone_number}', reply_markup=kb)
 
 
-@dp.callback_query_handler(text_contains='back:to:time_', state=AdminCheckLog.CheckWeek)
+@dp.callback_query_handler(text_contains='back:to:time_', state=AdminCheckLog)
 async def back_to_date_timetable(call: CallbackQuery, state: FSMContext):
     date = [int(i) for i in call.data.split('_')[1].split('-')]
     res = datetime.date(date[0], date[1], date[2])

@@ -31,7 +31,7 @@ async def check_users_logs(message: Message):
         for log in logs_list:
         # Список вида (2021, 2, 22, 0) 10:00
             date = [x.strip('()').strip() for x in log.date.split(',')]
-            kb_logs.add(InlineKeyboardButton(f'Дата: {date[2]}/{date[1]}/{date[0]} Время: {log.time}',
+            kb_logs.add(InlineKeyboardButton(f'Дата:  {date[2]} / {date[1]} / {date[0]} Время: {log.time}',
                                              callback_data=f'user:datetime_{log.full_datetime}_{log.name_master}'))
         await message.answer('Ваши записи:', reply_markup=kb_logs)
     else:
@@ -45,12 +45,12 @@ async def process_one_log(call: CallbackQuery):
     result = call.data.split('_')
     choice_log_datetime, choice_master = result[1], result[2]
     log = await db.get_log_by_full_datetime(choice_log_datetime, choice_master)
-    date = log.date.strip('()').split(',')
+    date = [int(d.strip()) for d in log.date.strip('()').split(',')]
     service = await db.get_service(log.service)
     await call.message.answer(f'Время - {log.time}'
-                              f'\nДата - {date[2]}/{date[1]}/{date[0]}'
+                              f'\nДата - {date[2]} / {date[1]} / {date[0]}'
+                              f'\nИмя клиента - {log.name_client}'
                               f'\nМастер - {choice_master}'
-                              f'\nВаше имя - {log.name_client}'
                               f'\nУслуга - {log.service}'
                               f'\nСтоимость - {service.price}')
     # Добавить кнопку-ссылку на пост в инстаграмм об услуге или показать описание услуги
