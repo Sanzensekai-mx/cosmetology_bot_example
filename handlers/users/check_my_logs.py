@@ -22,6 +22,7 @@ logging.basicConfig(format=u'%(filename)s [LINE:%(lineno)d] '
 
 @dp.message_handler(Text(equals='Мои записи'))
 async def check_users_logs(message: Message):
+    # print(await db.get_old_datetime(datetime.date.today()))
     logging.info(f'from: {message.chat.first_name}, text: {message.text}')
     logs_list = await db.get_all_logs_by_user_id(message.chat.id)
     kb_logs = InlineKeyboardMarkup(row_width=5)
@@ -47,6 +48,7 @@ async def process_one_log(call: CallbackQuery):
     log = await db.get_log_by_full_datetime(choice_log_datetime, choice_master)
     date = [int(d.strip()) for d in log.date.strip('()').split(',')]
     service = await db.get_service(log.service)
+    # Кнопка со ссылкой на описание и фото услуги?
     await call.message.answer(
         f'''
 Время - {log.time}\n
