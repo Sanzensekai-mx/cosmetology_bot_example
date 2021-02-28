@@ -4,7 +4,7 @@ import calendar
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters import Text
 from aiogram.types import Message, ReplyKeyboardRemove, InlineKeyboardMarkup, \
-    InlineKeyboardButton, CallbackQuery, ContentType
+    InlineKeyboardButton, CallbackQuery
 
 from keyboards.default import main_menu_admin, main_menu_master
 from keyboards.inline import check_logs_choice_range
@@ -22,7 +22,7 @@ def get_key(d, value):
             return k
 
 
-logging.basicConfig(format=u'%(filename)s [LINE:%(lineno)d] '
+logging.basicConfig(format=u'%(filename)s 'u'[LINE:%(lineno)d] '
                            u'#%(levelname)-8s [%(asctime)s]  %(message)s',
                     level=logging.INFO)
 
@@ -32,9 +32,9 @@ async def process_cancel_add_service(call: CallbackQuery, state: FSMContext):
     logging.info(f'from: {call.message.chat.full_name}, text: {call.message.text}, info: Отмена рассылки.')
     await call.answer(cache_time=60)
     if str(call.message.chat.id) in admins and str(call.message.chat.id) in masters_and_id.values():
-        await call.message.answer('Отмена.', reply_markup=main_menu_admin)  # Добавить reply_markup
+        await call.message.answer('Отмена.', reply_markup=main_menu_admin)
     else:
-        await call.message.answer('Отмена.', reply_markup=main_menu_master)  # Вставить меню мастера
+        await call.message.answer('Отмена.', reply_markup=main_menu_master)
     await state.reset_state()
 
 
@@ -46,7 +46,7 @@ async def start_check_logs(message: Message):
     await AdminCheckLog.ChoiceRange.set()
 
 
-async def process_choice_time_callback(call, state):
+async def process_choice_time_callback(call):
     full_datetime = call.data.split('_')[1]
     master_username = get_key(masters_and_id, str(call.message.chat.id))
     log = await db.get_log_by_full_datetime(full_datetime,
@@ -63,14 +63,14 @@ async def process_choice_time_callback(call, state):
 Услуга - {log.service}''', reply_markup=ReplyKeyboardRemove())
     kb = InlineKeyboardMarkup()
     # написать callback
-    kb.add(InlineKeyboardButton(f'Вернуться записям на {date[2]} число',
+    kb.add(InlineKeyboardButton(f'Вернуться к записям на {date[2]} число',
                                 callback_data=f'back:to:time_{date_to}_{master_username}'))
     kb.add(InlineKeyboardButton('Отмена просмотра', callback_data='cancel_check'))
     await call.message.answer(f'{log.phone_number}', reply_markup=kb)
 
 
 @dp.callback_query_handler(text_contains='back:to:time_', state=AdminCheckLog)
-async def back_to_date_timetable(call: CallbackQuery, state: FSMContext):
+async def back_to_date_timetable(call: CallbackQuery):
     await call.answer(cache_time=60)
     date = [int(i) for i in call.data.split('_')[1].split('-')]
     res = datetime.date(date[0], date[1], date[2])
@@ -79,9 +79,9 @@ async def back_to_date_timetable(call: CallbackQuery, state: FSMContext):
 
 @dp.callback_query_handler(text_contains='admin:datetime_', chat_id=masters_and_id.values(),
                            state=AdminCheckLog)
-async def process_choice_time(call: CallbackQuery, state: FSMContext):
+async def process_choice_time(call: CallbackQuery):
     await call.answer(cache_time=60)
-    await process_choice_time_callback(call, state)
+    await process_choice_time_callback(call)
 
 
 async def process_choice_day(call, date_time):
@@ -151,7 +151,7 @@ async def wrong_date_process(call: CallbackQuery):
 
 
 @dp.callback_query_handler(state=AdminCheckLog.CheckWeek, text_contains='date_')
-async def process_choice_day_of_week(call: CallbackQuery, state: FSMContext):
+async def process_choice_day_of_week(call: CallbackQuery):
     await call.answer(cache_time=60)
     # print(call.data.split('_')[1])
     date = [int(i) for i in call.data.split('_')[1].split(',')]
@@ -161,7 +161,7 @@ async def process_choice_day_of_week(call: CallbackQuery, state: FSMContext):
 
 
 @dp.callback_query_handler(state=AdminCheckLog.CheckMonths, text_contains='date_')
-async def process_choice_day_of_week(call: CallbackQuery, state: FSMContext):
+async def process_choice_day_of_week(call: CallbackQuery):
     await call.answer(cache_time=60)
     # print(call.data.split('_')[1])
     date = [int(i.strip('()')) for i in call.data.split('_')[1].split(',')]
@@ -226,12 +226,12 @@ async def process_choice_months(call, date_time, state, year, month, day):
     await state.update_data(data)
     inline_calendar.insert(InlineKeyboardButton(f'{print_c.split()[0]} {print_c.split()[1]}', callback_data=' '))
     inline_calendar.insert(InlineKeyboardButton('>', callback_data='month_next'))
-    for week_day in [item for item in print_c.split()][2:9]:
+    for week_day in print_c.split()[2:9]:
         if week_day == 'Пн':
             inline_calendar.add(InlineKeyboardButton(week_day, callback_data=week_day))
             continue
         inline_calendar.insert(InlineKeyboardButton(week_day, callback_data=week_day))
-    for day_cal in [date for date in c.itermonthdays4(year, month)]:
+    for day_cal in c.itermonthdays4(year, month):
         # Исключает дни другого месяца, прошедшие дни и выходные дни (Суббота, Воскресенье)
         if day_cal[2] == 0 \
                 or day > day_cal[2] \
@@ -239,7 +239,7 @@ async def process_choice_months(call, date_time, state, year, month, day):
                                   in c.itermonthdays2(year, month)
                                   if date[1] in [5, 6]] \
                 or day_cal[1] != month:
-            inline_calendar.insert(InlineKeyboardButton(' ', callback_data=f'wrong_date'))
+            inline_calendar.insert(InlineKeyboardButton(' ', callback_data='wrong_date'))
             continue
         inline_calendar.insert(InlineKeyboardButton(day_cal[2], callback_data=f'date_{day_cal}'))
     inline_calendar.add(InlineKeyboardButton('Отмена просмотра', callback_data='cancel_check'))

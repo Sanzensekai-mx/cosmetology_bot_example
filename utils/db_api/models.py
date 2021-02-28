@@ -1,6 +1,4 @@
-import calendar
 import datetime
-import json
 from aiogram.types import User as User_api_type
 from utils.db_api.database import db
 
@@ -45,12 +43,17 @@ class Log(db.Model):
 class Datetime(db.Model):
     __tablename__ = 'datetime'
     id = db.Column(db.Integer, db.Sequence('datetime_id_seq'), primary_key=True)
-    # year = db.Column(db.Integer)
-    # month = db.Column(db.Integer)
-    # day = db.Column(db.Integer)
     master = db.Column(db.String)
     datetime = db.Column(db.String)
     time = db.Column(db.JSON, nullable=False, server_default="{}")
+
+
+class Master(db.Model):
+    __tablename__ = 'masters'
+    id = db.Column(db.Integer, db.Sequence('master_id_seq'), primary_key=True)
+    master_name = db.Column(db.String)
+    master_user_id = db.Column(db.BigInteger, unique=True)
+    master_services = db.Column(db.JSON, nullable=False, server_default="[]")
 
 
 class DBCommands:
@@ -274,16 +277,14 @@ class DBCommands:
         datetime_first.datetime = datetime_one
         datetime_first.master = master
         datetime_first.time = {'10:00': False, '10:30': False, '11:00': False, '11:30': False,
-                             '12:00': False, '12:30': False, '13:00': False, '13:30': False,
-                             '14:00': False, '14:30': False, '15:00': False, '15:30': False,
-                             '16:00': False, '16:30': False, '17:00': False}
+                               '12:00': False, '12:30': False, '13:00': False, '13:30': False,
+                               '14:00': False, '14:30': False, '15:00': False, '15:30': False,
+                               '16:00': False, '16:30': False, '17:00': False}
         await datetime_first.create()
         return False
 
     async def add_update_date(self, datetime_one, time, master):
         datetime_first = await self.get_datetime(datetime_one, master)
-        # dict_time = datetime_one.time
-        # dict_time[time] = True
         if datetime_first:
             dict_time = datetime_first.time
             dict_time[time] = True
