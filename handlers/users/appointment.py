@@ -94,42 +94,6 @@ async def return_kb_masters():
     return cancel_appointment_choice_master
 
 
-@dp.message_handler(state=UserAppointment.Name)
-async def open_appointment_enter_name(message: Message, state: FSMContext):
-    data = await state.get_data()
-    if not data.get('name_client'):
-        # Принятие ввода имени клиента
-        name_client = message.text.strip()
-        data['name_client'] = name_client
-        data['user_id'] = message.chat.id
-        data['is_this_log_5_in_db'] = await db.is_this_log_5_in_db(message.chat.id)
-        await state.update_data(data)
-        is_this_log_5_in_db = data.get('is_this_log_5_in_db')
-        # Если существует 5 записей с одного chat_id, то выводится предупреждение и состояние сбрасывается
-        if data.get('is_this_log_5_in_db') is True:
-            await message.answer('5 записей с вашего аккаунта уже существует в БД. Больше нельзя.',
-                                 reply_markup=main_menu_client)
-            await state.finish()
-        # await message.answer(is_this_log_5_in_db)
-        # await state.update_data(data)
-        else:
-            await UserAppointment.Master.set()
-            # cancel_appointment_choice_master = InlineKeyboardMarkup()
-            # for master in masters_and_id.keys():
-            #     cancel_appointment_choice_master.add(InlineKeyboardButton(f'{master}',
-            #                                                               callback_data=f'm_{master}'))
-            # cancel_appointment_choice_master.add(InlineKeyboardButton('Отмена записи',
-            #                                                           callback_data='cancel_appointment'))
-            await message.answer(f'Ваше Фамилия и Имя: "{data.get("name_client")}". '
-                                 '\nВыберите мастера:', reply_markup=await return_kb_masters())
-
-    else:
-        name_client = message.text.strip()
-        data['name_client'] = name_client
-        await state.update_data(data)
-        await confirm_or_change(data, message)
-
-
 # Возвращает список, где 1-ый элемент - сообщение, 2-ой - клавиатура
 async def return_kb_mes_services(state):
     data_from_state = await state.get_data()
@@ -155,23 +119,41 @@ async def return_kb_mes_services(state):
 
 # !!!!!!!!! Вывод списка услуг в сообщении? Кнопки с цифрами, иначе все длина
 # какой-нибудь услуги может не уместиться в область кнопки
-async def service_process_enter(call, state):
+async def service_process_enter(message, state):
     data = await state.get_data()
-    # cancel_appointment_choice_service = InlineKeyboardMarkup()
-    # services = await db.all_services()
-    # for service in services:
-    #     service_name = service.name
-    #     service_price = service.price
-    #     service_time = service.time
-    #     cancel_appointment_choice_service.add(InlineKeyboardButton(f'{service_name} {service_price}',
-    #                                                                callback_data=f's_{service_name}'))
-    # cancel_appointment_choice_service.add(InlineKeyboardButton('Отмена записи',
-    #                                                            callback_data='cancel_appointment'))
     res_mes_and_kb = await return_kb_mes_services(state)
-    await call.message.answer(f'Ваше Фамилия и Имя: "{data.get("name_client")}". ' \
-                              f'\nМастер: "{data.get("name_master")}" ' \
+    await message.answer(f'Ваше Фамилия и Имя: "{data.get("name_client")}". ' \
                               f'\nВыберите услугу:\n{res_mes_and_kb[0]}',
                               reply_markup=res_mes_and_kb[1])
+
+
+@dp.message_handler(state=UserAppointment.Name)
+async def open_appointment_enter_name(message: Message, state: FSMContext):
+    data = await state.get_data()
+    if not data.get('name_client'):
+        # Принятие ввода имени клиента
+        name_client = message.text.strip()
+        data['name_client'] = name_client
+        data['user_id'] = message.chat.id
+        data['is_this_log_5_in_db'] = await db.is_this_log_5_in_db(message.chat.id)
+        await state.update_data(data)
+        is_this_log_5_in_db = data.get('is_this_log_5_in_db')
+        # Если существует 5 записей с одного chat_id, то выводится предупреждение и состояние сбрасывается
+        if data.get('is_this_log_5_in_db') is True:
+            await message.answer('5 записей с вашего аккаунта уже существует в БД. Больше нельзя.',
+                                 reply_markup=main_menu_client)
+            await state.finish()
+        # await message.answer(is_this_log_5_in_db)
+        # await state.update_data(data)
+        else:
+            await UserAppointment.Service.set()
+            await service_process_enter(message, state)
+
+    else:
+        name_client = message.text.strip()
+        data['name_client'] = name_client
+        await state.update_data(data)
+        await confirm_or_change(data, message)
 
 
 # Обработка выбранной услуги и занесение ее в state data
@@ -187,13 +169,16 @@ async def choice_master(call: CallbackQuery, state: FSMContext):
         data['service'] = service
         await state.update_data(data)
         # print(await state.get_data())
-        await UserAppointment.Date.set()
+        await UserAppointment.Master.set()
         # Выбор даты, функция
-        current_date = datetime.date.today()
-        await date_process_enter(call, state,
-                                 year=current_date.year,
-                                 month=current_date.month,
-                                 day=current_date.day)
+        # current_date = datetime.date.today()
+        # await date_process_enter(call, state,
+        #                          year=current_date.year,
+        #                          month=current_date.month,
+        #                          day=current_date.day)
+        await call.message.answer(f'Ваше Фамилия и Имя: "{data.get("name_client")}". ' \
+                                  f'\nВыбрана услуга: "{data.get("service")}"',
+                                  reply_markup=await return_kb_masters())
     else:
         data['service'] = service
         await state.update_data(data)
@@ -210,8 +195,13 @@ async def choice_master(call: CallbackQuery, state: FSMContext):
         # Принятие выбора мастера
         data['name_master'] = name_master
         await state.update_data(data)
-        await UserAppointment.Service.set()
-        await service_process_enter(call, state)
+        await UserAppointment.Date.set()
+        # Выбор даты, функция
+        current_date = datetime.date.today()
+        await date_process_enter(call, state,
+                                 year=current_date.year,
+                                 month=current_date.month,
+                                 day=current_date.day)
     else:
         data['name_master'] = name_master
         await state.update_data(data)

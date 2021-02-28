@@ -24,3 +24,10 @@ class AdminCheckLog(StatesGroup):
     CheckToday = State()
     CheckWeek = State()
     CheckMonths = State()
+
+
+class AdminAddMaster(StatesGroup):
+    Name = State()
+    ID = State()
+    Services = State()
+    Confirm = State()
