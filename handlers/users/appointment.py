@@ -210,7 +210,6 @@ async def choice_master(call: CallbackQuery, state: FSMContext):
         await confirm_or_change(data, call.message)
 
 
-# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Сделать, сзязь с БД, новая таблица в БД datetime?
 async def date_process_enter(call, state, year, month, day):
     data = await state.get_data()
     c = calendar.LocaleTextCalendar(calendar.MONDAY, locale='Russian_Russia')

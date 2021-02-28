@@ -71,37 +71,20 @@ async def process_choice_time_callback(call, state):
 
 @dp.callback_query_handler(text_contains='back:to:time_', state=AdminCheckLog)
 async def back_to_date_timetable(call: CallbackQuery, state: FSMContext):
+    await call.answer(cache_time=60)
     date = [int(i) for i in call.data.split('_')[1].split('-')]
     res = datetime.date(date[0], date[1], date[2])
-    await process_choice_day(call, res, state)
+    await process_choice_day(call, res)
 
 
 @dp.callback_query_handler(text_contains='admin:datetime_', chat_id=masters_and_id.values(),
-                           state=AdminCheckLog.CheckToday)
+                           state=AdminCheckLog)
 async def process_choice_time(call: CallbackQuery, state: FSMContext):
     await call.answer(cache_time=60)
     await process_choice_time_callback(call, state)
 
 
-@dp.callback_query_handler(text_contains='admin:datetime_', chat_id=masters_and_id.values(),
-                           state=AdminCheckLog.CheckWeek)
-async def process_choice_time(call: CallbackQuery, state: FSMContext):
-    data = await state.get_data()
-    await call.answer(cache_time=60)
-    await process_choice_time_callback(call, state)
-    # full_datetime = call.data.split('_')[1]
-    # log = await db.get_log_by_full_datetime(full_datetime,
-    #                                         get_key(masters_and_id, str(call.message.chat.id)))
-    # date = log.date.strip('()').split(',')
-    # await call.message.answer(f'Время - {log.time}'
-    #                           f'\nДата - {date[2]}/{date[1]}/{date[0]}'
-    #                           f'\nМастер - {log.name_master}'
-    #                           f'\nКлиент - {log.name_client}'
-    #                           f'\nУслуга - {log.service}')
-    # await call.message.answer(f'{log.phone_number}')
-
-
-async def process_choice_day(call, date_time, state):
+async def process_choice_day(call, date_time):
     current_date = date_time
     year, month, day = current_date.year, current_date.month, current_date.day
     c = calendar.LocaleTextCalendar(calendar.MONDAY, locale='Russian_Russia')
@@ -161,7 +144,7 @@ async def process_choice_week(call, date_time, state):
                               reply_markup=kb_week)
 
 
-@dp.callback_query_handler(state=AdminCheckLog.CheckWeek, text_contains='wrong_date')
+@dp.callback_query_handler(state=AdminCheckLog, text_contains='wrong_date')
 async def wrong_date_process(call: CallbackQuery):
     await call.answer(cache_time=60)
     await call.message.answer('Дата неактуальна, выберите не пустую дату.')
@@ -174,7 +157,93 @@ async def process_choice_day_of_week(call: CallbackQuery, state: FSMContext):
     date = [int(i) for i in call.data.split('_')[1].split(',')]
     # print(date)
     choice_day = datetime.date(date[0], date[1], date[2])
-    await process_choice_day(call=call, date_time=choice_day, state=state)
+    await process_choice_day(call=call, date_time=choice_day)
+
+
+@dp.callback_query_handler(state=AdminCheckLog.CheckMonths, text_contains='date_')
+async def process_choice_day_of_week(call: CallbackQuery, state: FSMContext):
+    await call.answer(cache_time=60)
+    # print(call.data.split('_')[1])
+    date = [int(i.strip('()')) for i in call.data.split('_')[1].split(',')]
+    # print(date)
+    choice_day = datetime.date(date[0], date[1], date[2])
+    await process_choice_day(call=call, date_time=choice_day)
+
+
+@dp.callback_query_handler(state=AdminCheckLog.CheckMonths, text_contains='month_')
+async def change_month_process(call: CallbackQuery, state: FSMContext):
+    await call.answer(cache_time=60)
+    data = await state.get_data()
+    current_date = datetime.date.today()
+    result = call.data.split('_')[1]
+    choice_year = data.get('current_choice_year')
+    choice_month = data.get('current_choice_month')
+    if result == 'next':
+        if choice_month == 12:
+            choice_year = current_date.year + 1
+            choice_month = 1
+        else:
+            choice_month = int(choice_month) + 1
+        data['current_choice_year'] = choice_year
+        data['current_choice_month'] = choice_month
+        await state.update_data()
+        await process_choice_months(call, current_date, state,
+                                    year=choice_year,
+                                    month=choice_month,
+                                    day=1)
+    elif result == 'previous':
+        if choice_month == 1:
+            choice_year = choice_year - 1
+            choice_month = 12
+        else:
+            choice_month = int(choice_month) - 1
+        data['current_choice_year'] = choice_year
+        data['current_choice_month'] = choice_month
+        await state.update_data()
+        await process_choice_months(call, current_date, state,
+                                    year=choice_year,
+                                    month=choice_month,
+                                    day=1)
+
+
+async def process_choice_months(call, date_time, state, year, month, day):
+    data = await state.get_data()
+    c = calendar.LocaleTextCalendar(calendar.MONDAY, locale='Russian_Russia')
+    current_date = date_time
+    # year, month = current_date.year, current_date.month
+    if month == current_date.month and year == current_date.year:
+        month = current_date.month
+        year = current_date.year
+        day = current_date.day
+    print_c = c.formatmonth(year, month)
+    inline_calendar = InlineKeyboardMarkup(row_width=7)
+    if (month != current_date.month and year == current_date.year) \
+            or ((month != current_date.month or month == current_date.month)
+                and year != current_date.year):
+        inline_calendar.add(InlineKeyboardButton('<', callback_data='month_previous'))
+    data['current_choice_month'] = month
+    data['current_choice_year'] = year
+    await state.update_data(data)
+    inline_calendar.insert(InlineKeyboardButton(f'{print_c.split()[0]} {print_c.split()[1]}', callback_data=' '))
+    inline_calendar.insert(InlineKeyboardButton('>', callback_data='month_next'))
+    for week_day in [item for item in print_c.split()][2:9]:
+        if week_day == 'Пн':
+            inline_calendar.add(InlineKeyboardButton(week_day, callback_data=week_day))
+            continue
+        inline_calendar.insert(InlineKeyboardButton(week_day, callback_data=week_day))
+    for day_cal in [date for date in c.itermonthdays4(year, month)]:
+        # Исключает дни другого месяца, прошедшие дни и выходные дни (Суббота, Воскресенье)
+        if day_cal[2] == 0 \
+                or day > day_cal[2] \
+                or day_cal[2] in [date[0] for date
+                                  in c.itermonthdays2(year, month)
+                                  if date[1] in [5, 6]] \
+                or day_cal[1] != month:
+            inline_calendar.insert(InlineKeyboardButton(' ', callback_data=f'wrong_date'))
+            continue
+        inline_calendar.insert(InlineKeyboardButton(day_cal[2], callback_data=f'date_{day_cal}'))
+    inline_calendar.add(InlineKeyboardButton('Отмена просмотра', callback_data='cancel_check'))
+    await call.message.answer('Выберите дату для просмотра записей.', reply_markup=inline_calendar)
 
 
 @dp.callback_query_handler(state=AdminCheckLog.ChoiceRange, chat_id=masters_and_id.values(), text_contains='logs_')
@@ -184,9 +253,16 @@ async def choice_range_log(call: CallbackQuery, state: FSMContext):
     current_date = datetime.date.today()
     if result == 'today':
         await AdminCheckLog.CheckToday.set()
-        await process_choice_day(call, current_date, state=state)
+        await process_choice_day(call, current_date)
     elif result == 'week':
         await AdminCheckLog.CheckWeek.set()
         await process_choice_week(call, current_date, state=state)
     elif result == 'months':
-        pass
+        await AdminCheckLog.CheckMonths.set()
+        await state.update_data(
+            {'current_choice_month': '',
+             'current_choice_year': ''})
+        await process_choice_months(call, current_date, state=state,
+                                    year=current_date.year,
+                                    month=current_date.month,
+                                    day=current_date.day)
