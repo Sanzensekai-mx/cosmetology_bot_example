@@ -88,7 +88,8 @@ async def return_kb_masters(service):
     cancel_appointment_choice_master = InlineKeyboardMarkup()
     all_masters = await db.all_masters()
     for master in all_masters:
-        if service in master.master_services:
+        # split так как в БД хранится строка типа Ресницы_Волосы. Костыль херли
+        if service in master.master_services.split('_'):
             cancel_appointment_choice_master.add(InlineKeyboardButton(f'{master.master_name}',
                                                                       callback_data=f'm_{master.master_name}'))
     cancel_appointment_choice_master.add(InlineKeyboardButton('Отмена записи',
@@ -120,8 +121,6 @@ async def return_kb_mes_services(state, is_it_appointment=True):
     return [res_message, cancel_appointment_choice_service]
 
 
-# !!!!!!!!! Вывод списка услуг в сообщении? Кнопки с цифрами, иначе все длина
-# какой-нибудь услуги может не уместиться в область кнопки
 async def service_process_enter(message, state):
     data = await state.get_data()
     res_mes_and_kb = await return_kb_mes_services(state)
