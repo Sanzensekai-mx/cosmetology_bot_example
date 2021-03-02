@@ -306,6 +306,10 @@ class DBCommands:
     @staticmethod
     async def get_master(master_name):
         master = await Master.query.where(Master.master_name == master_name).gino.first()
+        try:
+            master.master_services.split('_')
+        except AttributeError:
+            pass
         return master
 
     async def is_this_master_in_db(self, master_name):

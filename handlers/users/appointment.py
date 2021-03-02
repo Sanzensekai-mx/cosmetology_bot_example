@@ -84,11 +84,13 @@ async def open_appointment_start(message: Message, state: FSMContext):
     )
 
 
-async def return_kb_masters():
+async def return_kb_masters(service):
     cancel_appointment_choice_master = InlineKeyboardMarkup()
-    for master in masters_and_id.keys():
-        cancel_appointment_choice_master.add(InlineKeyboardButton(f'{master}',
-                                                                  callback_data=f'm_{master}'))
+    all_masters = await db.all_masters()
+    for master in all_masters:
+        if service in master.master_services:
+            cancel_appointment_choice_master.add(InlineKeyboardButton(f'{master.master_name}',
+                                                                      callback_data=f'm_{master.master_name}'))
     cancel_appointment_choice_master.add(InlineKeyboardButton('Отмена записи',
                                                               callback_data='cancel_appointment'))
     return cancel_appointment_choice_master
@@ -179,7 +181,7 @@ async def choice_master(call: CallbackQuery, state: FSMContext):
         #                          day=current_date.day)
         await call.message.answer(f'Ваше Фамилия и Имя: "{data.get("name_client")}". ' \
                                   f'\nВыбрана услуга: "{data.get("service")}"',
-                                  reply_markup=await return_kb_masters())
+                                  reply_markup=await return_kb_masters(service=data.get("service")))
     else:
         data['service'] = service
         await state.update_data(data)
