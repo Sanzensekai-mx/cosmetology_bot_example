@@ -1,12 +1,11 @@
 import os
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv(encoding='utf-8')
 BOT_TOKEN = os.getenv('BOT_TOKEN')
 admins = str(os.getenv('admins')).split(', ')
 masters_id = str(os.getenv('masters_id')).split(', ')
-masters_username = [name.encode('windows-1251').decode('utf-8')
-                    for name in str(os.getenv("masters_username")).split(', ')]
+masters_username = str(os.getenv("masters_username")).split(', ')
 
 host = str(os.getenv("PG_HOST"))  # хост базы данных
 PG_USER = str(os.getenv("PG_USER"))  # имя владельца базы данных

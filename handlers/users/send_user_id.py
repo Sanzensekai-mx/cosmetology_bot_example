@@ -5,7 +5,7 @@ from aiogram.dispatcher.filters import CommandStart
 from keyboards.default import main_menu_client, main_menu_admin, main_menu_master
 from loader import dp, bot
 from utils.db_api.models import DBCommands
-from data.config import admins, masters_and_id
+from data.config import admins
 
 logging.basicConfig(format=u'%(filename)s [LINE:%(lineno)d] '
                            u'#%(levelname)-8s [%(asctime)s]  %(message)s',
