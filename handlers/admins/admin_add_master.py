@@ -10,17 +10,20 @@ from loader import dp, bot
 from states.admin_states import AdminAddMaster
 from utils.db_api.models import DBCommands
 from data.config import admins
+from handlers.users.appointment import return_kb_mes_services
 
 db = DBCommands()
 
 
 async def confirm_or_change(data, mes):
     kb_confirm = InlineKeyboardMarkup(row_width=4)
+    for_kb_name_items = {'name': 'имя мастера', 'user_id': 'id мастера', 'services': 'список услуг'}
     for key in data.keys():
-        if key == 'is_master_in_db':
+        if key in ['is_master_in_db', 'current_services_dict']:
             pass
         else:
-            change_button = InlineKeyboardButton(f'Изменить {key}', callback_data=f'change:{key}')
+            change_button = InlineKeyboardButton(f'Изменить {for_kb_name_items.get(key)}',
+                                                 callback_data=f'change:{key}')
             kb_confirm.add(change_button)
     kb_confirm.add(InlineKeyboardButton('Подтвердить добавление', callback_data='сonfirm'))
     kb_confirm.add(InlineKeyboardButton('Отмена добавления мастера', callback_data='cancel_add_master'))
@@ -29,10 +32,9 @@ async def confirm_or_change(data, mes):
 то сначала удалите исходного мастера и добавьте вновь, вводя новые данные.
 Проверьте введенные данные.\n
 Имя мастера - {data.get("name")}\n
-Ссылка на картинку - {data.get("pic_file_id")}\n
-Описание - {data.get("describe")}\n
-Время оказание услуги - {data.get("time")}\n
-Цена - {data.get("price")}\n''', reply_markup=kb_confirm)
+User_id - {data.get("user_id")}\n
+Список услуг мастера - {data.get("services")}
+''', reply_markup=kb_confirm)
     await AdminAddMaster.Confirm.set()
 
 
@@ -54,7 +56,7 @@ async def start_add_master(message: Message, state: FSMContext):
     await state.update_data(
         {'name': '',
          'user_id': '',
-         'service': [],
+         'services': [],
          'is_master_in_db': ''}
     )
 
@@ -84,6 +86,30 @@ async def add_name_master(message: Message, state: FSMContext):
         await confirm_or_change(data, message)
 
 
+async def process_print_kb_mes(message, state, change_list=False):
+    data = await state.get_data()
+    mes_and_kb = await return_kb_mes_services(state=state, is_it_appointment=False)
+    answer_mes = mes_and_kb[0]
+    kb_services = mes_and_kb[1]
+    kb_services.add(InlineKeyboardButton('Подтвердить список сервисов', callback_data='confirm_services'))
+    kb_services.add(InlineKeyboardButton('Отмена добавления мастера',
+                                         callback_data='cancel_add_master'))
+    # await message.answer(text=answer_mes, reply_markup=kb_services)
+    if change_list is False:
+        await message.answer(f'Название: "{data.get("name")}". '
+                             f'\nUser_id "{data.get("user_id")}".'
+                             f'\nТекущий список услуг: '
+                             f'\n{data.get("services")}'
+                             f'\n{answer_mes}', reply_markup=kb_services)
+    else:
+        await message.answer('Пришлите новый список услуг для мастера.\n'
+                             f'\nТекущий список услуг: '
+                             f'\n{data.get("services")}'
+                             f'\n{answer_mes}', reply_markup=kb_services)
+
+    await AdminAddMaster.Services.set()
+
+
 @dp.message_handler(chat_id=admins, state=AdminAddMaster.ID)
 async def add_id_master(message: Message, state: FSMContext):
     data = await state.get_data()
@@ -91,11 +117,7 @@ async def add_id_master(message: Message, state: FSMContext):
         user_id = message.text.strip()
         data['user_id'] = user_id
         await state.update_data(data)
-        await message.answer(f'Название: "{data.get("name")}". '
-                             f'\n{data.get("is_meme_in_db")}'
-                             f'\nUser_id {data.get("user_id")}'
-                             '\nВвод сервисов...',
-                             reply_markup=cancel_add_master)
+        await process_print_kb_mes(message, state)
         await AdminAddMaster.Services.set()
     else:
         user_id = message.text
@@ -104,24 +126,51 @@ async def add_id_master(message: Message, state: FSMContext):
         await confirm_or_change(data, message)
 
 
-@dp.message_handler(chat_id=admins, state=AdminAddMaster.Services)
-async def add_services_master(message: Message, state: FSMContext):
+@dp.callback_query_handler(chat_id=admins, state=AdminAddMaster.Services, text_contains='confirm_services')
+async def confirm_master_service_list(call: CallbackQuery, state: FSMContext):
+    await call.answer(cache_time=60)
+    await AdminAddMaster.Confirm.set()
     data = await state.get_data()
-    services = db.all_services()
-    await message.answer('Разработка...')
-    # if not data.get('time'):
-    #     time = message.text
-    #     data['time'] = time
-    #     await state.update_data(data)
-    #     await message.answer(f'Название: "{data.get("name")}". '
-    #                          f'\n{data.get("is_meme_in_db")}'
-    #                          f'\nЦена услуги: {data.get("price")}'
-    #                          f'\nВремя оказание услуги: {data.get("time")}'
-    #                          '\nПришлите описание услуги.',
-    #                          reply_markup=cancel_add_service)
-    #     await AdminAddService.Describe.set()
-    # else:
-    #     time = message.text
-    #     data['time'] = time
-    #     await state.update_data(data)
-    #     await confirm_or_change(data, message)
+    await confirm_or_change(data=data, mes=call.message)
+
+
+@dp.callback_query_handler(chat_id=admins, state=AdminAddMaster.Services, text_contains='s_')
+async def process_add_services_to_master_list(call: CallbackQuery, state: FSMContext):
+    await call.answer(cache_time=60)
+    # result_num_service = call.data.split('_')[1]
+    result_name_service = call.data.split('_')[2]
+    data = await state.get_data()
+    data['services'].append(result_name_service)
+    await state.update_data(data)
+    await process_print_kb_mes(call.message, state)
+
+
+@dp.callback_query_handler(text_contains='change', chat_id=admins, state=AdminAddMaster.Confirm)
+async def change_some_data(call: CallbackQuery, state: FSMContext):
+    await call.answer(cache_time=60)
+    data = await state.get_data()
+    what_to_change = call.data.split(':')[1]
+    if what_to_change == 'name':
+        await call.message.answer('Введите новое имя мастера.')
+        await AdminAddMaster.Name.set()
+    elif what_to_change == 'user_id':
+        await call.message.answer('Пришлите новый user_id мастера.')
+        await AdminAddMaster.ID.set()
+    elif what_to_change == 'services':
+        data['services'].clear()
+        await state.update_data(data)
+        # await call.message.answer('Пришлите новый список услуг для мастера.')
+        await process_print_kb_mes(message=call.message, state=state, change_list=True)
+        await AdminAddMaster.Services.set()
+
+
+@dp.callback_query_handler(text_contains='сonfirm', chat_id=admins, state=AdminAddMaster.Confirm)
+async def confirm_new_meme(call: CallbackQuery, state: FSMContext):
+    data_from_state = await state.get_data()
+    await db.add_master(
+        master_name=data_from_state.get("name"),
+        master_user_id=data_from_state.get("user_id"),
+        master_services='_'.join(data_from_state.get("services")),
+    )
+    await call.message.answer('Мастер добавлен.', reply_markup=main_menu_admin)
+    await state.finish()

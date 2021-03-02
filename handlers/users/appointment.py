@@ -95,7 +95,7 @@ async def return_kb_masters():
 
 
 # Возвращает список, где 1-ый элемент - сообщение, 2-ой - клавиатура
-async def return_kb_mes_services(state):
+async def return_kb_mes_services(state, is_it_appointment=True):
     data_from_state = await state.get_data()
     cancel_appointment_choice_service = InlineKeyboardMarkup(row_width=5)
     services = await db.all_services()
@@ -107,11 +107,12 @@ async def return_kb_mes_services(state):
         res_message += f'\n{num}. {service_name} - {service_price}'
         current_services_dict[str(num)] = service_name
         cancel_appointment_choice_service.insert(InlineKeyboardButton(f'{num}',
-                                                                      callback_data=f's_{num}'))
+                                                                      callback_data=f's_{num}_{service_name}'))
         # cancel_appointment_choice_service.add(InlineKeyboardButton(f'{service_name} {service_price}',
         #                                                            callback_data=f's_{service_name}'))
-    cancel_appointment_choice_service.add(InlineKeyboardButton('Отмена записи',
-                                                               callback_data='cancel_appointment'))
+    if is_it_appointment:
+        cancel_appointment_choice_service.add(InlineKeyboardButton('Отмена записи',
+                                                                   callback_data='cancel_appointment'))
     data_from_state['current_services_dict'] = current_services_dict
     await state.update_data(data_from_state)
     return [res_message, cancel_appointment_choice_service]

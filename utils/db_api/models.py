@@ -53,7 +53,7 @@ class Master(db.Model):
     id = db.Column(db.Integer, db.Sequence('master_id_seq'), primary_key=True)
     master_name = db.Column(db.String)
     master_user_id = db.Column(db.BigInteger, unique=True)
-    master_services = db.Column(db.JSON, nullable=False, server_default="[]")
+    master_services = db.Column(db.String)
 
 
 class DBCommands:
@@ -305,7 +305,7 @@ class DBCommands:
         # Методы таблицы masters
     @staticmethod
     async def get_master(master_name):
-        master = await Master.query.where(Master.name == master_name).gino.first()
+        master = await Master.query.where(Master.master_name == master_name).gino.first()
         return master
 
     async def is_this_master_in_db(self, master_name):
@@ -325,15 +325,15 @@ class DBCommands:
         if old_master:
             await old_master.update(
                 id=old_master.id,
-                name=master_name,
-                master_user_id=master_user_id,
+                master_name=master_name,
+                master_user_id=int(master_user_id),
                 master_services=master_services
             ).apply()
             return old_master
         # Создание новой услуги в БД
         new_master = Master()
-        new_master.name = master_name
-        new_master.master_user_id = master_user_id
+        new_master.master_name = master_name
+        new_master.master_user_id = int(master_user_id)
         new_master.master_services = master_services
         await new_master.create()
         return new_master

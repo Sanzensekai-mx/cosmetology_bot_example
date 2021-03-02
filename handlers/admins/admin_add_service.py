@@ -186,7 +186,7 @@ async def confirm_new_meme(call: CallbackQuery, state: FSMContext):
         service_price=data_from_state.get("price"),
         service_time=int(data_from_state.get("time"))
     )
-    await call.message.answer('Услуга добавлена.', reply_markup=ReplyKeyboardRemove())  # Добавить reply_markup
+    await call.message.answer('Услуга добавлена.', reply_markup=main_menu_admin)  # Добавить reply_markup
     # Тест отправки
     # pic = await db.show_service_test()
     # await bot.send_photo(chat_id=591763264, photo=pic.pic_file_id)
