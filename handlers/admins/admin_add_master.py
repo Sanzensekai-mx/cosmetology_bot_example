@@ -28,8 +28,7 @@ async def confirm_or_change(data, mes):
     kb_confirm.add(InlineKeyboardButton('Подтвердить добавление', callback_data='сonfirm'))
     kb_confirm.add(InlineKeyboardButton('Отмена добавления мастера', callback_data='cancel_add_master'))
     await mes.answer(f'''
-ВНИМАНИЕ. Если вы хотите обновить имя мастера,
-то сначала удалите исходного мастера и добавьте вновь, вводя новые данные.
+ВНИМАНИЕ. Не забудьте добавить user_id мастера в Dashboard Heroku.
 Проверьте введенные данные.\n
 Имя мастера - {data.get("name")}\n
 User_id - {data.get("user_id")}\n
@@ -75,7 +74,8 @@ async def add_name_master(message: Message, state: FSMContext):
                              f'\n{is_master_in_db}'
                              '\nПришлите user_id мастера.'
                              '\nПопросите вашего будущего мастера прописать команду /send_id. '
-                             'Скопируйте полученный идентификатор и уже от своего лица отошлите боту.',
+                             'Скопируйте полученный идентификатор и уже от своего лица отошлите боту.'
+                             'ВНИМАНИЕ. Добавьте user_id мастера в Dashboard Heroku.',
                              reply_markup=cancel_add_master)
 
         await AdminAddMaster.ID.set()

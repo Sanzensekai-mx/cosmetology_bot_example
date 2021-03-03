@@ -303,6 +303,7 @@ class DBCommands:
         return datetime_first
 
         # Методы таблицы masters
+
     @staticmethod
     async def get_master(master_name):
         master = await Master.query.where(Master.master_name == master_name).gino.first()
@@ -337,3 +338,6 @@ class DBCommands:
         new_master.master_services = master_services
         await new_master.create()
         return new_master
+
+    async def get_master_and_id(self):
+        return {master.master_name: str(master.master_user_id) for master in await self.all_masters()}

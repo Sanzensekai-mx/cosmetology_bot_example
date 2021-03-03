@@ -20,31 +20,12 @@ logging.basicConfig(format=u'%(filename)s [LINE:%(lineno)d] '
 
 
 async def confirm_or_change(data, mes):
-    # Изменение параметров записи (упразднено)
-    # kb_confirm = InlineKeyboardMarkup(row_width=4)
-    # for_kb_name_items = {'name_client': 'имя клиента', 'name_master': 'мастера',
-    #                      'service': 'услугу', 'date': 'дату', 'time': 'время'}
-    # for key in data.keys():
-    #     if key in ['is_this_log_5_in_db', 'current_choice_month',
-    #                'current_choice_year', 'user_id', 'full_datetime',
-    #                'current_services_dict', 'phone_number']:
-    #         continue
-    #     change_button = InlineKeyboardButton(f'Изменить {for_kb_name_items.get(key)}', callback_data=f'change:{key}')
-    #     kb_confirm.add(change_button)
-    # kb_confirm.add(InlineKeyboardButton('Подтвердить', callback_data='confirm_appointment'))
-    # kb_confirm.add(InlineKeyboardButton('Отмена записи', callback_data='cancel_appointment'))
-#     await mes.answer(f'''
-# Имя клиента - {data.get("name_client")}\n
-# Мастер - {data.get("name_master")}\n
-# Услуга - {data.get("service")}\n
-# Дата - {data.get("date")}\n
-# Время - {data.get("time")}\n
-# Номер телефона - {data.get("phone_number")}''', reply_markup=kb_confirm)
+    date = [d.strip() for d in data.get("date").strip("()").split(",")]
     await mes.answer(f''' 
 Имя клиента - {data.get("name_client")}\n
 Услуга - {data.get("service")}\n
 Мастер - {data.get("name_master")}\n
-Дата - {data.get("date")}\n
+Дата - {date[2]} / {date[1]} / {date[0]}\n
 Время - {data.get("time")}\n
 Номер телефона - {data.get("phone_number")}''', reply_markup=cancel_appointment_or_confirm)
     await UserAppointment.Confirm.set()

@@ -11,7 +11,7 @@ from keyboards.inline import check_logs_choice_range
 from loader import dp
 from states.admin_states import AdminCheckLog
 from utils.db_api.models import DBCommands
-from data.config import masters_and_id, admins
+from data.config import admins, masters_id
 
 db = DBCommands()
 
@@ -27,11 +27,11 @@ logging.basicConfig(format=u'%(filename)s 'u'[LINE:%(lineno)d] '
                     level=logging.INFO)
 
 
-@dp.callback_query_handler(text_contains='cancel_check', chat_id=masters_and_id.values(), state=AdminCheckLog)
+@dp.callback_query_handler(text_contains='cancel_check', chat_id=masters_id, state=AdminCheckLog)
 async def process_cancel_add_service(call: CallbackQuery, state: FSMContext):
     logging.info(f'from: {call.message.chat.full_name}, text: {call.message.text}, info: Отмена рассылки.')
     await call.answer(cache_time=60)
-    if str(call.message.chat.id) in admins and str(call.message.chat.id) in masters_and_id.values():
+    if str(call.message.chat.id) in admins and str(call.message.chat.id) in masters_id:
         await call.message.answer('Отмена.', reply_markup=main_menu_admin)
     else:
         await call.message.answer('Отмена.', reply_markup=main_menu_master)
@@ -40,15 +40,16 @@ async def process_cancel_add_service(call: CallbackQuery, state: FSMContext):
 
 @dp.message_handler(Text(equals=['Посмотреть записи ко мне',
                                  'Посмотреть записи ко мне (супер-мастер)',
-                                 'Посмотреть записи ко мне (мастер)']), chat_id=masters_and_id.values())
+                                 'Посмотреть записи ко мне (мастер)']), chat_id=masters_id)
 async def start_check_logs(message: Message):
     await message.answer('Просмотр записи клиентов.', reply_markup=check_logs_choice_range)
+    print(await db.get_master_and_id())
     await AdminCheckLog.ChoiceRange.set()
 
 
 async def process_choice_time_callback(call):
     full_datetime = call.data.split('_')[1]
-    master_username = get_key(masters_and_id, str(call.message.chat.id))
+    master_username = get_key(await db.get_master_and_id(), str(call.message.chat.id))
     log = await db.get_log_by_full_datetime(full_datetime,
                                             master_username)
     date = [int(d.strip()) for d in log.date.strip('()').split(',')]
@@ -77,7 +78,7 @@ async def back_to_date_timetable(call: CallbackQuery):
     await process_choice_day(call, res)
 
 
-@dp.callback_query_handler(text_contains='admin:datetime_', chat_id=masters_and_id.values(),
+@dp.callback_query_handler(text_contains='admin:datetime_', chat_id=masters_id,
                            state=AdminCheckLog)
 async def process_choice_time(call: CallbackQuery):
     await call.answer(cache_time=60)
@@ -90,8 +91,9 @@ async def process_choice_day(call, date_time):
     c = calendar.LocaleTextCalendar(calendar.MONDAY, locale='Russian_Russia')
     datetime_with_weekdays = [date for date in c.itermonthdays4(year, month) if date[2] == day][0]
     # today_datetime_log = await db.get_datetime()
+    print(get_key(await db.get_master_and_id(), str(call.message.chat.id)))
     all_today_logs = await db.get_logs_only_date(f'{datetime_with_weekdays}',
-                                                 get_key(masters_and_id, str(call.message.chat.id)))
+                                                 get_key(await db.get_master_and_id(), str(call.message.chat.id)))
     # result_message_list = []
     if all_today_logs:
         kb_time = InlineKeyboardMarkup(row_width=5)
@@ -105,7 +107,7 @@ async def process_choice_day(call, date_time):
     else:
         await call.message.answer('Никто не записывался на этот день.', reply_markup=check_logs_choice_range)
         await AdminCheckLog.ChoiceRange.set()
-    
+
     # for num, log in enumerate(all_today_logs, 1):
     #     result_message_list.append(f'\n{log}. {log.time} - {log.name_client} - {log.service} - {log.phone_number}')
     #     result_message_list.append('\n')
@@ -246,7 +248,7 @@ async def process_choice_months(call, date_time, state, year, month, day):
     await call.message.answer('Выберите дату для просмотра записей.', reply_markup=inline_calendar)
 
 
-@dp.callback_query_handler(state=AdminCheckLog.ChoiceRange, chat_id=masters_and_id.values(), text_contains='logs_')
+@dp.callback_query_handler(state=AdminCheckLog.ChoiceRange, chat_id=masters_id, text_contains='logs_')
 async def choice_range_log(call: CallbackQuery, state: FSMContext):
     result = call.data.split('_')[1]
     await call.answer(cache_time=60)
