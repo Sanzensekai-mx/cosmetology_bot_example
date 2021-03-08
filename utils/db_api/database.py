@@ -7,9 +7,9 @@ db = Gino()
 
 async def create_db():
     # Устанавливаем связь с базой данных
-    await db.set_bind(POSTGRES_URI)
+    await db.set_bind(POSTGRES_URI, ssl="allow")
     db.gino: GinoSchemaVisitor
 
     # Создаем таблицы
-#     await db.gino.drop_all()
-#     await db.gino.create_all()
+    # await db.gino.drop_all()
+    # await db.gino.create_all()

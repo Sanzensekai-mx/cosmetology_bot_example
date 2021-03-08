@@ -16,6 +16,5 @@ masters_id = str(os.environ.get('masters_id')).split(', ')   # Dashboard
 
 # Ссылка подключения к базе данных
 POSTGRES_URI = str(os.environ.get('DATABASE_URL'))
-# POSTGRES_URI = f"postgresql://{PG_USER}:{PG_PASS}@{host}/{DATABASE}" # Dashboard
 # masters_and_id = {m_name: m_id for m_name in masters_username for m_id in masters_id}
 # masters_and_id = dict(zip(masters_username, masters_id))
