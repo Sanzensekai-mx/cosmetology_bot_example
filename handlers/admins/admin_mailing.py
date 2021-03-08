@@ -25,6 +25,7 @@ logging.basicConfig(format=u'%(filename)s [LINE:%(lineno)d] '
 
 @dp.callback_query_handler(text_contains='cancel_mail', chat_id=admins, state=AdminMailing)
 async def process_cancel_add_service(call: CallbackQuery, state: FSMContext):
+    await call.answer(cache_time=60)
     logging.info(f'from: {call.message.chat.full_name}, text: {call.message.text}, info: Отмена рассылки.')
     await call.message.answer('Отмена рассылки.')  # Добавить reply_markup
     await state.reset_state()
