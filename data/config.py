@@ -1,5 +1,5 @@
 import os
-from dotenv import load_dotenv
+# from dotenv import load_dotenv
 
 # load_dotenv(encoding='utf-8')
 BOT_TOKEN = str(os.environ.get('BOT_TOKEN'))  # Dashboard
