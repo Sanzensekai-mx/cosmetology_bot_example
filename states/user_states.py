@@ -9,3 +9,7 @@ class UserAppointment(StatesGroup):
     Time = State()
     PhoneNumber = State()
     Confirm = State()
+
+
+class UserCheckLog(StatesGroup):
+    Check = State()

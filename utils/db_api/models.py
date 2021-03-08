@@ -1,4 +1,4 @@
-import json
+import datetime
 from aiogram.types import User as User_api_type
 from utils.db_api.database import db
 
@@ -43,12 +43,17 @@ class Log(db.Model):
 class Datetime(db.Model):
     __tablename__ = 'datetime'
     id = db.Column(db.Integer, db.Sequence('datetime_id_seq'), primary_key=True)
-    # year = db.Column(db.Integer)
-    # month = db.Column(db.Integer)
-    # day = db.Column(db.Integer)
     master = db.Column(db.String)
     datetime = db.Column(db.String)
     time = db.Column(db.JSON, nullable=False, server_default="{}")
+
+
+class Master(db.Model):
+    __tablename__ = 'masters'
+    id = db.Column(db.Integer, db.Sequence('master_id_seq'), primary_key=True)
+    master_name = db.Column(db.String)
+    master_user_id = db.Column(db.BigInteger, unique=True)
+    master_services = db.Column(db.String)
 
 
 class DBCommands:
@@ -88,8 +93,8 @@ class DBCommands:
         return service
 
     async def is_this_service_in_db(self, service_name):
-        meme = await self.get_service(service_name)
-        if meme:
+        service = await self.get_service(service_name)
+        if service:
             return True
         return False
 
@@ -133,14 +138,36 @@ class DBCommands:
         return log
 
     @staticmethod
-    async def get_log_by_full_datetime(full_datetime, master=None):
+    async def get_log_by_full_datetime(full_datetime, master):
         logs = await Log.query.where(Log.full_datetime == full_datetime).gino.all()
         # log = await Log.query.where(Log.name_master == master).gino.first()
         if logs:
             for log in logs:
-                if log.full_datetime == full_datetime:
+                # if log.full_datetime == full_datetime:
+                if log.name_master == master:
                     return log
         # return log
+
+    async def del_log(self, full_datetime, master):
+        log = await self.get_log_by_full_datetime(full_datetime, master)
+        if log:
+            await log.delete()
+            # return log
+        # return log
+
+    @staticmethod
+    async def get_old_logs(current_date):
+        # year, month, day = current_date.year, current_date.month, current_date.day
+        # c = calendar.LocaleTextCalendar(calendar.MONDAY, locale='Russian_Russia')
+        # current_date_with_weekdays = [date for date in c.itermonthdays4(year, month) if date[2] == day][0]
+        logs = []
+        for log in await Log.query.gino.all():
+            date_process = [int(d.strip()) for d in str(log.date).strip('()').split(',')]
+            date = datetime.date(date_process[0], date_process[1], date_process[2])
+            if date < current_date:
+                logs.append(log)
+        # logs = await Log.query.where(Log.date < current_date_with_weekdays).gino.all()
+        return logs
 
     @staticmethod
     async def get_logs_only_date(date, master):
@@ -165,8 +192,9 @@ class DBCommands:
             return True
         return False
 
-    async def is_this_log_5_in_db(self, name_client):
-        log = await self.get_log_by_client(name_client)
+    @staticmethod
+    async def is_this_log_5_in_db(user_id):
+        log = await Log.query.where(Log.user_id == user_id).gino.first()
         if log:
             num_one_user_id = 0
             for i in [log.user_id for log in await Log.query.gino.all()]:
@@ -175,6 +203,11 @@ class DBCommands:
                 if num_one_user_id == 5:
                     return True
         return False
+
+    @staticmethod
+    async def get_all_logs_by_user_id(user_id):
+        logs = await Log.query.where(Log.user_id == user_id).gino.all()
+        return logs
 
     async def add_log(self, user_id, name_client, name_master, service, full_datetime, date, time, phone_number):
         log_one = await self.get_log_by_full_datetime(full_datetime, name_master)
@@ -206,49 +239,105 @@ class DBCommands:
 
     # Мeтоды для таблицы datetime
     @staticmethod
-    async def get_datetime(datetime, master):
+    async def get_datetime(datetime_one, master):
         # datetime_list = await Datetime.query.where(Datetime.datetime == datetime).gino.all()
         datetime_list = await Datetime.query.where(Datetime.master == master).gino.all()
         # datetime_with_master =
         for line in datetime_list:
-            if line.datetime == datetime:
+            if line.datetime == datetime_one:
                 return line
 
-    async def get_dict_of_time(self, datetime, master):
-        datetime_one = await self.get_datetime(datetime, master)
-        return datetime_one.time
+    @staticmethod
+    async def get_old_datetime(current_date):
+        datetime_many = []
+        for date_one in await Datetime.query.gino.all():
+            date_process = [int(d.strip()) for d in str(date_one.datetime).strip('()').split(',')]
+            date = datetime.date(date_process[0], date_process[1], date_process[2])
+            if date < current_date:
+                datetime_many.append(date_one)
+        # logs = await Log.query.where(Log.date < current_date_with_weekdays).gino.all()
+        return datetime_many
 
-    async def add_log_datetime(self, datetime, master):
-        datetime_one = await self.get_datetime(datetime, master)
-        if datetime_one:
+    async def del_datetime(self, datetime_one, master):
+        datetime_first = await self.get_datetime(datetime_one, master)
+        if datetime_first:
+            await datetime_first.delete()
+            return datetime_first
+        return datetime_first
+
+    async def get_dict_of_time(self, datetime_one, master):
+        datetime_first = await self.get_datetime(datetime_one, master)
+        return datetime_first.time
+
+    async def add_log_datetime(self, datetime_one, master):
+        datetime_first = await self.get_datetime(datetime_one, master)
+        if datetime_first:
             return True
-        datetime_one = Datetime()
-        datetime_one.datetime = datetime
-        datetime_one.master = master
-        datetime_one.time = {'10:00': False, '10:30': False, '11:00': False, '11:30': False,
-                             '12:00': False, '12:30': False, '13:00': False, '13:30': False,
-                             '14:00': False, '14:30': False, '15:00': False, '15:30': False,
-                             '16:00': False, '16:30': False, '17:00': False}
-        await datetime_one.create()
+        datetime_first = Datetime()
+        datetime_first.datetime = datetime_one
+        datetime_first.master = master
+        datetime_first.time = {'10:00': False, '10:30': False, '11:00': False, '11:30': False,
+                               '12:00': False, '12:30': False, '13:00': False, '13:30': False,
+                               '14:00': False, '14:30': False, '15:00': False, '15:30': False,
+                               '16:00': False, '16:30': False, '17:00': False}
+        await datetime_first.create()
         return False
 
-    async def add_update_date(self, datetime, time, master):
-        datetime_one = await self.get_datetime(datetime, master)
-        # dict_time = datetime_one.time
-        # dict_time[time] = True
-        if datetime_one:
-            dict_time = datetime_one.time
+    async def add_update_date(self, datetime_one, time, master):
+        datetime_first = await self.get_datetime(datetime_one, master)
+        if datetime_first:
+            dict_time = datetime_first.time
             dict_time[time] = True
-            await datetime_one.update(
-                id=datetime_one.id,
-                master=datetime_one.master,
-                datetime=datetime_one.datetime,
+            await datetime_first.update(
+                id=datetime_first.id,
+                master=datetime_first.master,
+                datetime=datetime_first.datetime,
                 time=dict_time
             ).apply()
-            return datetime_one
-        datetime_one = Datetime()
-        datetime_one.master = master
-        datetime_one.datetime = datetime
-        datetime_one.time = time
-        await datetime_one.create()
-        return datetime_one
+            return datetime_first
+        datetime_first = Datetime()
+        datetime_first.master = master
+        datetime_first.datetime = datetime_one
+        datetime_first.time = time
+        await datetime_first.create()
+        return datetime_first
+
+        # Методы таблицы masters
+
+    @staticmethod
+    async def get_master(master_name):
+        master = await Master.query.where(Master.master_name == master_name).gino.first()
+        return master
+
+    async def is_this_master_in_db(self, master_name):
+        master = await self.get_service(master_name)
+        if master:
+            return True
+        return False
+
+    @staticmethod
+    async def all_masters():
+        masters = await Master.query.gino.all()
+        return masters
+
+    async def add_master(self, master_name, master_user_id, master_services):
+        old_master = await self.get_master(master_name)
+        # Обновляет услугу, если такая уже существует в БД
+        if old_master:
+            await old_master.update(
+                id=old_master.id,
+                master_name=master_name,
+                master_user_id=int(master_user_id),
+                master_services=master_services
+            ).apply()
+            return old_master
+        # Создание новой услуги в БД
+        new_master = Master()
+        new_master.master_name = master_name
+        new_master.master_user_id = int(master_user_id)
+        new_master.master_services = master_services
+        await new_master.create()
+        return new_master
+
+    async def get_master_and_id(self):
+        return {master.master_name: str(master.master_user_id) for master in await self.all_masters()}

@@ -1,4 +1,6 @@
+import asyncio
 from utils.db_api.database import create_db
+from utils.del_old_logs import del_old_logs
 
 
 async def on_startup(dp):
@@ -6,6 +8,8 @@ async def on_startup(dp):
     import middlewares
     filters.setup(dp)
     middlewares.setup(dp)
+    # Создание задачи на удаление старых записей
+    asyncio.create_task(del_old_logs())
 
     from utils.notify_admins import on_startup_notify
     await on_startup_notify(dp)
