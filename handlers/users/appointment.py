@@ -11,7 +11,6 @@ from keyboards.inline import cancel_appointment, cancel_appointment_or_confirm
 from loader import dp
 from states.user_states import UserAppointment
 from utils.db_api.models import DBCommands
-from data.config import masters_and_id
 
 db = DBCommands()
 
@@ -21,31 +20,12 @@ logging.basicConfig(format=u'%(filename)s [LINE:%(lineno)d] '
 
 
 async def confirm_or_change(data, mes):
-    # Изменение параметров записи (упразднено)
-    # kb_confirm = InlineKeyboardMarkup(row_width=4)
-    # for_kb_name_items = {'name_client': 'имя клиента', 'name_master': 'мастера',
-    #                      'service': 'услугу', 'date': 'дату', 'time': 'время'}
-    # for key in data.keys():
-    #     if key in ['is_this_log_5_in_db', 'current_choice_month',
-    #                'current_choice_year', 'user_id', 'full_datetime',
-    #                'current_services_dict', 'phone_number']:
-    #         continue
-    #     change_button = InlineKeyboardButton(f'Изменить {for_kb_name_items.get(key)}', callback_data=f'change:{key}')
-    #     kb_confirm.add(change_button)
-    # kb_confirm.add(InlineKeyboardButton('Подтвердить', callback_data='confirm_appointment'))
-    # kb_confirm.add(InlineKeyboardButton('Отмена записи', callback_data='cancel_appointment'))
-#     await mes.answer(f'''
-# Имя клиента - {data.get("name_client")}\n
-# Мастер - {data.get("name_master")}\n
-# Услуга - {data.get("service")}\n
-# Дата - {data.get("date")}\n
-# Время - {data.get("time")}\n
-# Номер телефона - {data.get("phone_number")}''', reply_markup=kb_confirm)
+    date = [d.strip() for d in data.get("date").strip("()").split(",")]
     await mes.answer(f''' 
 Имя клиента - {data.get("name_client")}\n
 Услуга - {data.get("service")}\n
 Мастер - {data.get("name_master")}\n
-Дата - {data.get("date")}\n
+Дата - {date[2]} / {date[1]} / {date[0]}\n
 Время - {data.get("time")}\n
 Номер телефона - {data.get("phone_number")}''', reply_markup=cancel_appointment_or_confirm)
     await UserAppointment.Confirm.set()
@@ -84,14 +64,49 @@ async def open_appointment_start(message: Message, state: FSMContext):
     )
 
 
-async def return_kb_masters():
+async def return_kb_masters(service):
     cancel_appointment_choice_master = InlineKeyboardMarkup()
-    for master in masters_and_id.keys():
-        cancel_appointment_choice_master.add(InlineKeyboardButton(f'{master}',
-                                                                  callback_data=f'm_{master}'))
+    all_masters = await db.all_masters()
+    for master in all_masters:
+        # split так как в БД хранится строка типа Ресницы_Волосы. Костыль херли
+        if service in master.master_services.split('_'):
+            cancel_appointment_choice_master.add(InlineKeyboardButton(f'{master.master_name}',
+                                                                      callback_data=f'm_{master.master_name}'))
     cancel_appointment_choice_master.add(InlineKeyboardButton('Отмена записи',
                                                               callback_data='cancel_appointment'))
     return cancel_appointment_choice_master
+
+
+# Возвращает список, где 1-ый элемент - сообщение, 2-ой - клавиатура
+async def return_kb_mes_services(state, is_it_appointment=True):
+    data_from_state = await state.get_data()
+    cancel_appointment_choice_service = InlineKeyboardMarkup(row_width=5)
+    services = await db.all_services()
+    res_message = ''
+    current_services_dict = {}
+    for num, service in enumerate(services, 1):
+        service_name = service.name
+        service_price = service.price
+        res_message += f'\n{num}. {service_name} - {service_price}'
+        current_services_dict[str(num)] = service_name
+        cancel_appointment_choice_service.insert(InlineKeyboardButton(f'{num}',
+                                                                      callback_data=f's_{num}_{service_name}'))
+        # cancel_appointment_choice_service.add(InlineKeyboardButton(f'{service_name} {service_price}',
+        #                                                            callback_data=f's_{service_name}'))
+    if is_it_appointment:
+        cancel_appointment_choice_service.add(InlineKeyboardButton('Отмена записи',
+                                                                   callback_data='cancel_appointment'))
+    data_from_state['current_services_dict'] = current_services_dict
+    await state.update_data(data_from_state)
+    return [res_message, cancel_appointment_choice_service]
+
+
+async def service_process_enter(message, state):
+    data = await state.get_data()
+    res_mes_and_kb = await return_kb_mes_services(state)
+    await message.answer(f'Ваше Фамилия и Имя: "{data.get("name_client")}". ' \
+                              f'\nВыберите услугу:\n{res_mes_and_kb[0]}',
+                              reply_markup=res_mes_and_kb[1])
 
 
 @dp.message_handler(state=UserAppointment.Name)
@@ -113,65 +128,14 @@ async def open_appointment_enter_name(message: Message, state: FSMContext):
         # await message.answer(is_this_log_5_in_db)
         # await state.update_data(data)
         else:
-            await UserAppointment.Master.set()
-            # cancel_appointment_choice_master = InlineKeyboardMarkup()
-            # for master in masters_and_id.keys():
-            #     cancel_appointment_choice_master.add(InlineKeyboardButton(f'{master}',
-            #                                                               callback_data=f'm_{master}'))
-            # cancel_appointment_choice_master.add(InlineKeyboardButton('Отмена записи',
-            #                                                           callback_data='cancel_appointment'))
-            await message.answer(f'Ваше Фамилия и Имя: "{data.get("name_client")}". '
-                                 '\nВыберите мастера:', reply_markup=await return_kb_masters())
+            await UserAppointment.Service.set()
+            await service_process_enter(message, state)
 
     else:
         name_client = message.text.strip()
         data['name_client'] = name_client
         await state.update_data(data)
         await confirm_or_change(data, message)
-
-
-# Возвращает список, где 1-ый элемент - сообщение, 2-ой - клавиатура
-async def return_kb_mes_services(state):
-    data_from_state = await state.get_data()
-    cancel_appointment_choice_service = InlineKeyboardMarkup(row_width=5)
-    services = await db.all_services()
-    res_message = ''
-    current_services_dict = {}
-    for num, service in enumerate(services, 1):
-        service_name = service.name
-        service_price = service.price
-        res_message += f'\n{num}. {service_name} - {service_price}'
-        current_services_dict[str(num)] = service_name
-        cancel_appointment_choice_service.insert(InlineKeyboardButton(f'{num}',
-                                                                      callback_data=f's_{num}'))
-        # cancel_appointment_choice_service.add(InlineKeyboardButton(f'{service_name} {service_price}',
-        #                                                            callback_data=f's_{service_name}'))
-    cancel_appointment_choice_service.add(InlineKeyboardButton('Отмена записи',
-                                                               callback_data='cancel_appointment'))
-    data_from_state['current_services_dict'] = current_services_dict
-    await state.update_data(data_from_state)
-    return [res_message, cancel_appointment_choice_service]
-
-
-# !!!!!!!!! Вывод списка услуг в сообщении? Кнопки с цифрами, иначе все длина
-# какой-нибудь услуги может не уместиться в область кнопки
-async def service_process_enter(call, state):
-    data = await state.get_data()
-    # cancel_appointment_choice_service = InlineKeyboardMarkup()
-    # services = await db.all_services()
-    # for service in services:
-    #     service_name = service.name
-    #     service_price = service.price
-    #     service_time = service.time
-    #     cancel_appointment_choice_service.add(InlineKeyboardButton(f'{service_name} {service_price}',
-    #                                                                callback_data=f's_{service_name}'))
-    # cancel_appointment_choice_service.add(InlineKeyboardButton('Отмена записи',
-    #                                                            callback_data='cancel_appointment'))
-    res_mes_and_kb = await return_kb_mes_services(state)
-    await call.message.answer(f'Ваше Фамилия и Имя: "{data.get("name_client")}". ' \
-                              f'\nМастер: "{data.get("name_master")}" ' \
-                              f'\nВыберите услугу:\n{res_mes_and_kb[0]}',
-                              reply_markup=res_mes_and_kb[1])
 
 
 # Обработка выбранной услуги и занесение ее в state data
@@ -187,13 +151,16 @@ async def choice_master(call: CallbackQuery, state: FSMContext):
         data['service'] = service
         await state.update_data(data)
         # print(await state.get_data())
-        await UserAppointment.Date.set()
+        await UserAppointment.Master.set()
         # Выбор даты, функция
-        current_date = datetime.date.today()
-        await date_process_enter(call, state,
-                                 year=current_date.year,
-                                 month=current_date.month,
-                                 day=current_date.day)
+        # current_date = datetime.date.today()
+        # await date_process_enter(call, state,
+        #                          year=current_date.year,
+        #                          month=current_date.month,
+        #                          day=current_date.day)
+        await call.message.answer(f'Ваше Фамилия и Имя: "{data.get("name_client")}". ' \
+                                  f'\nВыбрана услуга: "{data.get("service")}"',
+                                  reply_markup=await return_kb_masters(service=data.get("service")))
     else:
         data['service'] = service
         await state.update_data(data)
@@ -210,8 +177,13 @@ async def choice_master(call: CallbackQuery, state: FSMContext):
         # Принятие выбора мастера
         data['name_master'] = name_master
         await state.update_data(data)
-        await UserAppointment.Service.set()
-        await service_process_enter(call, state)
+        await UserAppointment.Date.set()
+        # Выбор даты, функция
+        current_date = datetime.date.today()
+        await date_process_enter(call, state,
+                                 year=current_date.year,
+                                 month=current_date.month,
+                                 day=current_date.day)
     else:
         data['name_master'] = name_master
         await state.update_data(data)

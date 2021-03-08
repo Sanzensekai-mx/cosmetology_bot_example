@@ -4,7 +4,7 @@ from aiogram.dispatcher.filters import Text
 from aiogram.types import Message, ReplyKeyboardRemove, InlineKeyboardMarkup, InlineKeyboardButton, \
     CallbackQuery, ContentType
 
-from keyboards.default import main_menu_client
+from keyboards.default import main_menu_admin
 from keyboards.inline import cancel_add_service
 from loader import dp, bot
 from states.admin_states import AdminAddService
@@ -26,8 +26,7 @@ async def confirm_or_change(data, mes):
     kb_confirm.add(InlineKeyboardButton('Отмена', callback_data='cancel_add_service'))
     await mes.answer(f'''
 ВНИМАНИЕ. Если вы хотите обновить название услугу,
-то сначала удалите исходный усгу и введите новые данные.
-\n/cancel_meme для отмены Добавления/Изменения мема. 
+то сначала удалите исходный услугу и добавьте новую, вводя новые данные.
 Проверьте введенные данные.\n
 Название - {data.get("name")}\n
 Ссылка на картинку - {data.get("pic_file_id")}\n
@@ -39,8 +38,9 @@ async def confirm_or_change(data, mes):
 
 @dp.callback_query_handler(chat_id=admins, state=AdminAddService, text_contains='cancel_add_service')
 async def process_cancel_add_service(call: CallbackQuery, state: FSMContext):
+    await call.answer(cache_time=60)
     logging.info(f'from: {call.message.chat.full_name}, text: {call.message.text}, info: Отмена добавления услуги.')
-    await call.message.answer('Отмена добавления новой услуги.', )  # Добавить reply_markup
+    await call.message.answer('Отмена добавления новой услуги.', reply_markup=main_menu_admin)  # Добавить reply_markup
     await state.reset_state()
 
 
@@ -186,7 +186,7 @@ async def confirm_new_meme(call: CallbackQuery, state: FSMContext):
         service_price=data_from_state.get("price"),
         service_time=int(data_from_state.get("time"))
     )
-    await call.message.answer('Услуга добавлена.', reply_markup=ReplyKeyboardRemove())  # Добавить reply_markup
+    await call.message.answer('Услуга добавлена.', reply_markup=main_menu_admin)  # Добавить reply_markup
     # Тест отправки
     # pic = await db.show_service_test()
     # await bot.send_photo(chat_id=591763264, photo=pic.pic_file_id)

@@ -53,7 +53,7 @@ class Master(db.Model):
     id = db.Column(db.Integer, db.Sequence('master_id_seq'), primary_key=True)
     master_name = db.Column(db.String)
     master_user_id = db.Column(db.BigInteger, unique=True)
-    master_services = db.Column(db.JSON, nullable=False, server_default="[]")
+    master_services = db.Column(db.String)
 
 
 class DBCommands:
@@ -93,8 +93,8 @@ class DBCommands:
         return service
 
     async def is_this_service_in_db(self, service_name):
-        meme = await self.get_service(service_name)
-        if meme:
+        service = await self.get_service(service_name)
+        if service:
             return True
         return False
 
@@ -301,3 +301,43 @@ class DBCommands:
         datetime_first.time = time
         await datetime_first.create()
         return datetime_first
+
+        # Методы таблицы masters
+
+    @staticmethod
+    async def get_master(master_name):
+        master = await Master.query.where(Master.master_name == master_name).gino.first()
+        return master
+
+    async def is_this_master_in_db(self, master_name):
+        master = await self.get_service(master_name)
+        if master:
+            return True
+        return False
+
+    @staticmethod
+    async def all_masters():
+        masters = await Master.query.gino.all()
+        return masters
+
+    async def add_master(self, master_name, master_user_id, master_services):
+        old_master = await self.get_master(master_name)
+        # Обновляет услугу, если такая уже существует в БД
+        if old_master:
+            await old_master.update(
+                id=old_master.id,
+                master_name=master_name,
+                master_user_id=int(master_user_id),
+                master_services=master_services
+            ).apply()
+            return old_master
+        # Создание новой услуги в БД
+        new_master = Master()
+        new_master.master_name = master_name
+        new_master.master_user_id = int(master_user_id)
+        new_master.master_services = master_services
+        await new_master.create()
+        return new_master
+
+    async def get_master_and_id(self):
+        return {master.master_name: str(master.master_user_id) for master in await self.all_masters()}

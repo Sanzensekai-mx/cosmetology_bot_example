@@ -5,7 +5,7 @@ from aiogram.dispatcher.filters import CommandStart
 from keyboards.default import main_menu_client, main_menu_admin, main_menu_master
 from loader import dp
 from utils.db_api.models import DBCommands
-from data.config import admins, masters_and_id
+from data.config import admins, masters_id
 
 logging.basicConfig(format=u'%(filename)s [LINE:%(lineno)d] '
                            u'#%(levelname)-8s [%(asctime)s]  %(message)s',
@@ -35,7 +35,7 @@ async def bot_start(message: types.Message):
 У тебя права администратора! Введи /help_admin
 Пользователей в БД: {count_users} юзер(а).
         ''', reply_markup=main_menu_admin)
-    elif str(chat_id) in masters_and_id.values() and str(chat_id) not in admins:
+    elif str(chat_id) in masters_id and str(chat_id) not in admins:
         await message.answer(f'''
 Привет, {name_user}!
 У тебя права мастера салона!
