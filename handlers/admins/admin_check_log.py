@@ -27,6 +27,11 @@ logging.basicConfig(format=u'%(filename)s 'u'[LINE:%(lineno)d] '
                     level=logging.INFO)
 
 
+@dp.message_handler(commands=['time'])
+async def show_time(message: Message):
+    await message.answer(f'{datetime.datetime.today()}')
+
+
 @dp.callback_query_handler(text_contains='cancel_check', chat_id=masters_id, state=AdminCheckLog)
 async def process_cancel_add_service(call: CallbackQuery, state: FSMContext):
     logging.info(f'from: {call.message.chat.full_name}, text: {call.message.text}, info: Отмена рассылки.')
