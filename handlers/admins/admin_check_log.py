@@ -29,7 +29,11 @@ logging.basicConfig(format=u'%(filename)s 'u'[LINE:%(lineno)d] '
 
 @dp.message_handler(commands=['time'])
 async def show_time(message: Message):
-    await message.answer(f'{datetime.datetime.today()}')
+    current_date = datetime.datetime.today()
+    await message.answer(f'{current_date}')
+    c = calendar.LocaleTextCalendar(calendar.MONDAY, locale='Russian_Russia')
+    print_month_c = c.formatmonth(current_date.year, current_date.month)
+    await message.answer(print_month_c)
 
 
 @dp.callback_query_handler(text_contains='cancel_check', chat_id=masters_id, state=AdminCheckLog)
