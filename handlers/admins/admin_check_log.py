@@ -1,3 +1,4 @@
+import locale
 import logging
 import pytz
 import datetime
@@ -39,7 +40,8 @@ async def show_time(message: Message):
                          f'\nmaybe current'
                          f'\n{datetime.datetime.now(tz)}')
     # locale.setlocale(locale.LC_ALL, '')
-    c = calendar.LocaleTextCalendar(calendar.MONDAY, locale='ru_RU')
+    locale.setlocale(locale.LC_ALL, ('ru_RU', 'UTF-8'))
+    c = calendar.LocaleTextCalendar(calendar.MONDAY)
     print_month_c = c.formatmonth(current_date.year, current_date.month)
     await message.answer(print_month_c)
 
