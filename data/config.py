@@ -1,5 +1,7 @@
 import os
 import calendar
+
+import pytz
 # from dotenv import load_dotenv
 
 # load_dotenv(encoding='utf-8')
@@ -30,3 +32,4 @@ rus_days = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
 
 months = {calendar.month_name[i]: rus_months[i] for i in range(13)}
 days = {eng_days[i]: rus_days[i] for i in range(7)}
+tz_ulyanovsk = pytz.timezone('Europe/Ulyanovsk')

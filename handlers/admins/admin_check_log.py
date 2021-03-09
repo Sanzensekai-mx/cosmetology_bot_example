@@ -13,7 +13,7 @@ from keyboards.inline import check_logs_choice_range
 from loader import dp
 from states.admin_states import AdminCheckLog
 from utils.db_api.models import DBCommands
-from data.config import admins, masters_id, months, days
+from data.config import admins, masters_id, months, days, tz_ulyanovsk
 
 db = DBCommands()
 
@@ -31,14 +31,14 @@ logging.basicConfig(format=u'%(filename)s 'u'[LINE:%(lineno)d] '
 
 @dp.message_handler(commands=['time'])
 async def show_time(message: Message):
-    tz = pytz.timezone('Europe/Ulyanovsk')
+    # tz = pytz.timezone('Europe/Ulyanovsk')
     current_date = datetime.datetime.now()
     await message.answer(f'\ntoday'
                          f'\n{current_date}'
                          f'\nutcnow'
                          f'\n{datetime.datetime.utcnow()}'
                          f'\nmaybe current'
-                         f'\n{datetime.datetime.now(tz)}')
+                         f'\n{datetime.datetime.now(tz_ulyanovsk)}')
     # locale.setlocale(locale.LC_ALL, '')
     # locale.setlocale(locale.LC_ALL, 'ru_RU')
     # c = calendar.TextCalendar(calendar.MONDAY)

@@ -11,7 +11,7 @@ from keyboards.inline import cancel_appointment, cancel_appointment_or_confirm
 from loader import dp
 from states.user_states import UserAppointment
 from utils.db_api.models import DBCommands
-from data.config import days, months
+from data.config import days, months, tz_ulyanovsk
 
 db = DBCommands()
 
@@ -195,7 +195,7 @@ async def date_process_enter(call, state, year, month, day):
     data = await state.get_data()
     c = calendar.TextCalendar(calendar.MONDAY)
     service = await db.get_service(data.get('service'))
-    current_date = datetime.date.today()
+    current_date = datetime.datetime.now(tz_ulyanovsk)
     if month == current_date.month and year == current_date.year:
         month = current_date.month
         year = current_date.year
@@ -247,7 +247,7 @@ async def date_process_enter(call, state, year, month, day):
 async def change_month_process(call: CallbackQuery, state: FSMContext):
     data = await state.get_data()
     await call.answer(cache_time=60)
-    current_date = datetime.date.today()
+    current_date = datetime.datetime.now(tz_ulyanovsk)
     result = call.data.split('_')[1]
     choice_year = data.get('current_choice_year')
     choice_month = data.get('current_choice_month')
@@ -280,7 +280,7 @@ async def change_month_process(call: CallbackQuery, state: FSMContext):
 
 
 @dp.callback_query_handler(state=UserAppointment.Date, text_contains='wrong_date')
-async def wrong_date_process(call: CallbackQuery, state: FSMContext):
+async def wrong_date_process(call: CallbackQuery):
     await call.answer(cache_time=60)
     await call.message.answer('Дата неактуальна, выберите не пустую дату.')
 
