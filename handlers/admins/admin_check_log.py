@@ -40,7 +40,7 @@ async def show_time(message: Message):
                          f'\nmaybe current'
                          f'\n{datetime.datetime.now(tz)}')
     # locale.setlocale(locale.LC_ALL, '')
-    locale.setlocale(locale.LC_ALL, 'ru_RU')
+    locale.setlocale(locale.LC_ALL, 'ru_RU.utf-8')
     c = calendar.TextCalendar(calendar.MONDAY)
     print_month_c = c.formatmonth(current_date.year, current_date.month)
     await message.answer(print_month_c)
@@ -107,7 +107,7 @@ async def process_choice_time(call: CallbackQuery):
 async def process_choice_day(call, date_time):
     current_date = date_time
     year, month, day = current_date.year, current_date.month, current_date.day
-    c = calendar.LocaleTextCalendar(calendar.MONDAY, locale='ru_RU')
+    c = calendar.LocaleTextCalendar(calendar.MONDAY, locale='ru_RU.utf-8')
     datetime_with_weekdays = [date for date in c.itermonthdays4(year, month) if date[2] == day][0]
     # today_datetime_log = await db.get_datetime()
     print(get_key(await db.get_master_and_id(), str(call.message.chat.id)))
@@ -137,7 +137,7 @@ async def process_choice_week(call, date_time, state):
     # await state.update_data('kb': None)
     # data = await state.get_data()
     current_date = date_time
-    c = calendar.LocaleTextCalendar(calendar.MONDAY, locale='ru_RU')
+    c = calendar.LocaleTextCalendar(calendar.MONDAY, locale='ru_RU.utf-8')
     month_c = calendar.monthcalendar(current_date.year, current_date.month)
     print_month_c = c.formatmonth(current_date.year, current_date.month)
     # print(month_c)
@@ -229,7 +229,7 @@ async def change_month_process(call: CallbackQuery, state: FSMContext):
 
 async def process_choice_months(call, date_time, state, year, month, day):
     data = await state.get_data()
-    c = calendar.LocaleTextCalendar(calendar.MONDAY, locale='ru_RU')
+    c = calendar.LocaleTextCalendar(calendar.MONDAY, locale='ru_RU.utf-8')
     current_date = date_time
     # year, month = current_date.year, current_date.month
     if month == current_date.month and year == current_date.year:

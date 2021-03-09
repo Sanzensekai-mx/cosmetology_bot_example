@@ -192,7 +192,7 @@ async def choice_master(call: CallbackQuery, state: FSMContext):
 
 async def date_process_enter(call, state, year, month, day):
     data = await state.get_data()
-    c = calendar.LocaleTextCalendar(calendar.MONDAY, locale='ru_RU')
+    c = calendar.LocaleTextCalendar(calendar.MONDAY, locale='ru_RU.utf-8')
     service = await db.get_service(data.get('service'))
     current_date = datetime.date.today()
     if month == current_date.month and year == current_date.year:
