@@ -1,4 +1,5 @@
 import logging
+import locale
 import datetime
 import calendar
 from aiogram.dispatcher import FSMContext
@@ -31,7 +32,8 @@ logging.basicConfig(format=u'%(filename)s 'u'[LINE:%(lineno)d] '
 async def show_time(message: Message):
     current_date = datetime.datetime.today()
     await message.answer(f'{current_date}')
-    c = calendar.LocaleTextCalendar(calendar.MONDAY, locale='Russian_Russia')
+    locale.setlocale(locale.LC_ALL, 'ru_RU')
+    c = calendar.LocaleTextCalendar(calendar.MONDAY)
     print_month_c = c.formatmonth(current_date.year, current_date.month)
     await message.answer(print_month_c)
 
