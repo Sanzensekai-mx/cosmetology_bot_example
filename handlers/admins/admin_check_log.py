@@ -40,7 +40,7 @@ async def show_time(message: Message):
                          f'\nmaybe current'
                          f'\n{datetime.datetime.now(tz)}')
     # locale.setlocale(locale.LC_ALL, '')
-    locale.setlocale(locale.LC_ALL, ('ru_RU', 'UTF-8'))
+    locale.setlocale(locale.LC_ALL, 'ru_RU')
     c = calendar.TextCalendar(calendar.MONDAY)
     print_month_c = c.formatmonth(current_date.year, current_date.month)
     await message.answer(print_month_c)
