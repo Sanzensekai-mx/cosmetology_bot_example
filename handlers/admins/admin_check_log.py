@@ -1,5 +1,5 @@
 import logging
-import locale
+import pytz
 import datetime
 import calendar
 from aiogram.dispatcher import FSMContext
@@ -30,10 +30,16 @@ logging.basicConfig(format=u'%(filename)s 'u'[LINE:%(lineno)d] '
 
 @dp.message_handler(commands=['time'])
 async def show_time(message: Message):
-    current_date = datetime.datetime.today()
-    await message.answer(f'{current_date}')
-    locale.setlocale(locale.LC_ALL, '')
-    c = calendar.LocaleTextCalendar(calendar.MONDAY)
+    tz = pytz.timezone('Europe/Ulyanovsk')
+    current_date = datetime.datetime.now()
+    await message.answer(f'\ntoday'
+                         f'\n{current_date}'
+                         f'\nutcnow'
+                         f'\n{datetime.datetime.utcnow()}'
+                         f'\nmaybe current'
+                         f'\n{datetime.datetime.now(tz)}')
+    # locale.setlocale(locale.LC_ALL, '')
+    c = calendar.LocaleTextCalendar(calendar.MONDAY, locale='ru_RU')
     print_month_c = c.formatmonth(current_date.year, current_date.month)
     await message.answer(print_month_c)
 
@@ -99,7 +105,7 @@ async def process_choice_time(call: CallbackQuery):
 async def process_choice_day(call, date_time):
     current_date = date_time
     year, month, day = current_date.year, current_date.month, current_date.day
-    c = calendar.LocaleTextCalendar(calendar.MONDAY, locale='Russian_Russia')
+    c = calendar.LocaleTextCalendar(calendar.MONDAY, locale='ru_RU')
     datetime_with_weekdays = [date for date in c.itermonthdays4(year, month) if date[2] == day][0]
     # today_datetime_log = await db.get_datetime()
     print(get_key(await db.get_master_and_id(), str(call.message.chat.id)))
@@ -129,7 +135,7 @@ async def process_choice_week(call, date_time, state):
     # await state.update_data('kb': None)
     # data = await state.get_data()
     current_date = date_time
-    c = calendar.LocaleTextCalendar(calendar.MONDAY, locale='Russian_Russia')
+    c = calendar.LocaleTextCalendar(calendar.MONDAY, locale='ru_RU')
     month_c = calendar.monthcalendar(current_date.year, current_date.month)
     print_month_c = c.formatmonth(current_date.year, current_date.month)
     # print(month_c)
@@ -221,7 +227,7 @@ async def change_month_process(call: CallbackQuery, state: FSMContext):
 
 async def process_choice_months(call, date_time, state, year, month, day):
     data = await state.get_data()
-    c = calendar.LocaleTextCalendar(calendar.MONDAY, locale='Russian_Russia')
+    c = calendar.LocaleTextCalendar(calendar.MONDAY, locale='ru_RU')
     current_date = date_time
     # year, month = current_date.year, current_date.month
     if month == current_date.month and year == current_date.year:
