@@ -11,6 +11,7 @@ from keyboards.inline import cancel_appointment, cancel_appointment_or_confirm
 from loader import dp
 from states.user_states import UserAppointment
 from utils.db_api.models import DBCommands
+from data.config import days, months
 
 db = DBCommands()
 
@@ -192,7 +193,7 @@ async def choice_master(call: CallbackQuery, state: FSMContext):
 
 async def date_process_enter(call, state, year, month, day):
     data = await state.get_data()
-    c = calendar.LocaleTextCalendar(calendar.MONDAY, locale='ru_RU')
+    c = calendar.TextCalendar(calendar.MONDAY)
     service = await db.get_service(data.get('service'))
     current_date = datetime.date.today()
     if month == current_date.month and year == current_date.year:
@@ -210,13 +211,14 @@ async def date_process_enter(call, state, year, month, day):
     data['current_choice_month'] = month
     data['current_choice_year'] = year
     await state.update_data(data)
-    inline_calendar.insert(InlineKeyboardButton(f'{print_c.split()[0]} {print_c.split()[1]}', callback_data=' '))
+    inline_calendar.insert(InlineKeyboardButton(f'{months.get(print_c.split()[0])} {print_c.split()[1]}',
+                                                callback_data=' '))
     inline_calendar.insert(InlineKeyboardButton('>', callback_data='month_next'))
     for week_day in [item for item in print_c.split()][2:9]:
-        if week_day == 'Пн':
-            inline_calendar.add(InlineKeyboardButton(week_day, callback_data=week_day))
+        if week_day == 'Mo':
+            inline_calendar.add(InlineKeyboardButton(days.get(week_day), callback_data=days.get(week_day)))
             continue
-        inline_calendar.insert(InlineKeyboardButton(week_day, callback_data=week_day))
+        inline_calendar.insert(InlineKeyboardButton(days.get(week_day), callback_data=days.get(week_day)))
     for day_cal in [date for date in c.itermonthdays4(year, month)]:
         # Исключает дни другого месяца, прошедшие дни и выходные дни (Суббота, Воскресенье)
         if day_cal[2] == 0 \
