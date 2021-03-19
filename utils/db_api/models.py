@@ -127,10 +127,13 @@ class DBCommands:
         await new_service.create()
         return new_service
 
-    # @staticmethod
-    # async def show_service_test():
-    #     service = await Service.query.gino.first()
-    #     return service
+    async def del_service(self, name):
+        service = await self.get_service(name)
+        if service:
+            await service.delete()
+            return service
+        return service
+
     # Методы для таблицы log
     @staticmethod
     async def get_log_by_client(name_client):
@@ -343,3 +346,10 @@ class DBCommands:
 
     async def get_master_and_id(self):
         return {master.master_name: str(master.master_user_id) for master in await self.all_masters()}
+
+    async def del_master(self, name):
+        master = await self.get_master(name)
+        if master:
+            await master.delete()
+            return master
+        return master

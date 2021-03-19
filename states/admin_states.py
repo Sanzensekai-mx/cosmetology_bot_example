@@ -31,3 +31,7 @@ class AdminAddMaster(StatesGroup):
     ID = State()
     Services = State()
     Confirm = State()
+
+
+class AdminDelMaster(StatesGroup):
+    Del = State()
