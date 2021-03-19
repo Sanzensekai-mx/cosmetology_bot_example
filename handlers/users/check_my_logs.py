@@ -21,30 +21,38 @@ logging.basicConfig(format=u'%(filename)s [LINE:%(lineno)d] '
 
 
 @dp.message_handler(Text(equals='Мои записи'))
-async def check_users_logs(message: Message):
+async def check_users_logs(message: Message, state: FSMContext):
     # print(await db.get_old_datetime(datetime.date.today()))
+    await UserCheckLog.Check.set()
     logging.info(f'from: {message.chat.first_name}, text: {message.text}')
     logs_list = await db.get_all_logs_by_user_id(message.chat.id)
     kb_logs = InlineKeyboardMarkup(row_width=5)
-    # print(logs_list[0].full_datetime)
-    # print(type(logs_list[0].full_datetime))
-    if logs_list:
-        for log in logs_list:
-        # Список вида (2021, 2, 22, 0) 10:00
-            date = [x.strip('()').strip() for x in log.date.split(',')]
-            kb_logs.add(InlineKeyboardButton(f'Дата:  {date[2]} / {date[1]} / {date[0]} Время: {log.time}',
-                                             callback_data=f'user:datetime_{log.full_datetime}_{log.name_master}'))
-        await message.answer('Ваши записи:', reply_markup=kb_logs)
-    else:
+    await state.update_data(
+        {'user_logs': {}}
+    )
+    if not logs_list:
         await message.answer('Вы еще не записывались. \nДля записи нажмите кнопку "Запись"',
                              reply_markup=main_menu_client)
+    # print(logs_list[0].full_datetime)
+    # print(type(logs_list[0].full_datetime))
+    else:
+        data = await state.get_data()
+        for num, log in enumerate(logs_list, 1):
+        # Список вида (2021, 2, 22, 0) 10:00
+            date = [x.strip('()').strip() for x in log.date.split(',')]
+            data['user_logs'][num] = {'datetime': f'{log.full_datetime}', 'name_master': f'{log.name_master}'}
+            kb_logs.add(InlineKeyboardButton(f'Дата:  {date[2]} / {date[1]} / {date[0]} Время: {log.time}',
+                                             callback_data=f'ud_{num}'))
+        await state.update_data(data)
+        await message.answer('Ваши записи:', reply_markup=kb_logs)
 
 
-@dp.callback_query_handler(text_contains='user:datetime_')
-async def process_one_log(call: CallbackQuery):
+@dp.callback_query_handler(text_contains='ud_', state=UserCheckLog.Check)
+async def process_one_log(call: CallbackQuery, state: FSMContext):
     await call.answer(cache_time=60)
-    result = call.data.split('_')
-    choice_log_datetime, choice_master = result[1], result[2]
+    num = int(call.data.split('_')[1])  # Порядковый номер записи из словаря записей пользователя
+    data = await state.get_data()
+    choice_log_datetime, choice_master = data['user_logs'][num]['datetime'], data['user_logs'][num]['name_master']
     log = await db.get_log_by_full_datetime(choice_log_datetime, choice_master)
     date = [int(d.strip()) for d in log.date.strip('()').split(',')]
     service = await db.get_service(log.service)
@@ -57,4 +65,5 @@ async def process_one_log(call: CallbackQuery):
 Мастер - {choice_master}\n
 Услуга - {log.service}\n
 Стоимость - {service.price}''')
+    await state.finish()
     # Добавить кнопку-ссылку на пост в инстаграмм об услуге или показать описание услуги
