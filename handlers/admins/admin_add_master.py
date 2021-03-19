@@ -40,7 +40,7 @@ User_id - {data.get("user_id")}\n
 @dp.callback_query_handler(chat_id=admins, state=AdminAddMaster, text_contains='cancel_add_master')
 async def process_cancel_add_master(call: CallbackQuery, state: FSMContext):
     await call.answer(cache_time=60)
-    logging.info(f'from: {call.message.chat.full_name}, text: {call.message.text}, info: Отмена добавления услуги.')
+    logging.info(f'from: {call.message.chat.full_name}, text: {call.message.text}, info: Отмена добавления мастера.')
     await call.message.answer('Отмена добавления нового мастера.', reply_markup=main_menu_admin) # Добавить reply_markup
     await state.reset_state()
 

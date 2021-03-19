@@ -20,6 +20,14 @@ logging.basicConfig(format=u'%(filename)s [LINE:%(lineno)d] '
                     level=logging.INFO)
 
 
+@dp.callback_query_handler(state=UserCheckLog.Check, text_contains='cancel_check_user_log')
+async def process_cancel_check_logs(call: CallbackQuery, state: FSMContext):
+    await call.answer(cache_time=60)
+    logging.info(f'from: {call.message.chat.full_name}, text: {call.message.text}, info: Отмена добавления услуги.')
+    await call.message.answer('Отмена добавления нового мастера.', reply_markup=main_menu_client)
+    await state.reset_state()
+
+
 @dp.message_handler(Text(equals='Мои записи'))
 async def check_users_logs(message: Message, state: FSMContext):
     # print(await db.get_old_datetime(datetime.date.today()))
@@ -43,6 +51,7 @@ async def check_users_logs(message: Message, state: FSMContext):
             data['user_logs'][num] = {'datetime': f'{log.full_datetime}', 'name_master': f'{log.name_master}'}
             kb_logs.add(InlineKeyboardButton(f'Дата:  {date[2]} / {date[1]} / {date[0]} Время: {log.time}',
                                              callback_data=f'ud_{num}'))
+        kb_logs.add(InlineKeyboardButton(f'Закрыть просмотр записей', callback_data='cancel_check_user_log'))
         await state.update_data(data)
         await message.answer('Ваши записи:', reply_markup=kb_logs)
 

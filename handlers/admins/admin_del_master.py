@@ -16,7 +16,7 @@ db = DBCommands()
 @dp.callback_query_handler(chat_id=admins, state=AdminDelMaster, text_contains='cancel_del_master')
 async def process_cancel_del_master(call: CallbackQuery, state: FSMContext):
     await call.answer(cache_time=60)
-    logging.info(f'from: {call.message.chat.full_name}, text: {call.message.text}, info: Отмена добавления услуги.')
+    logging.info(f'from: {call.message.chat.full_name}, text: {call.message.text}, info: Отмена удаления мастера.')
     await call.message.answer('Отмена удаления мастера.', reply_markup=main_menu_admin)
     await state.reset_state()
 
