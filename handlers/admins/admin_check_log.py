@@ -49,7 +49,7 @@ async def show_time(message: Message):
 
 @dp.callback_query_handler(text_contains='cancel_check', chat_id=masters_id, state=AdminCheckLog)
 async def process_cancel_add_service(call: CallbackQuery, state: FSMContext):
-    logging.info(f'from: {call.message.chat.full_name}, text: {call.message.text}, info: Отмена рассылки.')
+    logging.info(f'from: {call.message.chat.full_name}, text: {call.message.text}, info: Отмена просмотра.')
     await call.answer(cache_time=60)
     if str(call.message.chat.id) in admins and str(call.message.chat.id) in masters_id:
         await call.message.answer('Отмена.', reply_markup=main_menu_admin)
@@ -63,7 +63,7 @@ async def process_cancel_add_service(call: CallbackQuery, state: FSMContext):
                                  'Посмотреть записи ко мне (мастер)']), chat_id=masters_id)
 async def start_check_logs(message: Message):
     await message.answer('Просмотр записи клиентов.', reply_markup=check_logs_choice_range)
-    print(await db.get_master_and_id())
+    # print(await db.get_master_and_id())
     await AdminCheckLog.ChoiceRange.set()
 
 

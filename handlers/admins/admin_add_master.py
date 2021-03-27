@@ -166,6 +166,7 @@ async def change_some_data(call: CallbackQuery, state: FSMContext):
 
 @dp.callback_query_handler(text_contains='сonfirm', chat_id=admins, state=AdminAddMaster.Confirm)
 async def confirm_new_meme(call: CallbackQuery, state: FSMContext):
+    await call.answer(cache_time=60)
     data_from_state = await state.get_data()
     await db.add_master(
         master_name=data_from_state.get("name"),

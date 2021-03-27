@@ -37,10 +37,11 @@ async def start_del_master(message: Message):
 
 @dp.callback_query_handler(chat_id=admins, state=AdminDelMaster.Del, text_contains='m_')
 async def del_master(call: CallbackQuery, state: FSMContext):
+    await call.answer(cache_time=60)
     master_to_del = call.data.split('_')[1]
-    master_item = await db.get_master(master_to_del)
     await db.del_master(master_to_del)
-    await call.message.answer(f'Мастер {master_item.master_name} удален. \nНе забудьте удалить его '
+    master_db_item = await db.get_master(master_to_del)
+    await call.message.answer(f'Мастер {master_db_item.master_name} удален. \nНе забудьте удалить его '
                               f'chat_id из переменных в Dashboard Heroku.'
-                              f'\nchat_id удаленного матера - {master_item.master_user_id}')
+                              f'\nchat_id удаленного матера - {master_db_item.master_user_id}')
     await state.finish()
