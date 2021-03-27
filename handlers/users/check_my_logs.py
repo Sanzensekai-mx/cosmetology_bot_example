@@ -42,8 +42,6 @@ async def check_users_logs(message: Message, state: FSMContext):
         await message.answer('Вы еще не записывались. \nДля записи нажмите кнопку "Запись"',
                              reply_markup=main_menu_client)
         await state.finish()
-    # print(logs_list[0].full_datetime)
-    # print(type(logs_list[0].full_datetime))
     else:
         data = await state.get_data()
         for num, log in enumerate(logs_list, 1):
