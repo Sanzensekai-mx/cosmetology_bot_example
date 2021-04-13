@@ -405,6 +405,7 @@ async def choice_date(message: Message, state: FSMContext):
 
 @dp.callback_query_handler(text_contains='confirm_appointment', state=UserAppointment.Confirm)
 async def confirm_to_db(call: CallbackQuery, state: FSMContext):
+    await call.answer(cache_time=60)
     data = await state.get_data()
     await db.add_update_date(datetime_one=data.get('date'),
                              time=data.get('time'), master=data.get('name_master'))
