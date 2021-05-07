@@ -34,7 +34,7 @@ async def confirm_or_change(data, mes):
 
 
 @dp.callback_query_handler(state=UserAppointment, text_contains='cancel_appointment')
-async def process_cancel_add_service(call: CallbackQuery, state: FSMContext):
+async def inline_process_cancel_add_service(call: CallbackQuery, state: FSMContext):
     logging.info(f'from: {call.message.chat.full_name}, text: {call.message.text}, info: Отмена записи.')
     await call.answer(cache_time=60)
     await call.message.answer('Отмена записи.', reply_markup=main_menu_client)  # Добавить reply_markup

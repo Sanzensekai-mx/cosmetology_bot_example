@@ -6,7 +6,7 @@ from aiogram.dispatcher.filters import Text
 from aiogram.types import Message, ReplyKeyboardRemove, InlineKeyboardMarkup, \
     InlineKeyboardButton, CallbackQuery, ContentType
 
-from keyboards.default import main_menu_client
+from keyboards.default import main_menu_client, default_cancel_user_check_logs
 from keyboards.inline import check_logs_choice_range
 from loader import dp
 from states.user_states import UserCheckLog
@@ -19,14 +19,23 @@ logging.basicConfig(format=u'%(filename)s [LINE:%(lineno)d] '
                            u'#%(levelname)-8s [%(asctime)s]  %(message)s',
                     level=logging.INFO)
 
+# Способ с inline-клавиатурой Закрытия просмотра записей
+# @dp.callback_query_handler(state=UserCheckLog.Check, text_contains='cancel_check_user_log')
+# async def inline_process_cancel_check_logs(call: CallbackQuery, state: FSMContext):
+#     await call.answer(cache_time=60)
+#     logging.info(f'from: {call.message.chat.full_name}, text: {call.message.text}, info: Отмена просмотра записей '
+#                  f'пользоватем.')
+#     await call.message.answer('Отмена просмотра записей.'
+#                               '\nВыберите кнопку ниже.', reply_markup=main_menu_client)
+#     await state.reset_state()
 
-@dp.callback_query_handler(state=UserCheckLog.Check, text_contains='cancel_check_user_log')
-async def process_cancel_check_logs(call: CallbackQuery, state: FSMContext):
-    await call.answer(cache_time=60)
-    logging.info(f'from: {call.message.chat.full_name}, text: {call.message.text}, info: Отмена просмотра записей '
+
+@dp.message_handler(Text(equals=['Закрыть просмотр записей']), state=UserCheckLog.Check)
+async def default_process_cancel_check_logs(message: Message, state: FSMContext):
+    logging.info(f'from: {message.chat.full_name}, text: {message.text}, info: Отмена просмотра записей '
                  f'пользоватем.')
-    await call.message.answer('Отмена просмотра записей.'
-                              '\nВыберите кнопку ниже.', reply_markup=main_menu_client)
+    await message.answer('Отмена просмотра записей.'
+                         '\nВыберите кнопку ниже.', reply_markup=main_menu_client)
     await state.reset_state()
 
 
@@ -52,10 +61,10 @@ async def check_users_logs(message: Message, state: FSMContext):
             data['user_logs'][num] = {'datetime': f'{log.full_datetime}', 'name_master': f'{log.name_master}'}
             kb_logs.add(InlineKeyboardButton(f'Дата:  {date[2]} / {date[1]} / {date[0]} Время: {log.time}',
                                              callback_data=f'ud_{num}'))
-        kb_logs.add(InlineKeyboardButton(f'Закрыть просмотр записей', callback_data='cancel_check_user_log'))
+        # kb_logs.add(InlineKeyboardButton(f'Закрыть просмотр записей', callback_data='cancel_check_user_log'))
         await state.update_data(data)
         await message.answer('Нажмите на кнопки ниже, чтобы просмотреть подробную информацию о выших записях.',
-                             reply_markup=ReplyKeyboardRemove())
+                             reply_markup=default_cancel_user_check_logs)
         await message.answer('Ваши записи:', reply_markup=kb_logs)
 
 
@@ -69,8 +78,8 @@ async def process_one_log(call: CallbackQuery, state: FSMContext):
     date = [int(d.strip()) for d in log.date.strip('()').split(',')]
     service = await db.get_service(log.service)
     # Кнопка со ссылкой на описание и фото услуги?
-    kb_log_cancel = InlineKeyboardMarkup().add(InlineKeyboardButton(
-        f'Закрыть просмотр записей', callback_data='cancel_check_user_log'))
+    # kb_log_cancel = InlineKeyboardMarkup().add(InlineKeyboardButton(
+    #     f'Закрыть просмотр записей', callback_data='cancel_check_user_log'))
     await call.message.answer(
         f'''
 Время - {log.time}\n
@@ -78,6 +87,6 @@ async def process_one_log(call: CallbackQuery, state: FSMContext):
 Имя клиента - {log.name_client}\n
 Мастер - {choice_master}\n
 Услуга - {log.service}\n
-Стоимость - {service.price}''', reply_markup=kb_log_cancel)
+Стоимость - {service.price}''')
     # await state.finish()
     # Добавить кнопку-ссылку на пост в инстаграмм об услуге или показать описание услуги
