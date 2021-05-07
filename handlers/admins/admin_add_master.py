@@ -85,8 +85,8 @@ async def add_name_master(message: Message, state: FSMContext):
         await message.answer(f'Имя мастера: "{name}". '
                              f'\n{is_master_in_db}'
                              '\nПришлите user_id мастера.'
-                             '\nПопросите вашего будущего мастера прописать команду  /send_id. '
-                             'Скопируйте полученный идентификатор и уже от своего лица отошлите боту.'
+                             '\nПопросите вашего будущего мастера прописать команду: \n/send_id. '
+                             '\nСкопируйте полученный идентификатор и уже от своего лица отошлите боту.'
                              'ВНИМАНИЕ. Добавьте user_id мастера в Dashboard Heroku.',
                              reply_markup=admin_default_cancel_add_master)
 
@@ -107,7 +107,7 @@ async def process_print_kb_mes(message, state, change_list=False):
     # kb_services.add(InlineKeyboardButton('Отмена добавления мастера',
     #                                      callback_data='cancel_add_master'))
     # await message.answer(text=answer_mes, reply_markup=kb_services)
-    await message.answer(text=answer_mes, reply_markup=admin_default_cancel_confirm_service_list)
+    await message.answer('Список услуг нового мастера.', reply_markup=admin_default_cancel_confirm_service_list)
     if change_list is False:
         await message.answer(f'Название: "{data.get("name")}". '
                              f'\nUser_id "{data.get("user_id")}".'
@@ -127,8 +127,15 @@ async def process_print_kb_mes(message, state, change_list=False):
 async def add_id_master(message: Message, state: FSMContext):
     data = await state.get_data()
     if not data.get('user_id'):
-        user_id = message.text.strip()
-        data['user_id'] = user_id
+        try:
+            user_id = int(message.text.strip())
+            data['user_id'] = user_id
+        except ValueError:
+            await state.reset_state(with_data=True)
+            await AdminAddMaster.ID.set()
+            await message.answer('Ошибка. User_id это последовательность цифр.'
+                                 '\nПришлите user_id мастера.')
+            return
         await state.update_data(data)
         await process_print_kb_mes(message, state)
         await AdminAddMaster.Services.set()

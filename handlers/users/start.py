@@ -34,7 +34,9 @@ async def bot_start(message: types.Message):
 Привет, {name_user}!
 У тебя права администратора! Введи /help_admin
 Пользователей в БД: {count_users} юзер(а).
+Ваш user_id:
         ''', reply_markup=main_menu_admin)
+        await message.answer(message.chat.id)
     elif str(chat_id) in masters_id and str(chat_id) not in admins:
         await message.answer(f'''
 Привет, {name_user}!
