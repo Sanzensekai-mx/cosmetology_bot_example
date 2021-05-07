@@ -6,8 +6,9 @@ from aiogram.dispatcher.filters import Text
 from aiogram.types import Message, ReplyKeyboardRemove, InlineKeyboardMarkup, \
     InlineKeyboardButton, CallbackQuery, ContentType
 
-from keyboards.default import main_menu_client, phone_number
-from keyboards.inline import cancel_appointment, cancel_appointment_or_confirm
+from keyboards.default import main_menu_client, phone_number, default_cancel_appointment, \
+    default_cancel_appointment_confirm
+from keyboards.inline import inline_cancel_appointment
 from loader import dp
 from states.user_states import UserAppointment
 from utils.db_api.models import DBCommands
@@ -28,7 +29,7 @@ async def confirm_or_change(data, mes):
 Мастер - {data.get("name_master")}\n
 Дата - {date[2]} / {date[1]} / {date[0]}\n
 Время - {data.get("time")}\n
-Номер телефона - {data.get("phone_number")}''', reply_markup=cancel_appointment_or_confirm)
+Номер телефона - {data.get("phone_number")}''', reply_markup=default_cancel_appointment_confirm)
     await UserAppointment.Confirm.set()
 
 
@@ -40,13 +41,20 @@ async def process_cancel_add_service(call: CallbackQuery, state: FSMContext):
     await state.reset_state()
 
 
+@dp.message_handler(Text(equals=['Отмена записи']), state=UserAppointment)
+async def default_kb_process_cancel_add_service(message: Message, state: FSMContext):
+    logging.info(f'from: {message.chat.full_name}, text: {message.text}, info: Отмена записи.')
+    await message.answer('Отмена записи.', reply_markup=main_menu_client)  # Добавить reply_markup
+    await state.reset_state()
+
+
 @dp.message_handler(Text(equals=['Запись']))
 async def open_appointment_start(message: Message, state: FSMContext):
     logging.info(f'from: {message.chat.first_name}, text: {message.text}')
     # LOG you!!!!!!!
     await message.answer('Начало записи.', reply_markup=ReplyKeyboardRemove())
     await message.answer('Введите своё фамилию и имя. Например: Петрина Кристина',
-                         reply_markup=cancel_appointment)
+                         reply_markup=inline_cancel_appointment)
     await UserAppointment.Name.set()
     await state.update_data(
         {'name_client': '',
@@ -73,8 +81,8 @@ async def return_kb_masters(service):
         if service in master.master_services.split('_'):
             cancel_appointment_choice_master.add(InlineKeyboardButton(f'{master.master_name}',
                                                                       callback_data=f'm_{master.master_name}'))
-    cancel_appointment_choice_master.add(InlineKeyboardButton('Отмена записи',
-                                                              callback_data='cancel_appointment'))
+    # cancel_appointment_choice_master.add(InlineKeyboardButton('Отмена записи',
+    #                                                           callback_data='cancel_appointment'))
     return cancel_appointment_choice_master
 
 
@@ -92,11 +100,9 @@ async def return_kb_mes_services(state, is_it_appointment=True):
         current_services_dict[str(num)] = service_name
         cancel_appointment_choice_service.insert(InlineKeyboardButton(f'{num}',
                                                                       callback_data=f's_{num}_{service_name}'))
-        # cancel_appointment_choice_service.add(InlineKeyboardButton(f'{service_name} {service_price}',
-        #                                                            callback_data=f's_{service_name}'))
-    if is_it_appointment:
-        cancel_appointment_choice_service.add(InlineKeyboardButton('Отмена записи',
-                                                                   callback_data='cancel_appointment'))
+    # if is_it_appointment:
+    #     cancel_appointment_choice_service.add(InlineKeyboardButton('Отмена записи',
+    #                                                                callback_data='cancel_appointment'))
     data_from_state['current_services_dict'] = current_services_dict
     await state.update_data(data_from_state)
     return [res_message, cancel_appointment_choice_service]
@@ -105,7 +111,8 @@ async def return_kb_mes_services(state, is_it_appointment=True):
 async def service_process_enter(message, state):
     data = await state.get_data()
     res_mes_and_kb = await return_kb_mes_services(state)
-    await message.answer(f'Ваше Фамилия и Имя: "{data.get("name_client")}". ' \
+    await message.answer('Выбор услуги', reply_markup=default_cancel_appointment)
+    await message.answer(f'Ваша Фамилия и Имя: "{data.get("name_client")}". ' \
                               f'\nВыберите услугу:\n{res_mes_and_kb[0]}',
                               reply_markup=res_mes_and_kb[1])
 
@@ -159,8 +166,10 @@ async def choice_master(call: CallbackQuery, state: FSMContext):
         #                          year=current_date.year,
         #                          month=current_date.month,
         #                          day=current_date.day)
-        await call.message.answer(f'Ваше Фамилия и Имя: "{data.get("name_client")}". ' \
-                                  f'\nВыбрана услуга: "{data.get("service")}"',
+        await call.message.answer('Выбор мастера', reply_markup=default_cancel_appointment)
+        await call.message.answer(f'Ваша Фамилия и Имя: "{data.get("name_client")}". ' \
+                                  f'\nВыбрана услуга: "{data.get("service")}"'
+                                  f'\nТеперь выберите мастера из списка ниже.',
                                   reply_markup=await return_kb_masters(service=data.get("service")))
     else:
         data['service'] = service
@@ -230,14 +239,8 @@ async def date_process_enter(call, state, year, month, day):
             inline_calendar.insert(InlineKeyboardButton(' ', callback_data=f'wrong_date'))
             continue
         inline_calendar.insert(InlineKeyboardButton(day_cal[2], callback_data=f'date_{day_cal}'))
-    inline_calendar.add(InlineKeyboardButton('Отмена записи', callback_data='cancel_appointment'))
-    # print([date[0] for date in c.itermonthdays2(current_date.year, current_date.month) if date[1] in [5, 6]])
-    # print([date for date in c.itermonthdays(current_date.year, current_date.month)])
-    # print([date for date in c.itermonthdays2(current_date.year, current_date.month)])
-    # print([date for date in c.itermonthdays3(current_date.year, current_date.month)])
-    # print([date for date in c.itermonthdays4(year, month)])
-    # print(print_c)
-    # print(print_c.split())
+    # inline_calendar.add(InlineKeyboardButton('Отмена записи', callback_data='cancel_appointment'))
+    await call.message.answer('Выбор даты оказания услуги', reply_markup=default_cancel_appointment)
     await call.message.answer(f'Ваше Фамилия и Имя: "{data.get("name_client")}". '
                               f'\nМастер: "{data.get("name_master")}"'
                               f'\nУслуга: "{service.name}"', reply_markup=inline_calendar)
@@ -315,9 +318,10 @@ async def time_process_enter(call, state):
                 time_kb.add(InlineKeyboardButton(f'{time}', callback_data=f'time_{time}'))
             else:
                 time_kb.insert(InlineKeyboardButton(f'{time}', callback_data=f'time_{time}'))
-    time_kb.add(InlineKeyboardButton('Отмена записи', callback_data='cancel_appointment'))
+    # time_kb.add(InlineKeyboardButton('Отмена записи', callback_data='cancel_appointment'))
     # Формат даты День/месяц/год
     date = [d.strip() for d in data.get("date").strip("()").split(",")]
+    await call.message.answer('Выбор времени оказания услуги', reply_markup=default_cancel_appointment)
     await call.message.answer(f'Ваше Фамилия и Имя: "{data.get("name_client")}". '
                               f'\nМастер: "{data.get("name_master")}"'
                               f'\nУслуга: "{data.get("service")}"'
@@ -346,7 +350,7 @@ async def choice_date(call: CallbackQuery, state: FSMContext):
                                       f'\nМастер: "{data.get("name_master")}"'
                                       f'\nУслуга: "{data.get("service")}"'
                                       f'\nДата:  {date[2]} / {date[1]} / {date[0]}'
-                                      f'\nВремя:  {data.get("time")}', reply_markup=cancel_appointment)
+                                      f'\nВремя:  {data.get("time")}', reply_markup=default_cancel_appointment)
             await call.message.answer('Нажмите на кнопку ниже, чтобы отправить номер телефона.',
                                       reply_markup=phone_number)
         # Выбор даты, функция
@@ -370,7 +374,7 @@ async def choice_date(message: Message, state: FSMContext):
         await state.update_data(data)
         # print(await state.get_data())
         await UserAppointment.Confirm.set()
-        await message.answer('Проверьте введенные данные.', reply_markup=ReplyKeyboardRemove())
+        await message.answer('Проверьте введенные данные.', reply_markup=default_cancel_appointment)
         await confirm_or_change(data, message)
         # await message.answer('Нажмите кнопку, чтобы записаться', reply_markup=cancel_appointment_or_confirm)
     else:
@@ -403,9 +407,11 @@ async def choice_date(message: Message, state: FSMContext):
 #         await UserAppointment.Time.set()
 
 
-@dp.callback_query_handler(text_contains='confirm_appointment', state=UserAppointment.Confirm)
-async def confirm_to_db(call: CallbackQuery, state: FSMContext):
-    await call.answer(cache_time=60)
+# @dp.callback_query_handler(text_contains='confirm_appointment', state=UserAppointment.Confirm)
+# async def confirm_to_db(call: CallbackQuery, state: FSMContext):
+@dp.message_handler(Text(equals=['Подтвердить']), state=UserAppointment.Confirm)
+async def confirm_to_db(message: Message, state: FSMContext):
+    # await call.answer(cache_time=60)
     data = await state.get_data()
     await db.add_update_date(datetime_one=data.get('date'),
                              time=data.get('time'), master=data.get('name_master'))
@@ -418,8 +424,8 @@ async def confirm_to_db(call: CallbackQuery, state: FSMContext):
         date=data.get('date'),
         time=data.get('time'),
         phone_number=data.get('phone_number'))
-    await call.message.answer('Вы записаны. Нажмите на кнопку \"Мои записи\", чтобы увидеть подробности записи',
-                              reply_markup=main_menu_client)  # Исправить reply_markup
+    await message.answer('Вы записаны. Нажмите на кнопку \"Мои записи\", чтобы увидеть подробности записи',
+                         reply_markup=main_menu_client)  # Исправить reply_markup
     # Тест отправки
     # pic = await db.show_service_test()
     # await bot.send_photo(chat_id=591763264, photo=pic.pic_file_id)
