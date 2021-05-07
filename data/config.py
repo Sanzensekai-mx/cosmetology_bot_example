@@ -5,6 +5,7 @@ import pytz
 from dotenv import load_dotenv
 
 load_dotenv(encoding='utf-8')
+
 BOT_TOKEN = str(os.environ.get('BOT_TOKEN'))  # Dashboard
 # BOT_TOKEN = str(os.getenv("BOT_TOKEN"))
 admins = str(os.environ.get('admins')).split(', ')   # Dashboard
