@@ -267,7 +267,7 @@ async def confirm_new_service(message: Message, state: FSMContext):
         if master.master_name in data_from_state.get("masters_list"):
             name, m_id, user_id, master_services = master.master_name, master.id, \
                                                    master.master_user_id, master.master_services
-            master_services += f'_{data_from_state.get("name")}'
+            master_services.append(data_from_state.get("name"))
             await db.del_master(master.master_name)
             await db.add_master(
                 master_name=name,

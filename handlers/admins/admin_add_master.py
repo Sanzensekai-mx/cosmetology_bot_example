@@ -188,7 +188,7 @@ async def confirm_new_master(message: Message, state: FSMContext):
     await db.add_master(
         master_name=data_from_state.get("name"),
         master_user_id=data_from_state.get("user_id"),
-        master_services='_'.join(data_from_state.get("services")),
+        master_services=data_from_state.get("services"),
     )
     try:
         await bot.send_message(chat_id=data_from_state.get("user_id"), text='Вы добавлены в качестве мастера.')

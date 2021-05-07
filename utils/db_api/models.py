@@ -53,7 +53,7 @@ class Master(db.Model):
     id = db.Column(db.Integer, db.Sequence('master_id_seq'), primary_key=True)
     master_name = db.Column(db.String)
     master_user_id = db.Column(db.BigInteger, unique=True)
-    master_services = db.Column(db.String)
+    master_services = db.Column(db.ARRAY(db.String))
 
 
 class DBCommands:

@@ -13,7 +13,7 @@ db = DBCommands()
 
 
 @dp.callback_query_handler(chat_id=admins, state=AdminDelService, text_contains='cancel_del_service')
-async def process_cancel_del_master(call: CallbackQuery, state: FSMContext):
+async def process_cancel_del_service(call: CallbackQuery, state: FSMContext):
     await call.answer(cache_time=60)
     logging.info(f'from: {call.message.chat.full_name}, text: {call.message.text}, info: Отмена удаления услуги.')
     await call.message.answer('Отмена удаления услуги.', reply_markup=main_menu_admin)
@@ -21,7 +21,7 @@ async def process_cancel_del_master(call: CallbackQuery, state: FSMContext):
 
 
 @dp.message_handler(Text(equals='Удалить услугу'), chat_id=admins)
-async def start_del_master(message: Message):
+async def start_del_service(message: Message):
     logging.info(f'from: {message.chat.full_name}, text: {message.text}')
     cancel_choice_service_to_del = InlineKeyboardMarkup()
     all_services = await db.all_services()
@@ -35,9 +35,21 @@ async def start_del_master(message: Message):
 
 
 @dp.callback_query_handler(chat_id=admins, state=AdminDelService.Del, text_contains='s_')
-async def del_master(call: CallbackQuery, state: FSMContext):
+async def del_service(call: CallbackQuery, state: FSMContext):
     await call.answer(cache_time=60)
     service_to_del = call.data.split('_')[1]
     await db.del_service(service_to_del)
+    masters = await db.all_masters()
+    for master in masters:
+        if service_to_del in master.master_services:
+            name, m_id, user_id, master_services = master.master_name, master.id, \
+                                                   master.master_user_id, master.master_services
+            master_services.remove(service_to_del)
+            await db.del_master(master.master_name)
+            await db.add_master(
+                master_name=name,
+                master_user_id=user_id,
+                master_services=master_services
+            )
     await call.message.answer(f'Услуга \'{service_to_del}\' удалена.')
     await state.finish()

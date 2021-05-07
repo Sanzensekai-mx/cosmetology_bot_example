@@ -78,7 +78,7 @@ async def return_kb_masters(service):
     all_masters = await db.all_masters()
     for master in all_masters:
         # split так как в БД хранится строка типа Ресницы_Волосы. Костыль херли
-        if service in master.master_services.split('_'):
+        if service in master.master_services:
             appointment_choice_master.add(InlineKeyboardButton(f'{master.master_name}',
                                                                callback_data=f'm_{master.master_name}'))
     # cancel_appointment_choice_master.add(InlineKeyboardButton('Отмена записи',
