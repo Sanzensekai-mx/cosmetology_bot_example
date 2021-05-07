@@ -148,12 +148,9 @@ async def process_choice_week(call, date_time, state):
     # print(current_week_days)
     kb_week = InlineKeyboardMarkup(row_width=7)
     for week_day in [item for item in print_month_c.split()][2:9]:
-        # if week_day == 'Mo':
-        #     kb_week.add(InlineKeyboardButton(days.get(week_day), callback_data=days.get(week_day)))
-        #     continue
         kb_week.insert(InlineKeyboardButton(days.get(week_day), callback_data=days.get(week_day)))
     for day in current_week_days:
-        if day < current_date.day:
+        if day < current_date.day or day in current_week_days[5:]:
             kb_week.insert(InlineKeyboardButton(' ', callback_data=f'wrong_date'))
             continue
         kb_week.insert(
