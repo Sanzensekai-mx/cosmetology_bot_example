@@ -74,16 +74,16 @@ async def open_appointment_start(message: Message, state: FSMContext):
 
 
 async def return_kb_masters(service):
-    cancel_appointment_choice_master = InlineKeyboardMarkup()
+    appointment_choice_master = InlineKeyboardMarkup()
     all_masters = await db.all_masters()
     for master in all_masters:
         # split так как в БД хранится строка типа Ресницы_Волосы. Костыль херли
         if service in master.master_services.split('_'):
-            cancel_appointment_choice_master.add(InlineKeyboardButton(f'{master.master_name}',
-                                                                      callback_data=f'm_{master.master_name}'))
+            appointment_choice_master.add(InlineKeyboardButton(f'{master.master_name}',
+                                                               callback_data=f'm_{master.master_name}'))
     # cancel_appointment_choice_master.add(InlineKeyboardButton('Отмена записи',
     #                                                           callback_data='cancel_appointment'))
-    return cancel_appointment_choice_master
+    return appointment_choice_master
 
 
 # Возвращает список, где 1-ый элемент - сообщение, 2-ой - клавиатура
@@ -113,8 +113,8 @@ async def service_process_enter(message, state):
     res_mes_and_kb = await return_kb_mes_services(state)
     await message.answer('Выбор услуги', reply_markup=default_cancel_appointment)
     await message.answer(f'Ваша Фамилия и Имя: "{data.get("name_client")}". ' \
-                              f'\nВыберите услугу:\n{res_mes_and_kb[0]}',
-                              reply_markup=res_mes_and_kb[1])
+                         f'\nВыберите услугу:\n{res_mes_and_kb[0]}',
+                         reply_markup=res_mes_and_kb[1])
 
 
 @dp.message_handler(state=UserAppointment.Name)

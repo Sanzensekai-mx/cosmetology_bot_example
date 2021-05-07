@@ -54,3 +54,31 @@ admin_default_cancel_del_master = ReplyKeyboardMarkup(
             KeyboardButton('Отмена удаления мастера')
         ]
     ], resize_keyboard=True)
+
+admin_default_cancel_confirm_service = ReplyKeyboardMarkup(
+    keyboard=[
+        [
+            KeyboardButton('Подтвердить добавление услуги')
+        ],
+        [
+            KeyboardButton('Отмена добавления услуги')
+        ]
+    ], resize_keyboard=True)
+
+admin_default_cancel_service = ReplyKeyboardMarkup(
+    keyboard=[
+        [
+            KeyboardButton('Отмена добавления услуги')
+        ]
+    ], resize_keyboard=True)
+
+admin_default_cancel_confirm_masters_list = ReplyKeyboardMarkup(
+    keyboard=[
+        [
+            KeyboardButton('Подтвердить список мастеров')
+        ],
+        [
+            KeyboardButton('Отмена добавления услуги')
+        ]
+    ], resize_keyboard=True
+)
