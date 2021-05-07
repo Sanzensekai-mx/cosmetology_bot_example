@@ -20,6 +20,7 @@ logging.basicConfig(format=u'%(filename)s [LINE:%(lineno)d] '
                     level=logging.INFO)
 
 # Способ с inline-клавиатурой Закрытия просмотра записей
+
 # @dp.callback_query_handler(state=UserCheckLog.Check, text_contains='cancel_check_user_log')
 # async def inline_process_cancel_check_logs(call: CallbackQuery, state: FSMContext):
 #     await call.answer(cache_time=60)
