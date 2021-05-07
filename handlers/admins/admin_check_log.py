@@ -1,4 +1,6 @@
+import locale
 import logging
+import pytz
 import datetime
 import calendar
 from aiogram.dispatcher import FSMContext
@@ -11,7 +13,7 @@ from keyboards.inline import check_logs_choice_range
 from loader import dp
 from states.admin_states import AdminCheckLog
 from utils.db_api.models import DBCommands
-from data.config import admins, masters_id
+from data.config import admins, masters_id, months, days, tz_ulyanovsk
 
 db = DBCommands()
 
@@ -27,9 +29,27 @@ logging.basicConfig(format=u'%(filename)s 'u'[LINE:%(lineno)d] '
                     level=logging.INFO)
 
 
+@dp.message_handler(commands=['time'])
+async def show_time(message: Message):
+    # tz = pytz.timezone('Europe/Ulyanovsk')
+    current_date = datetime.datetime.now()
+    await message.answer(f'\ntoday'
+                         f'\n{current_date}'
+                         f'\nutcnow'
+                         f'\n{datetime.datetime.utcnow()}'
+                         f'\nmaybe current'
+                         f'\n{datetime.datetime.now(tz_ulyanovsk)}')
+    # locale.setlocale(locale.LC_ALL, '')
+    # locale.setlocale(locale.LC_ALL, 'ru_RU')
+    # c = calendar.TextCalendar(calendar.MONDAY)
+    # print_month_c = c.formatmonth(current_date.year, current_date.month)
+    await message.answer(months)
+    await message.answer(days)
+
+
 @dp.callback_query_handler(text_contains='cancel_check', chat_id=masters_id, state=AdminCheckLog)
 async def process_cancel_add_service(call: CallbackQuery, state: FSMContext):
-    logging.info(f'from: {call.message.chat.full_name}, text: {call.message.text}, info: Отмена рассылки.')
+    logging.info(f'from: {call.message.chat.full_name}, text: {call.message.text}, info: Отмена просмотра.')
     await call.answer(cache_time=60)
     if str(call.message.chat.id) in admins and str(call.message.chat.id) in masters_id:
         await call.message.answer('Отмена.', reply_markup=main_menu_admin)
@@ -43,7 +63,7 @@ async def process_cancel_add_service(call: CallbackQuery, state: FSMContext):
                                  'Посмотреть записи ко мне (мастер)']), chat_id=masters_id)
 async def start_check_logs(message: Message):
     await message.answer('Просмотр записи клиентов.', reply_markup=check_logs_choice_range)
-    print(await db.get_master_and_id())
+    # print(await db.get_master_and_id())
     await AdminCheckLog.ChoiceRange.set()
 
 
@@ -88,7 +108,7 @@ async def process_choice_time(call: CallbackQuery):
 async def process_choice_day(call, date_time):
     current_date = date_time
     year, month, day = current_date.year, current_date.month, current_date.day
-    c = calendar.LocaleTextCalendar(calendar.MONDAY, locale='Russian_Russia')
+    c = calendar.TextCalendar(calendar.MONDAY)
     datetime_with_weekdays = [date for date in c.itermonthdays4(year, month) if date[2] == day][0]
     # today_datetime_log = await db.get_datetime()
     print(get_key(await db.get_master_and_id(), str(call.message.chat.id)))
@@ -118,7 +138,7 @@ async def process_choice_week(call, date_time, state):
     # await state.update_data('kb': None)
     # data = await state.get_data()
     current_date = date_time
-    c = calendar.LocaleTextCalendar(calendar.MONDAY, locale='Russian_Russia')
+    c = calendar.TextCalendar(calendar.MONDAY)
     month_c = calendar.monthcalendar(current_date.year, current_date.month)
     print_month_c = c.formatmonth(current_date.year, current_date.month)
     # print(month_c)
@@ -128,12 +148,9 @@ async def process_choice_week(call, date_time, state):
     # print(current_week_days)
     kb_week = InlineKeyboardMarkup(row_width=7)
     for week_day in [item for item in print_month_c.split()][2:9]:
-        if week_day == 'Пн':
-            kb_week.add(InlineKeyboardButton(week_day, callback_data=week_day))
-            continue
-        kb_week.insert(InlineKeyboardButton(week_day, callback_data=week_day))
+        kb_week.insert(InlineKeyboardButton(days.get(week_day), callback_data=days.get(week_day)))
     for day in current_week_days:
-        if day < current_date.day:
+        if day < current_date.day or day in current_week_days[5:]:
             kb_week.insert(InlineKeyboardButton(' ', callback_data=f'wrong_date'))
             continue
         kb_week.insert(
@@ -210,7 +227,7 @@ async def change_month_process(call: CallbackQuery, state: FSMContext):
 
 async def process_choice_months(call, date_time, state, year, month, day):
     data = await state.get_data()
-    c = calendar.LocaleTextCalendar(calendar.MONDAY, locale='Russian_Russia')
+    c = calendar.TextCalendar(calendar.MONDAY)
     current_date = date_time
     # year, month = current_date.year, current_date.month
     if month == current_date.month and year == current_date.year:
@@ -226,13 +243,14 @@ async def process_choice_months(call, date_time, state, year, month, day):
     data['current_choice_month'] = month
     data['current_choice_year'] = year
     await state.update_data(data)
-    inline_calendar.insert(InlineKeyboardButton(f'{print_c.split()[0]} {print_c.split()[1]}', callback_data=' '))
+    inline_calendar.insert(InlineKeyboardButton(f'{months.get(print_c.split()[0])} {print_c.split()[1]}',
+                                                callback_data=' '))
     inline_calendar.insert(InlineKeyboardButton('>', callback_data='month_next'))
     for week_day in print_c.split()[2:9]:
-        if week_day == 'Пн':
-            inline_calendar.add(InlineKeyboardButton(week_day, callback_data=week_day))
+        if week_day == 'Mo':
+            inline_calendar.add(InlineKeyboardButton(days.get(week_day), callback_data=days.get(week_day)))
             continue
-        inline_calendar.insert(InlineKeyboardButton(week_day, callback_data=week_day))
+        inline_calendar.insert(InlineKeyboardButton(days.get(week_day), callback_data=days.get(week_day)))
     for day_cal in c.itermonthdays4(year, month):
         # Исключает дни другого месяца, прошедшие дни и выходные дни (Суббота, Воскресенье)
         if day_cal[2] == 0 \

@@ -19,6 +19,10 @@ class AdminAddService(StatesGroup):
     Confirm = State()
 
 
+class AdminDelService(StatesGroup):
+    Del = State()
+
+
 class AdminCheckLog(StatesGroup):
     ChoiceRange = State()
     CheckToday = State()
@@ -31,3 +35,7 @@ class AdminAddMaster(StatesGroup):
     ID = State()
     Services = State()
     Confirm = State()
+
+
+class AdminDelMaster(StatesGroup):
+    Del = State()

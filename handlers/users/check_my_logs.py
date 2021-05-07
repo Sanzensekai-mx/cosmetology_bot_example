@@ -20,35 +20,57 @@ logging.basicConfig(format=u'%(filename)s [LINE:%(lineno)d] '
                     level=logging.INFO)
 
 
+@dp.callback_query_handler(state=UserCheckLog.Check, text_contains='cancel_check_user_log')
+async def process_cancel_check_logs(call: CallbackQuery, state: FSMContext):
+    await call.answer(cache_time=60)
+    logging.info(f'from: {call.message.chat.full_name}, text: {call.message.text}, info: Отмена просмотра записей '
+                 f'пользоватем.')
+    await call.message.answer('Отмена просмотра записей.'
+                              '\nВыберите кнопку ниже.', reply_markup=main_menu_client)
+    await state.reset_state()
+
+
 @dp.message_handler(Text(equals='Мои записи'))
-async def check_users_logs(message: Message):
+async def check_users_logs(message: Message, state: FSMContext):
     # print(await db.get_old_datetime(datetime.date.today()))
+    await UserCheckLog.Check.set()
     logging.info(f'from: {message.chat.first_name}, text: {message.text}')
     logs_list = await db.get_all_logs_by_user_id(message.chat.id)
     kb_logs = InlineKeyboardMarkup(row_width=5)
-    # print(logs_list[0].full_datetime)
-    # print(type(logs_list[0].full_datetime))
-    if logs_list:
-        for log in logs_list:
-        # Список вида (2021, 2, 22, 0) 10:00
-            date = [x.strip('()').strip() for x in log.date.split(',')]
-            kb_logs.add(InlineKeyboardButton(f'Дата:  {date[2]} / {date[1]} / {date[0]} Время: {log.time}',
-                                             callback_data=f'user:datetime_{log.full_datetime}_{log.name_master}'))
-        await message.answer('Ваши записи:', reply_markup=kb_logs)
-    else:
+    await state.update_data(
+        {'user_logs': {}}
+    )
+    if not logs_list:
         await message.answer('Вы еще не записывались. \nДля записи нажмите кнопку "Запись"',
                              reply_markup=main_menu_client)
+        await state.finish()
+    else:
+        data = await state.get_data()
+        for num, log in enumerate(logs_list, 1):
+        # Список вида (2021, 2, 22, 0) 10:00
+            date = [x.strip('()').strip() for x in log.date.split(',')]
+            data['user_logs'][num] = {'datetime': f'{log.full_datetime}', 'name_master': f'{log.name_master}'}
+            kb_logs.add(InlineKeyboardButton(f'Дата:  {date[2]} / {date[1]} / {date[0]} Время: {log.time}',
+                                             callback_data=f'ud_{num}'))
+        kb_logs.add(InlineKeyboardButton(f'Закрыть просмотр записей', callback_data='cancel_check_user_log'))
+        await state.update_data(data)
+        await message.answer('Нажмите на кнопки ниже, чтобы просмотреть подробную информацию о выших записях.',
+                             reply_markup=ReplyKeyboardRemove())
+        await message.answer('Ваши записи:', reply_markup=kb_logs)
 
 
-@dp.callback_query_handler(text_contains='user:datetime_')
-async def process_one_log(call: CallbackQuery):
+@dp.callback_query_handler(text_contains='ud_', state=UserCheckLog.Check)
+async def process_one_log(call: CallbackQuery, state: FSMContext):
     await call.answer(cache_time=60)
-    result = call.data.split('_')
-    choice_log_datetime, choice_master = result[1], result[2]
+    num = int(call.data.split('_')[1])  # Порядковый номер записи из словаря записей пользователя
+    data = await state.get_data()
+    choice_log_datetime, choice_master = data['user_logs'][num]['datetime'], data['user_logs'][num]['name_master']
     log = await db.get_log_by_full_datetime(choice_log_datetime, choice_master)
     date = [int(d.strip()) for d in log.date.strip('()').split(',')]
     service = await db.get_service(log.service)
     # Кнопка со ссылкой на описание и фото услуги?
+    kb_log_cancel = InlineKeyboardMarkup().add(InlineKeyboardButton(
+        f'Закрыть просмотр записей', callback_data='cancel_check_user_log'))
     await call.message.answer(
         f'''
 Время - {log.time}\n
@@ -56,5 +78,6 @@ async def process_one_log(call: CallbackQuery):
 Имя клиента - {log.name_client}\n
 Мастер - {choice_master}\n
 Услуга - {log.service}\n
-Стоимость - {service.price}''')
+Стоимость - {service.price}''', reply_markup=kb_log_cancel)
+    # await state.finish()
     # Добавить кнопку-ссылку на пост в инстаграмм об услуге или показать описание услуги

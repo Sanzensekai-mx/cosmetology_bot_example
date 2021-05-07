@@ -127,10 +127,13 @@ class DBCommands:
         await new_service.create()
         return new_service
 
-    # @staticmethod
-    # async def show_service_test():
-    #     service = await Service.query.gino.first()
-    #     return service
+    async def del_service(self, name):
+        service = await self.get_service(name)
+        if service:
+            await service.delete()
+            return service
+        return service
+
     # Методы для таблицы log
     @staticmethod
     async def get_log_by_client(name_client):
@@ -156,10 +159,11 @@ class DBCommands:
         # return log
 
     @staticmethod
-    async def get_old_logs(current_date):
+    async def get_old_logs(current_datetime):
         # year, month, day = current_date.year, current_date.month, current_date.day
         # c = calendar.LocaleTextCalendar(calendar.MONDAY, locale='Russian_Russia')
         # current_date_with_weekdays = [date for date in c.itermonthdays4(year, month) if date[2] == day][0]
+        current_date = datetime.date(current_datetime.year, current_datetime.month, current_datetime.day)
         logs = []
         for log in await Log.query.gino.all():
             date_process = [int(d.strip()) for d in str(log.date).strip('()').split(',')]
@@ -248,7 +252,8 @@ class DBCommands:
                 return line
 
     @staticmethod
-    async def get_old_datetime(current_date):
+    async def get_old_datetime(current_datetime):
+        current_date = datetime.date(current_datetime.year, current_datetime.month, current_datetime.day)
         datetime_many = []
         for date_one in await Datetime.query.gino.all():
             date_process = [int(d.strip()) for d in str(date_one.datetime).strip('()').split(',')]
@@ -341,3 +346,10 @@ class DBCommands:
 
     async def get_master_and_id(self):
         return {master.master_name: str(master.master_user_id) for master in await self.all_masters()}
+
+    async def del_master(self, name):
+        master = await self.get_master(name)
+        if master:
+            await master.delete()
+            return master
+        return master
