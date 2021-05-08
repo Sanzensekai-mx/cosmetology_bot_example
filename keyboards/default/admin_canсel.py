@@ -89,3 +89,10 @@ admin_default_cancel_del_service = ReplyKeyboardMarkup(
             KeyboardButton('Отмена удаления услуги')
         ]
     ], resize_keyboard=True)
+
+admin_default_cancel_mailing = ReplyKeyboardMarkup(
+    keyboard=[
+        [
+            KeyboardButton('Отмена рассылки')
+        ]
+    ], resize_keyboard=True)

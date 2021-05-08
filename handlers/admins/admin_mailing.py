@@ -6,7 +6,7 @@ from aiogram.dispatcher.filters import Text
 from aiogram.types import Message, CallbackQuery, ContentType, \
     InputMediaPhoto, InputMediaVideo, ReplyKeyboardRemove
 from loader import dp, bot
-from keyboards.default import main_menu, admin_cancel_mail_or_confirm, admin_cancel_mail
+from keyboards.default import main_menu_admin, admin_cancel_mail_or_confirm, admin_default_cancel_mailing
 from keyboards.inline import admin_mailing_kb, cancel_mailing_kb
 from data.config import admins
 from states.admin_states import AdminMailing
@@ -27,23 +27,24 @@ logging.basicConfig(format=u'%(filename)s [LINE:%(lineno)d] '
 async def process_cancel_add_service(call: CallbackQuery, state: FSMContext):
     await call.answer(cache_time=60)
     logging.info(f'from: {call.message.chat.full_name}, text: {call.message.text}, info: Отмена рассылки.')
-    await call.message.answer('Отмена рассылки.')  # Добавить reply_markup
+    await call.message.answer('Отмена рассылки.', reply_markup=main_menu_admin)
     await state.reset_state()
 
 
-# @dp.message_handler(chat_id=admins, commands=['cancel_mail'], state=AdminMailing)
-# async def cancel_mail(message: Message, state: FSMContext):
-#     logging.info(f'from: {message.chat.full_name}, text: {message.text}, info: Отмена рассылки.')
-#     await message.answer('Отмена рассылки.', reply_markup=ReplyKeyboardRemove())  # Добавить reply_markup
-#     await state.reset_state()
+@dp.message_handler(Text(equals='Отмена рассылки'), chat_id=admins, state=AdminMailing)
+async def cancel_mail(message: Message, state: FSMContext):
+    logging.info(f'from: {message.chat.full_name}, text: {message.text}, info: Отмена рассылки.')
+    await message.answer('Отмена рассылки.', reply_markup=main_menu_admin)
+    await state.reset_state()
 
 
 @dp.message_handler(Text(equals='Рассылка'), chat_id=admins)
 async def mailing(message: Message):
     count_users = await db.count_users()
     logging.info(f'from: {message.chat.full_name}, text: {message.text}')
-    await message.answer("Выберите тип рассылки из меню. Нажмите /cancel_mail для отмены. "
-                         f"Сейчас в боте {count_users} пользователя(ей)")
+    await message.answer("Выберите тип рассылки из меню."
+                         f"Сейчас в боте {count_users} пользователя(ей)",
+                         reply_markup=admin_default_cancel_mailing)
     await message.answer("Отправить:", reply_markup=admin_mailing_kb)
     await AdminMailing.MailingMenu.set()
 
@@ -61,16 +62,16 @@ async def process_callback_data_mailing(call: CallbackQuery):
     elif what_to_send == 'another':
         await AdminMailing.AnotherMedia.set()
         await call.message.answer('Пришлите документ, аудио, анимацию, стикер, голосовое или видеозаметку. '
-                                  'За раз можно отправить только один объект.',
-                                  reply_markup=cancel_mailing_kb)
+                                  '\nЗа раз можно отправить только один объект.')
     elif what_to_send == 'forward':
         await AdminMailing.Forward.set()
-        await call.message.answer('Перешлите нужный пост в этот диалог. Имейте ввиду, что если в посте несколько '
+        await call.message.answer('Пересланный пост/сообщение')
+        await call.message.answer('Перешлите нужный пост в этот диалог. \nИмейте ввиду, что если в посте несколько '
                                   'фото/видео, то пользователям отошлется только первая картинка. Сработает Too '
-                                  'many requests.',
-                                  reply_markup=cancel_mailing_kb)
+                                  'many requests.')
     elif what_to_send == 'text':
         await AdminMailing.Text.set()
+        await call.message.answer('Обычный текст.', reply_markup=ReplyKeyboardRemove())
         await call.message.answer('Напишите текст для отправки.', reply_markup=cancel_mailing_kb)
 
 
@@ -99,6 +100,7 @@ async def send_group_photo(message: Message, state: FSMContext):
     if message.photo or message.video:
         await process_media_send(message, state)
     elif message.text == 'Отменить':
+        await message.answer('Отмена рассылки.', reply_markup=main_menu_admin)
         await state.finish()
     elif message.text == 'Подтвердить':
         users_data = await db.all_users()
@@ -109,7 +111,7 @@ async def send_group_photo(message: Message, state: FSMContext):
             except Exception as error:
                 logging.error(f'{error}, User: {user.full_name}, chat_id: {user.user_id}')
                 await message.answer(f'{error}, User: {user.full_name}, chat_id: {user.user_id}')
-        await message.answer("Рассылка выполнена.", reply_markup=ReplyKeyboardRemove())  # Добавить reply_markup
+        await message.answer("Рассылка выполнена.", reply_markup=main_menu_admin)
         await state.finish()
 
 
@@ -158,7 +160,7 @@ async def send_another(message: Message, state: FSMContext):
         except Exception as error:
             logging.error(f'{error}, User: {user.full_name}, chat_id: {user.user_id}')
             await message.answer(f'{error}, User: {user.full_name}, chat_id: {user.user_id}')
-    await message.answer("Рассылка выполнена.", reply_markup=ReplyKeyboardRemove())  # Добавить reply_markup
+    await message.answer("Рассылка выполнена.", reply_markup=main_menu_admin)
     await state.finish()
 
 
@@ -175,7 +177,7 @@ async def send_everyone(message: Message, state: FSMContext):
         except Exception as error:
             logging.error(f'{error}, User: {user.full_name}, chat_id: {user.user_id}')
             await message.answer(f'{error}, User: {user.full_name}, chat_id: {user.user_id}')
-    await message.answer("Рассылка выполнена.", reply_markup=ReplyKeyboardRemove())  # Добавить reply_markup
+    await message.answer("Рассылка выполнена.", reply_markup=main_menu_admin)
     await state.finish()
 
 
@@ -192,5 +194,5 @@ async def send_forward_message(message: Message, state: FSMContext):
         except Exception as error:
             logging.error(f'{error}, User: {user.full_name}, chat_id: {user.user_id}')
             await message.answer(f'{error}, User: {user.full_name}, chat_id: {user.user_id}')
-    await message.answer("Рассылка выполнена.", reply_markup=ReplyKeyboardRemove())  # Добавить reply_markup
+    await message.answer("Рассылка выполнена.", reply_markup=main_menu_admin)
     await state.finish()
