@@ -3,7 +3,7 @@ from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters import Text
 from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 
-from keyboards.default import main_menu_admin
+from keyboards.default import main_menu_admin, admin_default_cancel_del_service
 from loader import dp
 from states.admin_states import AdminDelService
 from utils.db_api.models import DBCommands
@@ -13,10 +13,17 @@ db = DBCommands()
 
 
 @dp.callback_query_handler(chat_id=admins, state=AdminDelService, text_contains='cancel_del_service')
-async def process_cancel_del_service(call: CallbackQuery, state: FSMContext):
+async def inline_process_cancel_del_service(call: CallbackQuery, state: FSMContext):
     await call.answer(cache_time=60)
     logging.info(f'from: {call.message.chat.full_name}, text: {call.message.text}, info: Отмена удаления услуги.')
     await call.message.answer('Отмена удаления услуги.', reply_markup=main_menu_admin)
+    await state.reset_state()
+
+
+@dp.message_handler(Text(equals=['Отмена удаления услуги']), chat_id=admins, state=AdminDelService)
+async def default_process_cancel_del_service(message: Message, state: FSMContext):
+    logging.info(f'from: {message.chat.full_name}, text: {message.text}, info: Отмена удаления услуги.')
+    await message.answer('Отмена удаления.', reply_markup=main_menu_admin)
     await state.reset_state()
 
 
@@ -28,8 +35,9 @@ async def start_del_service(message: Message):
     for service in all_services:
         cancel_choice_service_to_del.add(InlineKeyboardButton(f'{service.name}',
                                                               callback_data=f's_{service.name}'))
-    cancel_choice_service_to_del.add(InlineKeyboardButton('Отмена удаления',
-                                                          callback_data='cancel_del_service'))
+    # cancel_choice_service_to_del.add(InlineKeyboardButton('Отмена удаления',
+    #                                                       callback_data='cancel_del_service'))
+    await message.answer('Удаление услуги.', reply_markup=admin_default_cancel_del_service)
     await message.answer('Выберите услугу для удаления.', reply_markup=cancel_choice_service_to_del)
     await AdminDelService.Del.set()
 

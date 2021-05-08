@@ -110,10 +110,10 @@ class DBCommands:
         if old_service:
             await old_service.update(
                 id=old_service.id,
-                name=service_name,
+                name=old_service.name,
                 price=service_price,
                 describe=service_describe,
-                pic_href=service_pic_file_id,
+                pic_file_id=service_pic_file_id,
                 time=service_time
             ).apply()
             return old_service

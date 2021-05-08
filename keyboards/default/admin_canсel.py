@@ -82,3 +82,10 @@ admin_default_cancel_confirm_masters_list = ReplyKeyboardMarkup(
         ]
     ], resize_keyboard=True
 )
+
+admin_default_cancel_del_service = ReplyKeyboardMarkup(
+    keyboard=[
+        [
+            KeyboardButton('Отмена удаления услуги')
+        ]
+    ], resize_keyboard=True)

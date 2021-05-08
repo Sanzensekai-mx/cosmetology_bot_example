@@ -28,8 +28,8 @@ async def confirm_or_change(data, mes):
     # kb_confirm.add(InlineKeyboardButton('Отмена', callback_data='cancel_add_service'))
     await mes.answer('Подтверждение добавления новой услуги.', reply_markup=admin_default_cancel_confirm_service)
     await mes.answer(f'''
-ВНИМАНИЕ. Если вы хотите обновить название услугу,
-то сначала удалите исходную услугу и добавьте новую, вводя новые данные.
+# ВНИМАНИЕ. Если вы хотите обновить название услугу,
+# то сначала удалите исходную услугу и добавьте новую, вводя новые данные.
 Проверьте введенные данные.\n
 Название - {data.get("name")}\n
 Ссылка на картинку - {data.get("pic_file_id")}\n
