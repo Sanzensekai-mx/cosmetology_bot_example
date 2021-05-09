@@ -131,7 +131,9 @@ async def add_id_master(message: Message, state: FSMContext):
             user_id = int(message.text.strip())
             data['user_id'] = user_id
         except ValueError:
+            # ???
             await state.reset_state(with_data=True)
+            # ???
             await AdminAddMaster.ID.set()
             await message.answer('Ошибка. User_id это последовательность цифр.'
                                  '\nПришлите user_id мастера.')
@@ -153,7 +155,12 @@ async def confirm_master_service_list(message: Message, state: FSMContext):
 #     await call.answer(cache_time=60)
     await AdminAddMaster.Confirm.set()
     data = await state.get_data()
-    await confirm_or_change(data=data, mes=message)
+    if len(data.get('services')) == 0:
+        await message.answer('Ошибка. Список оказываемых услуг не может быть пустым.')
+        await process_print_kb_mes(message=message, state=state)
+        return
+    else:
+        await confirm_or_change(data=data, mes=message)
 
 
 @dp.callback_query_handler(chat_id=admins, state=AdminAddMaster.Services, text_contains='s_')
