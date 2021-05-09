@@ -205,6 +205,8 @@ async def date_process_enter(call, state, year, month, day):
     c = calendar.TextCalendar(calendar.MONDAY)
     service = await db.get_service(data.get('service'))
     current_date = datetime.datetime.now(tz_ulyanovsk)
+    # ?
+    # current_date += datetime.timedelta(hours=4)
     if month == current_date.month and year == current_date.year:
         month = current_date.month
         year = current_date.year
@@ -251,6 +253,9 @@ async def change_month_process(call: CallbackQuery, state: FSMContext):
     data = await state.get_data()
     await call.answer(cache_time=60)
     current_date = datetime.datetime.now(tz_ulyanovsk)
+    # ?
+    # current_date += datetime.timedelta(hours=4)
+    # await call.message.answer(f'{current_date.hour}:{current_date.minute}')
     result = call.data.split('_')[1]
     choice_year = data.get('current_choice_year')
     choice_month = data.get('current_choice_month')
