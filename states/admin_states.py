@@ -16,6 +16,7 @@ class AdminAddService(StatesGroup):
     Describe = State()
     PicHref = State()
     Time = State()
+    Masters = State()
     Confirm = State()
 
 

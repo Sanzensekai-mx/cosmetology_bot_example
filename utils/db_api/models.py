@@ -53,7 +53,7 @@ class Master(db.Model):
     id = db.Column(db.Integer, db.Sequence('master_id_seq'), primary_key=True)
     master_name = db.Column(db.String)
     master_user_id = db.Column(db.BigInteger, unique=True)
-    master_services = db.Column(db.String)
+    master_services = db.Column(db.ARRAY(db.String))
 
 
 class DBCommands:
@@ -110,10 +110,10 @@ class DBCommands:
         if old_service:
             await old_service.update(
                 id=old_service.id,
-                name=service_name,
+                name=old_service.name,
                 price=service_price,
                 describe=service_describe,
-                pic_href=service_pic_file_id,
+                pic_file_id=service_pic_file_id,
                 time=service_time
             ).apply()
             return old_service
@@ -315,7 +315,7 @@ class DBCommands:
         return master
 
     async def is_this_master_in_db(self, master_name):
-        master = await self.get_service(master_name)
+        master = await self.get_master(master_name)
         if master:
             return True
         return False

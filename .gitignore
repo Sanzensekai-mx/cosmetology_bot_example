@@ -130,4 +130,4 @@ dmypy.json
 .idea/*
 
 # Игнорирование конфига
-/data/config.py
+.data/config.py
