@@ -83,7 +83,7 @@ async def inline_process_back_to_months(call: CallbackQuery, state: FSMContext):
     data = await state.get_data()
     # await state.reset_state(with_data=True)
     # await AdminCheckLog.CheckMonths.set()
-    current_date = datetime.date.today()
+    current_date = datetime.datetime.now(tz_ulyanovsk)
     await process_choice_months(call=call,
                                 date_time=current_date,
                                 state=state,
@@ -95,7 +95,7 @@ async def inline_process_back_to_months(call: CallbackQuery, state: FSMContext):
 @dp.callback_query_handler(chat_id=masters_id, state=AdminCheckLog.CheckWeek, text_contains='back_weekdays')
 async def inline_process_back_to_weekdays(call: CallbackQuery, state: FSMContext):
     await call.answer(cache_time=60)
-    current_date = datetime.date.today()
+    current_date = datetime.datetime.now(tz_ulyanovsk)
     await process_choice_week(call=call, date_time=current_date, state=state)
 
 

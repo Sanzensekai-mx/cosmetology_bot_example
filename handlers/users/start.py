@@ -32,6 +32,9 @@ async def bot_start(message: types.Message):
     count_users = await db.count_users()
     if str(chat_id) in admins:
         current_date = datetime.datetime.now(tz_ulyanovsk)
+        # ?
+        # current_date += datetime.timedelta(hours=4)
+        # await message.answer(f'{current_date}')
         await message.answer(f'''
 Привет, {name_user}!
 У тебя права администратора! Введи /help_admin

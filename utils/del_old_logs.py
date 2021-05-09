@@ -10,6 +10,7 @@ db = DBCommands()
 
 async def del_logs_and_datetime():
     current_date = datetime.datetime.now(tz_ulyanovsk)
+    current_date += datetime.timedelta(hours=4)
     old_logs = await db.get_old_logs(current_date)
     old_datetime = await db.get_old_datetime(current_date)
     for log in old_logs:
