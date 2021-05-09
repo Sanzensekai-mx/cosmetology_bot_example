@@ -130,7 +130,7 @@ async def add_price_service(message: Message, state: FSMContext):
         await state.update_data(data)
         await message.answer('Время на оказание новой услуги.')
         await message.answer(f'Название: "{data.get("name")}". '
-                             f'\n{data.get("is_meme_in_db")}'
+                             f'\n{data.get("is_service_in_db")}'
                              f'\nЦена услуги: {data.get("price")}'
                              '\nНапишите время на оказание услуги. (В разработке или нет)',
                              reply_markup=cancel_add_service)
@@ -146,12 +146,18 @@ async def add_price_service(message: Message, state: FSMContext):
 async def add_price_service(message: Message, state: FSMContext):
     data = await state.get_data()
     if not data.get('time'):
-        time = message.text
-        data['time'] = time
+        try:
+            time = int(message.text)
+            data['time'] = time
+        except ValueError:
+            await state.reset_state(with_data=True)
+            await AdminAddService.Time.set()
+            await message.answer('Ошибка. Время должно содержать только цифры. Попробуйте ещё раз.')
+            return
         await state.update_data(data)
         await message.answer('Описание новой услуги.')
         await message.answer(f'Название: "{data.get("name")}". '
-                             f'\n{data.get("is_meme_in_db")}'
+                             f'\n{data.get("is_service_in_db")}'
                              f'\nЦена услуги: {data.get("price")}'
                              f'\nВремя оказание услуги: {data.get("time")}'
                              '\nНапишите краткое описание услуги.',
@@ -183,7 +189,7 @@ async def print_masters_choice(message, state, change_list=False):
     else:
         await message.answer('Пришлите новый список услуг для мастера.\n'
                              f'\nТекущий список мастеров: '
-                             f'\n{data.get("masters_list")}', reply_markup=choice_master)
+                             f'\n{list(set(data.get("masters_list")))}', reply_markup=choice_master)
     await AdminAddService.Masters.set()
 
 
@@ -219,6 +225,7 @@ async def process_add_masters_to_service_list(call: CallbackQuery, state: FSMCon
     result_name_master = call.data.split('_')[1]
     data = await state.get_data()
     data['masters_list'].append(result_name_master)
+    data['masters_list'] = list(set(data['masters_list']))
     await state.update_data(data)
     await print_masters_choice(call.message, state)
 
@@ -268,6 +275,7 @@ async def confirm_new_service(message: Message, state: FSMContext):
             name, m_id, user_id, master_services = master.master_name, master.id, \
                                                    master.master_user_id, master.master_services
             master_services.append(data_from_state.get("name"))
+            master_services = list(set(master_services))
             await db.del_master(master.master_name)
             await db.add_master(
                 master_name=name,

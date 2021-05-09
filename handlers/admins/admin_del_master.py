@@ -12,6 +12,7 @@ from data.config import admins
 
 db = DBCommands()
 
+
 # Инлайн отображение Отмены удаления
 # @dp.callback_query_handler(chat_id=admins, state=AdminDelMaster, text_contains='cancel_del_master')
 # async def inline_process_cancel_del_master(call: CallbackQuery, state: FSMContext):
@@ -51,5 +52,6 @@ async def del_master(call: CallbackQuery, state: FSMContext):
     await db.del_master(master_to_del)
     await call.message.answer(f'Мастер {master_db_item.master_name} удален. \nНе забудьте удалить его '
                               f'chat_id из переменных в Dashboard Heroku.'
-                              f'\nchat_id удаленного матера - {master_db_item.master_user_id}')
+                              f'\nchat_id удаленного маcтера - {master_db_item.master_user_id}',
+                              reply_markup=main_menu_admin)
     await state.finish()

@@ -1,7 +1,7 @@
 import logging
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters import Text
-from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
+from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, ReplyKeyboardRemove
 
 from keyboards.default import main_menu_admin, admin_default_cancel_del_service
 from loader import dp
@@ -59,5 +59,5 @@ async def del_service(call: CallbackQuery, state: FSMContext):
                 master_user_id=user_id,
                 master_services=master_services
             )
-    await call.message.answer(f'Услуга \'{service_to_del}\' удалена.')
+    await call.message.answer(f'Услуга \'{service_to_del}\' удалена.', reply_markup=ReplyKeyboardRemove())
     await state.finish()

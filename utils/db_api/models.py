@@ -315,7 +315,7 @@ class DBCommands:
         return master
 
     async def is_this_master_in_db(self, master_name):
-        master = await self.get_service(master_name)
+        master = await self.get_master(master_name)
         if master:
             return True
         return False

@@ -163,6 +163,7 @@ async def process_add_services_to_master_list(call: CallbackQuery, state: FSMCon
     result_name_service = call.data.split('_')[2]
     data = await state.get_data()
     data['services'].append(result_name_service)
+    data['services'] = list(set(data['services']))
     await state.update_data(data)
     await process_print_kb_mes(call.message, state)
 
@@ -173,7 +174,7 @@ async def change_some_data(call: CallbackQuery, state: FSMContext):
     data = await state.get_data()
     what_to_change = call.data.split(':')[1]
     if what_to_change == 'name':
-        await call.message.answer('Введите новое имя мастера.')
+        await call.message.answer('Введите новое имя мастера.', reply_markup=ReplyKeyboardRemove())
         await AdminAddMaster.Name.set()
     elif what_to_change == 'user_id':
         await call.message.answer('Пришлите новый user_id мастера.')
