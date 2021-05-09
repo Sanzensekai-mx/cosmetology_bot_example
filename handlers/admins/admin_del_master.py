@@ -47,8 +47,8 @@ async def start_del_master(message: Message):
 async def del_master(call: CallbackQuery, state: FSMContext):
     await call.answer(cache_time=60)
     master_to_del = call.data.split('_')[1]
-    await db.del_master(master_to_del)
     master_db_item = await db.get_master(master_to_del)
+    await db.del_master(master_to_del)
     await call.message.answer(f'Мастер {master_db_item.master_name} удален. \nНе забудьте удалить его '
                               f'chat_id из переменных в Dashboard Heroku.'
                               f'\nchat_id удаленного матера - {master_db_item.master_user_id}')

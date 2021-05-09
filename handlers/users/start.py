@@ -1,3 +1,4 @@
+import datetime
 import logging
 from aiogram import types
 from aiogram.dispatcher.filters import CommandStart
@@ -30,12 +31,14 @@ async def bot_start(message: types.Message):
     name_user = user.full_name
     count_users = await db.count_users()
     if str(chat_id) in admins:
+        current_date = datetime.datetime.now()
         await message.answer(f'''
 Привет, {name_user}!
 У тебя права администратора! Введи /help_admin
 Пользователей в БД: {count_users} юзер(а).
-Ваш user_id:
-        ''', reply_markup=main_menu_admin)
+Текущая дата: {current_date.day}/{current_date.month}/{current_date.year}
+Текущее время: {current_date.hour}:{current_date.minute}
+Ваш user_id:''', reply_markup=main_menu_admin)
         await message.answer(message.chat.id)
     elif str(chat_id) in masters_id and str(chat_id) not in admins:
         await message.answer(f'''
