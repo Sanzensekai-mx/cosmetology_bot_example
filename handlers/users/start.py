@@ -6,7 +6,7 @@ from aiogram.dispatcher.filters import CommandStart
 from keyboards.default import main_menu_client, main_menu_admin, main_menu_master
 from loader import dp
 from utils.db_api.models import DBCommands
-from data.config import admins, masters_id, tz_ulyanovsk
+from data.config import admins, masters_id
 
 logging.basicConfig(format=u'%(filename)s [LINE:%(lineno)d] '
                            u'#%(levelname)-8s [%(asctime)s]  %(message)s',
@@ -31,7 +31,8 @@ async def bot_start(message: types.Message):
     name_user = user.full_name
     count_users = await db.count_users()
     if str(chat_id) in admins:
-        current_date = datetime.datetime.now(tz_ulyanovsk)
+        # current_date = datetime.datetime.now(tz_ulyanovsk)
+        current_date = datetime.datetime.now()
         # ?
         # current_date += datetime.timedelta(hours=4)
         # await message.answer(f'{current_date}')

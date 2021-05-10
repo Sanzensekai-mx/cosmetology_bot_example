@@ -14,7 +14,7 @@ from keyboards.inline import check_logs_choice_range
 from loader import dp
 from states.admin_states import AdminCheckLog
 from utils.db_api.models import DBCommands
-from data.config import admins, masters_id, months, days, tz_ulyanovsk
+from data.config import admins, masters_id, months, days
 
 db = DBCommands()
 
@@ -39,7 +39,8 @@ async def show_time(message: Message):
                          f'\nutcnow'
                          f'\n{datetime.datetime.utcnow()}'
                          f'\nmaybe current'
-                         f'\n{datetime.datetime.now(tz_ulyanovsk)}')
+                         f'\n{datetime.datetime.now()}')
+                         # f'\n{datetime.datetime.now(tz_ulyanovsk)}'
     # locale.setlocale(locale.LC_ALL, '')
     # locale.setlocale(locale.LC_ALL, 'ru_RU')
     # c = calendar.TextCalendar(calendar.MONDAY)
@@ -83,7 +84,8 @@ async def inline_process_back_to_months(call: CallbackQuery, state: FSMContext):
     data = await state.get_data()
     # await state.reset_state(with_data=True)
     # await AdminCheckLog.CheckMonths.set()
-    current_date = datetime.datetime.now(tz_ulyanovsk)
+    # current_date = datetime.datetime.now(tz_ulyanovsk)
+    current_date = datetime.datetime.now()
     await process_choice_months(call=call,
                                 date_time=current_date,
                                 state=state,
@@ -95,7 +97,8 @@ async def inline_process_back_to_months(call: CallbackQuery, state: FSMContext):
 @dp.callback_query_handler(chat_id=masters_id, state=AdminCheckLog.CheckWeek, text_contains='back_weekdays')
 async def inline_process_back_to_weekdays(call: CallbackQuery, state: FSMContext):
     await call.answer(cache_time=60)
-    current_date = datetime.datetime.now(tz_ulyanovsk)
+    # current_date = datetime.datetime.now(tz_ulyanovsk)
+    current_date = datetime.datetime.now()
     await process_choice_week(call=call, date_time=current_date, state=state)
 
 
