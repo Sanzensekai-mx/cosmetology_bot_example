@@ -2,14 +2,15 @@ import datetime
 import asyncio
 import aioschedule
 from utils.db_api.models import DBCommands
-from data.config import admins, tz_ulyanovsk
+from data.config import admins
 from loader import bot
 
 db = DBCommands()
 
 
 async def del_logs_and_datetime():
-    current_date = datetime.datetime.now(tz_ulyanovsk)
+    # current_date = datetime.datetime.now(tz_ulyanovsk)
+    current_date = datetime.datetime.now()
     current_date += datetime.timedelta(hours=4)
     old_logs = await db.get_old_logs(current_date)
     old_datetime = await db.get_old_datetime(current_date)

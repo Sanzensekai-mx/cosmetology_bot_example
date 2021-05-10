@@ -1,17 +1,17 @@
 import os
 import calendar
 
-import pytz
+# import pytz
 from dotenv import load_dotenv
 
 load_dotenv(encoding='utf-8')
 
-BOT_TOKEN = str(os.environ.get('BOT_TOKEN'))  # Dashboard
-# BOT_TOKEN = str(os.getenv("BOT_TOKEN"))
-admins = str(os.environ.get('admins')).split(', ')   # Dashboard
-# admins = str(os.getenv("admins")).split(', ')
-masters_id = str(os.environ.get('masters_id')).split(', ')   # Dashboard
-# masters_id = str(os.getenv("masters_id")).split(',')
+# BOT_TOKEN = str(os.environ.get('BOT_TOKEN'))  # Dashboard
+BOT_TOKEN = str(os.getenv("BOT_TOKEN"))
+# admins = str(os.environ.get('admins')).split(', ')   # Dashboard
+admins = str(os.getenv("admins")).split(', ')
+# masters_id = str(os.environ.get('masters_id')).split(', ')   # Dashboard
+masters_id = str(os.getenv("masters_id")).split(',')
 # masters_username = str(os.getenv("masters_username")).split(', ')
 
 # host = str(os.getenv("PG_HOST"))  # хост базы данных
@@ -33,4 +33,4 @@ rus_days = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
 
 months = {calendar.month_name[i]: rus_months[i] for i in range(13)}
 days = {eng_days[i]: rus_days[i] for i in range(7)}
-tz_ulyanovsk = pytz.timezone('Europe/Ulyanovsk')
+# tz_ulyanovsk = pytz.timezone('Europe/Ulyanovsk')
