@@ -190,6 +190,7 @@ async def choice_master(call: CallbackQuery, state: FSMContext):
         await UserAppointment.Date.set()
         # Выбор даты, функция
         current_date = datetime.date.today()
+        await call.message.answer('Выбор даты оказания услуги', reply_markup=default_cancel_appointment)
         await date_process_enter(call, state,
                                  year=current_date.year,
                                  month=current_date.month,
@@ -200,10 +201,11 @@ async def choice_master(call: CallbackQuery, state: FSMContext):
         await confirm_or_change(data, call.message)
 
 
-async def date_process_enter(call, state, year, month, day):
+async def date_process_enter(call, state, year, month, day, service=True):
     data = await state.get_data()
     c = calendar.TextCalendar(calendar.MONDAY)
-    service = await db.get_service(data.get('service'))
+    if service:
+        service = await db.get_service(data.get('service'))
     # current_date = datetime.datetime.now(tz_ulyanovsk)
     current_date = datetime.datetime.now()
     # ?
@@ -243,10 +245,12 @@ async def date_process_enter(call, state, year, month, day):
             continue
         inline_calendar.insert(InlineKeyboardButton(day_cal[2], callback_data=f'date_{day_cal}'))
     # inline_calendar.add(InlineKeyboardButton('Отмена записи', callback_data='cancel_appointment'))
-    await call.message.answer('Выбор даты оказания услуги', reply_markup=default_cancel_appointment)
-    await call.message.answer(f'Ваше Фамилия и Имя: "{data.get("name_client")}". '
-                              f'\nМастер: "{data.get("name_master")}"'
-                              f'\nУслуга: "{service.name}"', reply_markup=inline_calendar)
+    if service:
+        await call.message.answer(f'Ваше Фамилия и Имя: "{data.get("name_client")}". '
+                                  f'\nМастер: "{data.get("name_master")}"'
+                                  f'\nУслуга: "{service.name}"', reply_markup=inline_calendar)
+    else:
+        await call.message.answer(f'Выберите дату.', reply_markup=inline_calendar)
 
 
 @dp.callback_query_handler(state=UserAppointment.Date, text_contains='month_')
@@ -270,6 +274,7 @@ async def change_month_process(call: CallbackQuery, state: FSMContext):
         data['current_choice_year'] = choice_year
         data['current_choice_month'] = choice_month
         await state.update_data()
+        await call.message.answer('Выбор даты оказания услуги', reply_markup=default_cancel_appointment)
         await date_process_enter(call, state,
                                  year=choice_year,
                                  month=choice_month,
@@ -283,6 +288,7 @@ async def change_month_process(call: CallbackQuery, state: FSMContext):
         data['current_choice_year'] = choice_year
         data['current_choice_month'] = choice_month
         await state.update_data()
+        await call.message.answer('Выбор даты оказания услуги', reply_markup=default_cancel_appointment)
         await date_process_enter(call, state,
                                  year=choice_year,
                                  month=choice_month,

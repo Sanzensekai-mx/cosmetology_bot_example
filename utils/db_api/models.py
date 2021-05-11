@@ -292,7 +292,10 @@ class DBCommands:
         datetime_first = await self.get_datetime(datetime_one, master)
         if datetime_first:
             dict_time = datetime_first.time
-            dict_time[time] = True
+            if dict_time[time] is False:
+                dict_time[time] = True
+            elif dict_time[time] is True:
+                dict_time[time] = False
             await datetime_first.update(
                 id=datetime_first.id,
                 master=datetime_first.master,
