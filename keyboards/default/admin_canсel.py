@@ -96,3 +96,20 @@ admin_default_cancel_mailing = ReplyKeyboardMarkup(
             KeyboardButton('Отмена рассылки')
         ]
     ], resize_keyboard=True)
+
+admin_default_cancel_check_log = ReplyKeyboardMarkup(
+    keyboard=[
+        [
+            KeyboardButton('Отмена просмотра')
+        ]
+    ], resize_keyboard=True)
+
+admin_default_cancel_back_check_log = ReplyKeyboardMarkup(
+    keyboard=[
+        [
+            KeyboardButton('Назад в главное меню просмотра записей')
+        ],
+        [
+            KeyboardButton('Отмена просмотра')
+        ]
+    ], resize_keyboard=True)

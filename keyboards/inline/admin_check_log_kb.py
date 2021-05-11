@@ -10,7 +10,5 @@ check_logs_choice_range = InlineKeyboardMarkup(inline_keyboard=[
     [
         InlineKeyboardButton('Записи по месяцам', callback_data='logs_months')
     ],
-    [
-        InlineKeyboardButton('Отмена просмотра', callback_data='cancel_check')
-    ]
+    # [InlineKeyboardButton('Отмена просмотра', callback_data='cancel_check')]
 ])
