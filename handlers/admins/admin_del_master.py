@@ -24,14 +24,13 @@ db = DBCommands()
 
 @dp.message_handler(Text(equals=['Отмена удаления мастера']), chat_id=admins, state=AdminDelMaster)
 async def default_process_cancel_del_master(message: Message, state: FSMContext):
-    logging.info(f'from: {message.chat.full_name}, text: {message.text}, info: Отмена удаления мастера.')
     await message.answer('Отмена удаления мастера.', reply_markup=main_menu_admin)
     await state.reset_state()
 
 
 @dp.message_handler(Text(equals='Удалить мастера'), chat_id=admins)
 async def start_del_master(message: Message):
-    logging.info(f'from: {message.chat.full_name}, text: {message.text}')
+    logging.info(f'from: {message.chat.full_name}, text: {message.text.upper()}')
     cancel_choice_master_to_del = InlineKeyboardMarkup()
     all_masters = await db.all_masters()
     for master in all_masters:

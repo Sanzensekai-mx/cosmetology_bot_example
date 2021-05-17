@@ -14,6 +14,6 @@ logging.basicConfig(format=u'%(filename)s [LINE:%(lineno)d] '
 
 @dp.message_handler(Text(equals=['О салоне']))
 async def show_about(message: Message):
-    logging.info('About show')
+    logging.info(f'from: {message.chat.full_name}, text: {message.text.upper()}')
     await message.answer('Размещение информации о салоне, контакты, местоположение и т.д.',
                          reply_markup=main_menu_client)

@@ -2,11 +2,10 @@ import logging
 
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters import Text
-from aiogram.types import Message, ReplyKeyboardRemove, InlineKeyboardMarkup, \
-    InlineKeyboardButton, CallbackQuery, ContentType
+from aiogram.types import Message, InlineKeyboardMarkup, \
+    InlineKeyboardButton, CallbackQuery
 
 from keyboards.default import main_menu_client, default_cancel_user_check_logs
-from keyboards.inline import check_logs_choice_range
 from loader import dp
 from states.user_states import UserCheckLog
 from utils.db_api.models import DBCommands
@@ -32,8 +31,6 @@ logging.basicConfig(format=u'%(filename)s [LINE:%(lineno)d] '
 
 @dp.message_handler(Text(equals=['Закрыть просмотр записей']), state=UserCheckLog.Check)
 async def default_process_cancel_check_logs(message: Message, state: FSMContext):
-    logging.info(f'from: {message.chat.full_name}, text: {message.text}, info: Отмена просмотра записей '
-                 f'пользоватем.')
     await message.answer('Отмена просмотра записей.'
                          '\nВыберите кнопку ниже.', reply_markup=main_menu_client)
     await state.reset_state()
@@ -43,7 +40,7 @@ async def default_process_cancel_check_logs(message: Message, state: FSMContext)
 async def check_users_logs(message: Message, state: FSMContext):
     # print(await db.get_old_datetime(datetime.date.today()))
     await UserCheckLog.Check.set()
-    logging.info(f'from: {message.chat.first_name}, text: {message.text}')
+    logging.info(f'from: {message.chat.full_name}, text: {message.text.upper()}')
     logs_list = await db.get_all_logs_by_user_id(message.chat.id)
     kb_logs = InlineKeyboardMarkup(row_width=5)
     await state.update_data(
@@ -63,7 +60,7 @@ async def check_users_logs(message: Message, state: FSMContext):
                                              callback_data=f'ud_{num}'))
         # kb_logs.add(InlineKeyboardButton(f'Закрыть просмотр записей', callback_data='cancel_check_user_log'))
         await state.update_data(data)
-        await message.answer('Нажмите на кнопки ниже, чтобы просмотреть подробную информацию о выших записях.',
+        await message.answer('Нажмите на кнопки ниже, чтобы просмотреть подробную информацию о ваших записях.',
                              reply_markup=default_cancel_user_check_logs)
         await message.answer('Ваши записи:', reply_markup=kb_logs)
 

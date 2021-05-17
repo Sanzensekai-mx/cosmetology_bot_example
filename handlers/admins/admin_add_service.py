@@ -45,21 +45,19 @@ async def confirm_or_change(data, mes):
 @dp.callback_query_handler(chat_id=admins, state=AdminAddService, text_contains='cancel_add_service')
 async def inline_process_cancel_add_service(call: CallbackQuery, state: FSMContext):
     await call.answer(cache_time=60)
-    logging.info(f'from: {call.message.chat.full_name}, text: {call.message.text}, info: Отмена добавления услуги.')
     await call.message.answer('Отмена добавления новой услуги.', reply_markup=main_menu_admin)  # Добавить reply_markup
     await state.reset_state()
 
 
 @dp.message_handler(Text(equals=['Отмена добавления услуги']), chat_id=admins, state=AdminAddService)
 async def default_process_cancel_add_service(message: Message, state: FSMContext):
-    logging.info(f'from: {message.chat.full_name}, text: {message.text}, info: Отмена добавления услуги.')
     await message.answer('Отмена добавления новой услуги.', reply_markup=main_menu_admin)  # Добавить reply_markup
     await state.reset_state()
 
 
 @dp.message_handler(Text(equals='Добавить услугу'), chat_id=admins)
 async def start_add_service(message: Message, state: FSMContext):
-    logging.info(f'from: {message.chat.full_name}, text: {message.text}')
+    logging.info(f'from: {message.chat.full_name}, text: {message.text.upper()}')
     await message.answer('Название новой услуги.', reply_markup=ReplyKeyboardRemove())
     await message.answer('Введите название новой услуги или услуги, который уже существует, '
                          'но её данные необходимо обновить. '
@@ -153,9 +151,9 @@ async def add_price_service(message: Message, state: FSMContext):
             data['time'] = time
         except ValueError:
             # ???
-            await state.reset_state(with_data=True)
+            # await state.reset_state(with_data=True)
             # ???
-            await AdminAddService.Time.set()
+            # await AdminAddService.Time.set()
             await message.answer('Ошибка. Время должно содержать только цифры. Попробуйте ещё раз.')
             return
         await state.update_data(data)

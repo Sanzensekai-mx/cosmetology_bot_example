@@ -13,8 +13,7 @@ class User(db.Model):
     username = db.Column(db.String)
 
     def __repr__(self):
-        return "<User(id='{}', fullname='{}', username='{}')>".format(
-            self.chat_id, self.full_name, self.username)
+        return f"<User(user_id='{self.user_id}', full_name='{self.full_name}', username='{self.username}')>"
 
 
 class Service(db.Model):
@@ -25,6 +24,9 @@ class Service(db.Model):
     describe = db.Column(db.String)
     pic_file_id = db.Column(db.String)
     time = db.Column(db.Integer)  # Сколько времени занимает услуга
+
+    def __repr__(self):
+        return f"<Service(name='{self.name}', price='{self.price}', time='{self.time}')>"
 
 
 class Log(db.Model):
@@ -39,6 +41,10 @@ class Log(db.Model):
     time = db.Column(db.String)
     phone_number = db.Column(db.String)
 
+    def __repr__(self):
+        return f"<Log(user_id='{self.user_id}', name_client='{self.name_client}', name_master='{self.name_master}', " \
+               f"service='{self.service}', full_datetime='{self.full_datetime}', phone_number={self.phone_number})>"
+
 
 class Datetime(db.Model):
     __tablename__ = 'datetime'
@@ -47,6 +53,9 @@ class Datetime(db.Model):
     datetime = db.Column(db.String)
     time = db.Column(db.JSON, nullable=False, server_default="{}")
 
+    def __repr__(self):
+        return f"<Datetime(master='{self.master}', datetime='{self.datetime}', time='{self.time}')>"
+
 
 class Master(db.Model):
     __tablename__ = 'masters'
@@ -54,6 +63,10 @@ class Master(db.Model):
     master_name = db.Column(db.String)
     master_user_id = db.Column(db.BigInteger, unique=True)
     master_services = db.Column(db.ARRAY(db.String))
+
+    def __repr__(self):
+        return f"<Master(master_name='{self.master_name}', master_user_id='{self.master_user_id}', " \
+               f"master_services='{self.master_services}')>"
 
 
 class DBCommands:
@@ -292,7 +305,10 @@ class DBCommands:
         datetime_first = await self.get_datetime(datetime_one, master)
         if datetime_first:
             dict_time = datetime_first.time
-            dict_time[time] = True
+            if dict_time[time] is False:
+                dict_time[time] = True
+            elif dict_time[time] is True:
+                dict_time[time] = False
             await datetime_first.update(
                 id=datetime_first.id,
                 master=datetime_first.master,

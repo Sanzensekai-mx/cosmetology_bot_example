@@ -5,4 +5,5 @@ from .main_menu import main_menu_client, main_menu_admin, main_menu_master
 #     admin_default_cancel_del_service, admin_default_cancel_mailing
 from .admin_canсel import *
 from .phone_number import phone_number
-from .user_cancel import default_cancel_appointment, default_cancel_appointment_confirm, default_cancel_user_check_logs
+from .user_cancel import default_cancel_appointment, default_cancel_appointment_confirm, default_cancel_user_check_logs, \
+    default_cancel_show_services, default_cancel_back_show_services

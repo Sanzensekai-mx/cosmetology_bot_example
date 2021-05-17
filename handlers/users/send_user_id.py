@@ -14,7 +14,7 @@ logging.basicConfig(format=u'%(filename)s [LINE:%(lineno)d] '
 
 @dp.message_handler(commands=['send_id'])
 async def send_user_id(message: types.Message):
-    logging.info('Введена команда /send_id')
+    logging.info(f'from: {message.chat.full_name}, text: {message.text.upper()}')
     for admin in admins:
         await bot.send_message(chat_id=admin, text=f'Пользователь {message.chat.full_name}'
                                                    f'\nchat_id:')

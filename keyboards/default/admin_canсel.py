@@ -113,3 +113,10 @@ admin_default_cancel_back_check_log = ReplyKeyboardMarkup(
             KeyboardButton('Отмена просмотра')
         ]
     ], resize_keyboard=True)
+
+admin_default_cancel_del_log = ReplyKeyboardMarkup(
+    keyboard=[
+        [
+            KeyboardButton('Закрыть меню удаления записей')
+        ]
+    ], resize_keyboard=True)

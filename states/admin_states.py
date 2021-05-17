@@ -40,3 +40,10 @@ class AdminAddMaster(StatesGroup):
 
 class AdminDelMaster(StatesGroup):
     Del = State()
+
+
+class AdminDelLog(StatesGroup):
+    ChoiceMaster = State()
+    ChoiceDate = State()
+    ChoiceTime = State()
+    Confirm = State()

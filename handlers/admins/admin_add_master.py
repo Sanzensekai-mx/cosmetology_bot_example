@@ -43,7 +43,6 @@ User_id - {data.get("user_id")}\n
 @dp.callback_query_handler(chat_id=admins, state=AdminAddMaster, text_contains='cancel_add_master')
 async def inline_process_cancel_add_master(call: CallbackQuery, state: FSMContext):
     await call.answer(cache_time=60)
-    logging.info(f'from: {call.message.chat.full_name}, text: {call.message.text}, info: Отмена добавления мастера.')
     await call.message.answer('Отмена добавления нового мастера.',
                               reply_markup=main_menu_admin)  # Добавить reply_markup
     await state.reset_state()
@@ -51,14 +50,13 @@ async def inline_process_cancel_add_master(call: CallbackQuery, state: FSMContex
 
 @dp.message_handler(Text(equals=['Отмена добавления мастера']), chat_id=admins, state=AdminAddMaster)
 async def default_process_cancel_add_master(message: Message, state: FSMContext):
-    logging.info(f'from: {message.chat.full_name}, text: {message.text}, info: Отмена добавления мастера.')
     await message.answer('Отмена добавления нового мастера.', reply_markup=main_menu_admin)
     await state.reset_state()
 
 
 @dp.message_handler(Text(equals='Добавить мастера'), chat_id=admins)
 async def start_add_master(message: Message, state: FSMContext):
-    logging.info(f'from: {message.chat.full_name}, text: {message.text}')
+    logging.info(f'from: {message.chat.full_name}, text: {message.text}, info: ДОБАВИТЬ МАСТЕРА')
     await message.answer('Имя нового мастера.', reply_markup=ReplyKeyboardRemove())
     await message.answer('Введите имя нового мастера. \nИли существующего мастера (для обновления информации).'
                          '\nНажмите на кнопку ниже для отмены.',
@@ -132,9 +130,9 @@ async def add_id_master(message: Message, state: FSMContext):
             data['user_id'] = user_id
         except ValueError:
             # ???
-            await state.reset_state(with_data=True)
+            # await state.reset_state(with_data=True)
             # ???
-            await AdminAddMaster.ID.set()
+            # await AdminAddMaster.ID.set()
             await message.answer('Ошибка. User_id это последовательность цифр.'
                                  '\nПришлите user_id мастера.')
             return
@@ -166,10 +164,10 @@ async def confirm_master_service_list(message: Message, state: FSMContext):
 @dp.callback_query_handler(chat_id=admins, state=AdminAddMaster.Services, text_contains='s_')
 async def process_add_services_to_master_list(call: CallbackQuery, state: FSMContext):
     await call.answer(cache_time=60)
-    # result_num_service = call.data.split('_')[1]
-    result_name_service = call.data.split('_')[2]
+    result_num_service = call.data.split('_')[1]
+    # result_name_service = call.data.split('_')[2]
     data = await state.get_data()
-    data['services'].append(result_name_service)
+    data['services'].append(data.get('current_services_dict')[result_num_service])
     data['services'] = list(set(data['services']))
     await state.update_data(data)
     await process_print_kb_mes(call.message, state)

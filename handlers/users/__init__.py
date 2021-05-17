@@ -5,5 +5,6 @@ from .about import dp
 from .stocks import dp
 from .check_my_logs import dp
 from .send_user_id import dp
+from .services import dp
 
 __all__ = ["dp"]
