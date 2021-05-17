@@ -1,28 +1,91 @@
 import calendar
 import datetime
+from math import ceil
+import numpy as np
+from aiogram.dispatcher import FSMContext
 from aiogram.types import Message, ReplyKeyboardRemove, InlineKeyboardMarkup, \
-    InlineKeyboardButton
+    InlineKeyboardButton, CallbackQuery
 from utils.db_api.models import DBCommands
 from data.config import days, months
+from loader import dp, bot
 
 db = DBCommands()
 
 
 # 1-ый элемент - сообщение, 2-ой - клавиатура
-async def return_kb_mes_services(state):
+async def return_kb_mes_services(message, state):
+    await state.update_data(
+        {'services_by_page': {1: {}},
+         'keyboards': {1: {}},
+         'all_result_messages': {1: {}},
+         'page': 1}
+    )
     data_from_state = await state.get_data()
-    choice_service_kb = InlineKeyboardMarkup(row_width=5)
     services = await db.all_services()
-    res_message = ''
-    current_services_dict = {}
-    for num, service in enumerate(services, 1):
-        res_message += f'\n{num}. {service.name} - {service.price}'
-        current_services_dict[str(num)] = service.name
-        choice_service_kb.insert(InlineKeyboardButton(f'{num}',
-                                                      callback_data=f's_{num}'))
-    data_from_state['current_services_dict'] = current_services_dict
-    await state.update_data(data_from_state)
-    return res_message, choice_service_kb
+    if len(services) <= 5:
+        choice_service_kb = InlineKeyboardMarkup(row_width=5)
+        res_message = ''
+        # current_services_dict = {}
+        for num, service in enumerate(services, 1):
+            res_message += f'{num}. {service.name} - {service.price}\n'
+            res_message += '\n'
+            data_from_state.get('services_by_page')[1].update({str(num): service.name})
+            # current_services_dict[str(num)] = service.name
+            choice_service_kb.insert(InlineKeyboardButton(f'{num}',
+                                                          callback_data=f's_{num}'))
+        data_from_state.get('keyboards').update({1: choice_service_kb})
+        data_from_state.get('all_result_messages').update({1: res_message})
+        await state.update_data(data_from_state)
+    elif len(services) > 5:
+        data_from_state.get('services_by_page').clear()
+        number_of_pages = ceil(len(services) / 5)
+        rule_np_list = []
+        for i in range(number_of_pages):
+            if i == 0:
+                rule_np_list.append(5)
+                continue
+            rule_np_list.append(rule_np_list[i - 1] + 5)
+        services_by_pages = np.array_split(services, rule_np_list)
+        keyboards_inside = {}
+        for page_num in range(number_of_pages):
+            if page_num == 0:
+                keyboards_inside.update(
+                    {page_num + 1: InlineKeyboardMarkup(row_width=5, inline_keyboard=[
+                        [InlineKeyboardButton('➡️', callback_data='next_page')]]
+                                                        )})
+                continue
+            if page_num == list(range(number_of_pages))[-1]:
+                keyboards_inside.update(
+                    {page_num + 1: InlineKeyboardMarkup(row_width=5, inline_keyboard=[
+                        [InlineKeyboardButton('⬅️', callback_data='pre_page')]]
+                                                        )})
+                continue
+            keyboards_inside.update({page_num + 1: InlineKeyboardMarkup(row_width=5, inline_keyboard=[
+                [InlineKeyboardButton('⬅️', callback_data='pre_page')],
+                [InlineKeyboardButton('➡️', callback_data='next_page')]])})
+        for page_num, page in enumerate(range(number_of_pages), 1):
+            data_from_state.get('services_by_page').update({page_num: {}})
+            res_message = ''
+            for num, service in enumerate(list(services_by_pages)[page], 1):
+                service_button = InlineKeyboardButton(str(num), callback_data=f's_{num}')
+                data_from_state.get('services_by_page')[page_num].update({str(num): service.name})
+                if num == 1:
+                    keyboards_inside[page_num].add(service_button)
+                    res_message += f'{num}. {service.name} - {service.price}\n'
+                    res_message += '\n'
+                    continue
+                keyboards_inside[page_num].insert(service_button)
+                res_message += f'{num}. {service.name} - {service.price}\n'
+                res_message += '\n'
+            res_message += f'Страница {page_num} из {number_of_pages}'
+            data_from_state.get('all_result_messages').update({page_num: res_message})
+        data_from_state.get('keyboards').update(keyboards_inside)
+        await state.update_data(data_from_state)
+    await message.answer(
+        f"Выберите услугу:\n\n{data_from_state.get('all_result_messages')[data_from_state.get('page')]}",
+        reply_markup=data_from_state.get('keyboards')[data_from_state.get('page')])
+
+    # return res_message, choice_service_kb
 
 
 async def date_process_enter(call, state, year, month, day, service=True):

@@ -83,11 +83,10 @@ async def return_kb_masters(service):
 
 async def service_process_enter(message, state):
     data = await state.get_data()
-    services_mes, services_kb = await return_kb_mes_services(state)
-    await message.answer('Выбор услуги', reply_markup=default_cancel_appointment)
-    await message.answer(f'Ваша Фамилия и Имя: "{data.get("name_client")}". ' \
-                         f'\nВыберите услугу:\n{services_mes}',
-                         reply_markup=services_kb)
+    # services_mes, services_kb = await return_kb_mes_services(state)
+    await message.answer('Выбор услуги\n'
+                         f'Ваша Фамилия и Имя: "{data.get("name_client")}". ', reply_markup=default_cancel_appointment)
+    await return_kb_mes_services(message, state)
 
 
 @dp.message_handler(state=UserAppointment.Name)
@@ -125,7 +124,8 @@ async def choice_master(call: CallbackQuery, state: FSMContext):
     data = await state.get_data()
     service_num = call.data.split('_')[1]
     await call.answer(cache_time=60)
-    all_services_names = data.get('current_services_dict')
+    # all_services_names = data.get('current_services_dict')
+    all_services_names = data.get('services_by_page')[data.get('page')]
     service = all_services_names[service_num]
     if not data.get('service'):
         # Принятие выбора услуги

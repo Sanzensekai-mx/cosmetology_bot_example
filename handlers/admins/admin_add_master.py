@@ -21,12 +21,12 @@ async def confirm_or_change(data, mes):
     kb_confirm = InlineKeyboardMarkup(row_width=4)
     for_kb_name_items = {'name': 'имя мастера', 'user_id': 'id мастера', 'services': 'список услуг'}
     for key in data.keys():
-        if key in ['is_master_in_db', 'current_services_dict']:
-            pass
-        else:
+        if key in ['name', 'user_id', 'services']:
             change_button = InlineKeyboardButton(f'Изменить {for_kb_name_items.get(key)}',
                                                  callback_data=f'change:{key}')
             kb_confirm.add(change_button)
+        else:
+            pass
     # kb_confirm.add(InlineKeyboardButton('Подтвердить добавление', callback_data='сonfirm'))
     # kb_confirm.add(InlineKeyboardButton('Отмена добавления мастера', callback_data='cancel_add_master'))
     await mes.answer('Подтверждение добавления мастера.', reply_markup=admin_default_cancel_confirm_add_master)
@@ -98,27 +98,19 @@ async def add_name_master(message: Message, state: FSMContext):
 
 async def process_print_kb_mes(message, state, change_list=False):
     data = await state.get_data()
-    mes_and_kb = await return_kb_mes_services(state=state)
-    answer_mes = mes_and_kb[0]
-    kb_services = mes_and_kb[1]
-    # kb_services.add(InlineKeyboardButton('Подтвердить список сервисов', callback_data='confirm_services'))
-    # kb_services.add(InlineKeyboardButton('Отмена добавления мастера',
-    #                                      callback_data='cancel_add_master'))
-    # await message.answer(text=answer_mes, reply_markup=kb_services)
-    await message.answer('Список услуг нового мастера.', reply_markup=admin_default_cancel_confirm_service_list)
     if change_list is False:
-        await message.answer(f'Название: "{data.get("name")}". '
+        await message.answer('Список услуг нового мастера.\n'
+                             f'Имя мастера: "{data.get("name")}". '
                              f'\nUser_id "{data.get("user_id")}".'
                              f'\nТекущий список услуг: '
-                             f'\n{data.get("services")}'
-                             f'\n{answer_mes}', reply_markup=kb_services)
+                             f'\n{data.get("services")}', reply_markup=admin_default_cancel_confirm_service_list)
+        await return_kb_mes_services(message, state)
     else:
-        await message.answer('Пришлите новый список услуг для мастера.\n'
+        await message.answer('Список услуг нового мастера.\n'
+                             'Пришлите новый список услуг для мастера.\n'
                              f'\nТекущий список услуг: '
-                             f'\n{data.get("services")}'
-                             f'\n{answer_mes}', reply_markup=kb_services)
-
-    await AdminAddMaster.Services.set()
+                             f'\n{data.get("services")}', reply_markup=admin_default_cancel_confirm_service_list)
+        await return_kb_mes_services(message, state)
 
 
 @dp.message_handler(chat_id=admins, state=AdminAddMaster.ID)
@@ -164,7 +156,7 @@ async def process_add_services_to_master_list(call: CallbackQuery, state: FSMCon
     result_num_service = call.data.split('_')[1]
     # result_name_service = call.data.split('_')[2]
     data = await state.get_data()
-    data['services'].append(data.get('current_services_dict')[result_num_service])
+    data['services'].append(data.get('services_by_page')[data.get('page')][result_num_service])
     data['services'] = list(set(data['services']))
     await state.update_data(data)
     await process_print_kb_mes(call.message, state)
