@@ -13,3 +13,7 @@ class UserAppointment(StatesGroup):
 
 class UserCheckLog(StatesGroup):
     Check = State()
+
+
+class UserServices(StatesGroup):
+    ServicesList = State()

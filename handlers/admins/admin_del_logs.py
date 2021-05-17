@@ -7,7 +7,7 @@ from aiogram.types import Message, ReplyKeyboardRemove, InlineKeyboardMarkup, \
     InlineKeyboardButton, CallbackQuery
 from loader import dp
 from utils.db_api.models import DBCommands
-from states.admin_states import AdminDelLog, AdminCheckLog
+from states.admin_states import AdminDelLog
 from keyboards.default import main_menu_admin, admin_default_cancel_del_log
 from data.config import admins, masters_id
 from handlers.users.appointment import date_process_enter
@@ -37,13 +37,12 @@ async def start_del_log(message: Message, state: FSMContext):
     await state.update_data(
         {'name_master': '',
          'full_datetime': '',
-         'date': '',
-         'time': '',
-         'current_choice_month': '',
-         'current_choice_year': '',
          }
     )
 
+
+# 'current_choice_month': '',
+# 'current_choice_year': '',
 
 @dp.callback_query_handler(text_contains='m_', chat_id=admins, state=AdminDelLog.ChoiceMaster)
 async def process_choice_master_date_del_log(call: CallbackQuery, state: FSMContext):
@@ -60,7 +59,9 @@ async def process_choice_master_date_del_log(call: CallbackQuery, state: FSMCont
                              year=current_date.year,
                              month=current_date.month,
                              day=current_date.day)
-    # await AdminDelLog.
+    # data = await state.get_data()
+    # print(data.get('current_choice_month'))
+    # print(data.get('current_choice_year'))
 
 
 async def process_choice_day(call, date_time):

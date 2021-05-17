@@ -23,3 +23,22 @@ default_cancel_user_check_logs = ReplyKeyboardMarkup(
             KeyboardButton('Закрыть просмотр записей')
         ]
     ], resize_keyboard=True)
+
+default_cancel_show_services = ReplyKeyboardMarkup(
+    keyboard=[
+        [
+            KeyboardButton('Закрыть просмотр услуг')
+        ]
+    ], resize_keyboard=True
+)
+
+default_cancel_back_show_services = ReplyKeyboardMarkup(
+    keyboard=[
+        [
+            KeyboardButton('Вернуться к списку услуг')
+        ],
+        [
+            KeyboardButton('Закрыть просмотр услуг')
+        ]
+    ], resize_keyboard=True
+)
