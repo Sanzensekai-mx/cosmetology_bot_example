@@ -2,11 +2,10 @@ import logging
 
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters import Text
-from aiogram.types import Message, ReplyKeyboardRemove, InlineKeyboardMarkup, \
-    InlineKeyboardButton, CallbackQuery, ContentType
+from aiogram.types import Message, InlineKeyboardMarkup, \
+    InlineKeyboardButton, CallbackQuery
 
 from keyboards.default import main_menu_client, default_cancel_user_check_logs
-from keyboards.inline import check_logs_choice_range
 from loader import dp
 from states.user_states import UserCheckLog
 from utils.db_api.models import DBCommands
@@ -61,7 +60,7 @@ async def check_users_logs(message: Message, state: FSMContext):
                                              callback_data=f'ud_{num}'))
         # kb_logs.add(InlineKeyboardButton(f'Закрыть просмотр записей', callback_data='cancel_check_user_log'))
         await state.update_data(data)
-        await message.answer('Нажмите на кнопки ниже, чтобы просмотреть подробную информацию о выших записях.',
+        await message.answer('Нажмите на кнопки ниже, чтобы просмотреть подробную информацию о ваших записях.',
                              reply_markup=default_cancel_user_check_logs)
         await message.answer('Ваши записи:', reply_markup=kb_logs)
 

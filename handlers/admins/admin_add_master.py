@@ -130,9 +130,9 @@ async def add_id_master(message: Message, state: FSMContext):
             data['user_id'] = user_id
         except ValueError:
             # ???
-            await state.reset_state(with_data=True)
+            # await state.reset_state(with_data=True)
             # ???
-            await AdminAddMaster.ID.set()
+            # await AdminAddMaster.ID.set()
             await message.answer('Ошибка. User_id это последовательность цифр.'
                                  '\nПришлите user_id мастера.')
             return
@@ -164,10 +164,10 @@ async def confirm_master_service_list(message: Message, state: FSMContext):
 @dp.callback_query_handler(chat_id=admins, state=AdminAddMaster.Services, text_contains='s_')
 async def process_add_services_to_master_list(call: CallbackQuery, state: FSMContext):
     await call.answer(cache_time=60)
-    # result_num_service = call.data.split('_')[1]
-    result_name_service = call.data.split('_')[2]
+    result_num_service = call.data.split('_')[1]
+    # result_name_service = call.data.split('_')[2]
     data = await state.get_data()
-    data['services'].append(result_name_service)
+    data['services'].append(data.get('current_services_dict')[result_num_service])
     data['services'] = list(set(data['services']))
     await state.update_data(data)
     await process_print_kb_mes(call.message, state)

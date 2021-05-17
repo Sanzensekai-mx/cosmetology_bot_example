@@ -151,9 +151,9 @@ async def add_price_service(message: Message, state: FSMContext):
             data['time'] = time
         except ValueError:
             # ???
-            await state.reset_state(with_data=True)
+            # await state.reset_state(with_data=True)
             # ???
-            await AdminAddService.Time.set()
+            # await AdminAddService.Time.set()
             await message.answer('Ошибка. Время должно содержать только цифры. Попробуйте ещё раз.')
             return
         await state.update_data(data)

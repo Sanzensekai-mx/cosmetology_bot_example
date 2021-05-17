@@ -92,27 +92,25 @@ async def return_kb_mes_services(state, is_it_appointment=True):
     res_message = ''
     current_services_dict = {}
     for num, service in enumerate(services, 1):
-        service_name = service.name
-        service_price = service.price
-        res_message += f'\n{num}. {service_name} - {service_price}'
-        current_services_dict[str(num)] = service_name
+        res_message += f'\n{num}. {service.name} - {service.price}'
+        current_services_dict[str(num)] = service.name
         cancel_appointment_choice_service.insert(InlineKeyboardButton(f'{num}',
-                                                                      callback_data=f's_{num}_{service_name}'))
+                                                                      callback_data=f's_{num}'))
     # if is_it_appointment:
     #     cancel_appointment_choice_service.add(InlineKeyboardButton('Отмена записи',
     #                                                                callback_data='cancel_appointment'))
     data_from_state['current_services_dict'] = current_services_dict
     await state.update_data(data_from_state)
-    return [res_message, cancel_appointment_choice_service]
+    return res_message, cancel_appointment_choice_service
 
 
 async def service_process_enter(message, state):
     data = await state.get_data()
-    res_mes_and_kb = await return_kb_mes_services(state)
+    services_mes, services_kb = await return_kb_mes_services(state)
     await message.answer('Выбор услуги', reply_markup=default_cancel_appointment)
     await message.answer(f'Ваша Фамилия и Имя: "{data.get("name_client")}". ' \
-                         f'\nВыберите услугу:\n{res_mes_and_kb[0]}',
-                         reply_markup=res_mes_and_kb[1])
+                         f'\nВыберите услугу:\n{services_mes}',
+                         reply_markup=services_kb)
 
 
 @dp.message_handler(state=UserAppointment.Name)
