@@ -2,10 +2,9 @@ import logging
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters import Text
 from aiogram.types import Message, ReplyKeyboardRemove, InlineKeyboardMarkup, \
-    InlineKeyboardButton, CallbackQuery, ContentType
+    InlineKeyboardButton, CallbackQuery
 
 from keyboards.default import default_cancel_show_services, main_menu_client, default_cancel_back_show_services
-from keyboards.inline import inline_cancel_appointment
 from loader import dp, bot
 from states.user_states import UserServices
 from utils.db_api.models import DBCommands
@@ -22,14 +21,13 @@ async def process_show_menu_services(message: Message, state: FSMContext):
 
 @dp.message_handler(Text(equals=['Закрыть просмотр услуг']), state=UserServices)
 async def cancel_show_services(message: Message, state: FSMContext):
-    logging.info(f'from: {message.chat.full_name}, text: {message.text}, info: Отмена просмотра записей '
-                 f'пользоватем.')
     await message.answer('Отмена просмотра услуг.', reply_markup=main_menu_client)
     await state.reset_state()
 
 
 @dp.message_handler(Text(equals=['Услуги']))
 async def start_show_services(message: Message, state: FSMContext):
+    logging.info(f'from: {message.chat.full_name}, text: {message.text.upper()}')
     # await state.update_data({'current_services_dict': {}})
     await process_show_menu_services(message=message, state=state)
     await UserServices.ServicesList.set()

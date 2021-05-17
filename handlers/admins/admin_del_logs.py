@@ -18,14 +18,13 @@ db = DBCommands()
 
 @dp.message_handler(Text(equals=['Закрыть меню удаления записей']), state=AdminDelLog, chat_id=admins)
 async def default_process_cancel_check_logs(message: Message, state: FSMContext):
-    logging.info(f'from: {message.chat.full_name}, text: {message.text}, info: Отмена просмотра записей '
-                 f'пользоватем.')
     await message.answer('Отмена просмотра записей для удаления', reply_markup=main_menu_admin)
     await state.reset_state()
 
 
 @dp.message_handler(Text(equals=['Удаление записи']), chat_id=admins)
 async def start_del_log(message: Message, state: FSMContext):
+    logging.info(f'from: {message.chat.full_name}, text: {message.text.upper()}')
     kb_masters = InlineKeyboardMarkup()
     all_masters = await db.all_masters()
     for master in all_masters:

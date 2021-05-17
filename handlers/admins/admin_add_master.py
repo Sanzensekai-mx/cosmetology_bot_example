@@ -43,7 +43,6 @@ User_id - {data.get("user_id")}\n
 @dp.callback_query_handler(chat_id=admins, state=AdminAddMaster, text_contains='cancel_add_master')
 async def inline_process_cancel_add_master(call: CallbackQuery, state: FSMContext):
     await call.answer(cache_time=60)
-    logging.info(f'from: {call.message.chat.full_name}, text: {call.message.text}, info: Отмена добавления мастера.')
     await call.message.answer('Отмена добавления нового мастера.',
                               reply_markup=main_menu_admin)  # Добавить reply_markup
     await state.reset_state()
@@ -51,14 +50,13 @@ async def inline_process_cancel_add_master(call: CallbackQuery, state: FSMContex
 
 @dp.message_handler(Text(equals=['Отмена добавления мастера']), chat_id=admins, state=AdminAddMaster)
 async def default_process_cancel_add_master(message: Message, state: FSMContext):
-    logging.info(f'from: {message.chat.full_name}, text: {message.text}, info: Отмена добавления мастера.')
     await message.answer('Отмена добавления нового мастера.', reply_markup=main_menu_admin)
     await state.reset_state()
 
 
 @dp.message_handler(Text(equals='Добавить мастера'), chat_id=admins)
 async def start_add_master(message: Message, state: FSMContext):
-    logging.info(f'from: {message.chat.full_name}, text: {message.text}')
+    logging.info(f'from: {message.chat.full_name}, text: {message.text}, info: ДОБАВИТЬ МАСТЕРА')
     await message.answer('Имя нового мастера.', reply_markup=ReplyKeyboardRemove())
     await message.answer('Введите имя нового мастера. \nИли существующего мастера (для обновления информации).'
                          '\nНажмите на кнопку ниже для отмены.',

@@ -32,8 +32,6 @@ logging.basicConfig(format=u'%(filename)s [LINE:%(lineno)d] '
 
 @dp.message_handler(Text(equals=['Закрыть просмотр записей']), state=UserCheckLog.Check)
 async def default_process_cancel_check_logs(message: Message, state: FSMContext):
-    logging.info(f'from: {message.chat.full_name}, text: {message.text}, info: Отмена просмотра записей '
-                 f'пользоватем.')
     await message.answer('Отмена просмотра записей.'
                          '\nВыберите кнопку ниже.', reply_markup=main_menu_client)
     await state.reset_state()
@@ -43,7 +41,7 @@ async def default_process_cancel_check_logs(message: Message, state: FSMContext)
 async def check_users_logs(message: Message, state: FSMContext):
     # print(await db.get_old_datetime(datetime.date.today()))
     await UserCheckLog.Check.set()
-    logging.info(f'from: {message.chat.first_name}, text: {message.text}')
+    logging.info(f'from: {message.chat.full_name}, text: {message.text.upper()}')
     logs_list = await db.get_all_logs_by_user_id(message.chat.id)
     kb_logs = InlineKeyboardMarkup(row_width=5)
     await state.update_data(

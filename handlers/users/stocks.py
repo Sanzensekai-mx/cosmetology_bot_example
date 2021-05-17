@@ -14,7 +14,7 @@ logging.basicConfig(format=u'%(filename)s [LINE:%(lineno)d] '
 
 @dp.message_handler(Text(equals=['Акции']))
 async def show_about(message: Message):
-    logging.info('Stocks show')
+    logging.info(f'from: {message.chat.full_name}, text: {message.text.upper()}')
     await message.answer('Акции...'
                          '\n...'
                          '\n...',

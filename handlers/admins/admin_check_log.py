@@ -51,7 +51,6 @@ async def show_time(message: Message):
 
 @dp.callback_query_handler(text_contains='cancel_check', chat_id=masters_id, state=AdminCheckLog)
 async def inline_process_cancel_master_check_logs(call: CallbackQuery, state: FSMContext):
-    logging.info(f'from: {call.message.chat.full_name}, text: {call.message.text}, info: Отмена просмотра.')
     await call.answer(cache_time=60)
     if str(call.message.chat.id) in admins and str(call.message.chat.id) in masters_id:
         await call.message.answer('Отмена.', reply_markup=main_menu_admin)
@@ -62,7 +61,6 @@ async def inline_process_cancel_master_check_logs(call: CallbackQuery, state: FS
 
 @dp.message_handler(Text(equals='Отмена просмотра'), chat_id=masters_id, state=AdminCheckLog)
 async def default_process_cancel_master_check_logs(message: Message, state: FSMContext):
-    logging.info(f'from: {message.chat.full_name}, text: {message.text}, info: Отмена просмотра.')
     # await call.answer(cache_time=60)
     if str(message.chat.id) in admins and str(message.chat.id) in masters_id:
         await message.answer('Отмена.', reply_markup=main_menu_admin)
@@ -108,6 +106,7 @@ async def inline_process_back_to_weekdays(call: CallbackQuery, state: FSMContext
                                  'Посмотреть записи ко мне (супер-мастер)',
                                  'Посмотреть записи ко мне (мастер)']), chat_id=masters_id)
 async def start_check_logs(message: Message):
+    logging.info(f'from: {message.chat.full_name}, text: {message.text.upper()}')
     await message.answer('Записи клиентов.', reply_markup=admin_default_cancel_check_log)
     await message.answer('Просмотр записи клиентов.', reply_markup=check_logs_choice_range)
     # print(await db.get_master_and_id())

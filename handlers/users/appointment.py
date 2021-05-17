@@ -35,7 +35,6 @@ async def confirm_or_change(data, mes):
 
 @dp.callback_query_handler(state=UserAppointment, text_contains='cancel_appointment')
 async def inline_process_cancel_add_service(call: CallbackQuery, state: FSMContext):
-    logging.info(f'from: {call.message.chat.full_name}, text: {call.message.text}, info: Отмена записи.')
     await call.answer(cache_time=60)
     await call.message.answer('Отмена записи.', reply_markup=main_menu_client)  # Добавить reply_markup
     await state.reset_state()
@@ -43,14 +42,13 @@ async def inline_process_cancel_add_service(call: CallbackQuery, state: FSMConte
 
 @dp.message_handler(Text(equals=['Отмена записи']), state=UserAppointment)
 async def default_kb_process_cancel_add_service(message: Message, state: FSMContext):
-    logging.info(f'from: {message.chat.full_name}, text: {message.text}, info: Отмена записи.')
     await message.answer('Отмена записи.', reply_markup=main_menu_client)  # Добавить reply_markup
     await state.reset_state()
 
 
 @dp.message_handler(Text(equals=['Запись']))
 async def open_appointment_start(message: Message, state: FSMContext):
-    logging.info(f'from: {message.chat.first_name}, text: {message.text}')
+    logging.info(f'from: {message.chat.full_name}, text: {message.text.upper()}')
     # LOG you!!!!!!!
     await message.answer('Начало записи.', reply_markup=ReplyKeyboardRemove())
     await message.answer('Введите своё фамилию и имя. Например: Петрина Кристина',

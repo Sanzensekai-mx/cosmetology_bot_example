@@ -15,21 +15,19 @@ db = DBCommands()
 @dp.callback_query_handler(chat_id=admins, state=AdminDelService, text_contains='cancel_del_service')
 async def inline_process_cancel_del_service(call: CallbackQuery, state: FSMContext):
     await call.answer(cache_time=60)
-    logging.info(f'from: {call.message.chat.full_name}, text: {call.message.text}, info: Отмена удаления услуги.')
     await call.message.answer('Отмена удаления услуги.', reply_markup=main_menu_admin)
     await state.reset_state()
 
 
 @dp.message_handler(Text(equals=['Отмена удаления услуги']), chat_id=admins, state=AdminDelService)
 async def default_process_cancel_del_service(message: Message, state: FSMContext):
-    logging.info(f'from: {message.chat.full_name}, text: {message.text}, info: Отмена удаления услуги.')
     await message.answer('Отмена удаления.', reply_markup=main_menu_admin)
     await state.reset_state()
 
 
 @dp.message_handler(Text(equals='Удалить услугу'), chat_id=admins)
 async def start_del_service(message: Message):
-    logging.info(f'from: {message.chat.full_name}, text: {message.text}')
+    logging.info(f'from: {message.chat.full_name}, text: {message.text.upper()}')
     cancel_choice_service_to_del = InlineKeyboardMarkup()
     all_services = await db.all_services()
     for service in all_services:
