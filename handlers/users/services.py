@@ -8,7 +8,7 @@ from keyboards.default import default_cancel_show_services, main_menu_client, de
 from loader import dp, bot
 from states.user_states import UserServices
 from utils.db_api.models import DBCommands
-from handlers.users.appointment import return_kb_mes_services
+from utils.general_func import return_kb_mes_services
 
 db = DBCommands()
 

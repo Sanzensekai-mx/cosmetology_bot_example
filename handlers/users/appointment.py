@@ -1,6 +1,5 @@
 import logging
 import datetime
-import calendar
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters import Text
 from aiogram.types import Message, ReplyKeyboardRemove, InlineKeyboardMarkup, \
@@ -12,7 +11,8 @@ from keyboards.inline import inline_cancel_appointment
 from loader import dp
 from states.user_states import UserAppointment
 from utils.db_api.models import DBCommands
-from data.config import days, months
+
+from utils.general_func import return_kb_mes_services, date_process_enter
 
 db = DBCommands()
 
@@ -36,13 +36,13 @@ async def confirm_or_change(data, mes):
 @dp.callback_query_handler(state=UserAppointment, text_contains='cancel_appointment')
 async def inline_process_cancel_add_service(call: CallbackQuery, state: FSMContext):
     await call.answer(cache_time=60)
-    await call.message.answer('Отмена записи.', reply_markup=main_menu_client)  # Добавить reply_markup
+    await call.message.answer('Отмена записи.', reply_markup=main_menu_client)
     await state.reset_state()
 
 
 @dp.message_handler(Text(equals=['Отмена записи']), state=UserAppointment)
 async def default_kb_process_cancel_add_service(message: Message, state: FSMContext):
-    await message.answer('Отмена записи.', reply_markup=main_menu_client)  # Добавить reply_markup
+    await message.answer('Отмена записи.', reply_markup=main_menu_client)
     await state.reset_state()
 
 
@@ -75,33 +75,10 @@ async def return_kb_masters(service):
     appointment_choice_master = InlineKeyboardMarkup()
     all_masters = await db.all_masters()
     for master in all_masters:
-        # split так как в БД хранится строка типа Ресницы_Волосы. Костыль херли
         if service in master.master_services:
             appointment_choice_master.add(InlineKeyboardButton(f'{master.master_name}',
                                                                callback_data=f'm_{master.master_name}'))
-    # cancel_appointment_choice_master.add(InlineKeyboardButton('Отмена записи',
-    #                                                           callback_data='cancel_appointment'))
     return appointment_choice_master
-
-
-# Возвращает список, где 1-ый элемент - сообщение, 2-ой - клавиатура
-async def return_kb_mes_services(state, is_it_appointment=True):
-    data_from_state = await state.get_data()
-    cancel_appointment_choice_service = InlineKeyboardMarkup(row_width=5)
-    services = await db.all_services()
-    res_message = ''
-    current_services_dict = {}
-    for num, service in enumerate(services, 1):
-        res_message += f'\n{num}. {service.name} - {service.price}'
-        current_services_dict[str(num)] = service.name
-        cancel_appointment_choice_service.insert(InlineKeyboardButton(f'{num}',
-                                                                      callback_data=f's_{num}'))
-    # if is_it_appointment:
-    #     cancel_appointment_choice_service.add(InlineKeyboardButton('Отмена записи',
-    #                                                                callback_data='cancel_appointment'))
-    data_from_state['current_services_dict'] = current_services_dict
-    await state.update_data(data_from_state)
-    return res_message, cancel_appointment_choice_service
 
 
 async def service_process_enter(message, state):
@@ -195,58 +172,6 @@ async def choice_master(call: CallbackQuery, state: FSMContext):
         data['name_master'] = name_master
         await state.update_data(data)
         await confirm_or_change(data, call.message)
-
-
-async def date_process_enter(call, state, year, month, day, service=True):
-    data = await state.get_data()
-    c = calendar.TextCalendar(calendar.MONDAY)
-    if service:
-        service = await db.get_service(data.get('service'))
-    # current_date = datetime.datetime.now(tz_ulyanovsk)
-    current_date = datetime.datetime.now()
-    # ?
-    # current_date += datetime.timedelta(hours=4)
-    if month == current_date.month and year == current_date.year:
-        month = current_date.month
-        year = current_date.year
-        day = current_date.day
-    # print(c.formatyear(current_date.year))
-    print_c = c.formatmonth(year, month)
-    # time_service = service.time
-    inline_calendar = InlineKeyboardMarkup(row_width=7)
-    if (month != current_date.month and year == current_date.year) \
-            or ((month != current_date.month or month == current_date.month)
-                and year != current_date.year):
-        inline_calendar.add(InlineKeyboardButton('<', callback_data='month_previous'))
-    data['current_choice_month'] = month
-    data['current_choice_year'] = year
-    await state.update_data(data)
-    inline_calendar.insert(InlineKeyboardButton(f'{months.get(print_c.split()[0])} {print_c.split()[1]}',
-                                                callback_data=' '))
-    inline_calendar.insert(InlineKeyboardButton('>', callback_data='month_next'))
-    for week_day in [item for item in print_c.split()][2:9]:
-        if week_day == 'Mo':
-            inline_calendar.add(InlineKeyboardButton(days.get(week_day), callback_data=days.get(week_day)))
-            continue
-        inline_calendar.insert(InlineKeyboardButton(days.get(week_day), callback_data=days.get(week_day)))
-    for day_cal in [date for date in c.itermonthdays4(year, month)]:
-        # Исключает дни другого месяца, прошедшие дни и выходные дни (Суббота, Воскресенье)
-        if day_cal[2] == 0 \
-                or day > day_cal[2] \
-                or day_cal[2] in [date[0] for date
-                                  in c.itermonthdays2(year, month)
-                                  if date[1] in [5, 6]] \
-                or day_cal[1] != month:
-            inline_calendar.insert(InlineKeyboardButton(' ', callback_data=f'wrong_date'))
-            continue
-        inline_calendar.insert(InlineKeyboardButton(day_cal[2], callback_data=f'date_{day_cal}'))
-    # inline_calendar.add(InlineKeyboardButton('Отмена записи', callback_data='cancel_appointment'))
-    if service:
-        await call.message.answer(f'Ваше Фамилия и Имя: "{data.get("name_client")}". '
-                                  f'\nМастер: "{data.get("name_master")}"'
-                                  f'\nУслуга: "{service.name}"', reply_markup=inline_calendar)
-    else:
-        await call.message.answer(f'Выберите дату.', reply_markup=inline_calendar)
 
 
 @dp.callback_query_handler(state=UserAppointment.Date, text_contains='month_')

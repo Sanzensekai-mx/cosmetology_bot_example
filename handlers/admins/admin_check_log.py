@@ -15,14 +15,10 @@ from loader import dp
 from states.admin_states import AdminCheckLog, AdminDelLog
 from utils.db_api.models import DBCommands
 from data.config import admins, masters_id, months, days
+from utils.general_func import get_key
 
 db = DBCommands()
 
-
-def get_key(d, value):
-    for k, v in d.items():
-        if v == value:
-            return k
 
 
 logging.basicConfig(format=u'%(filename)s 'u'[LINE:%(lineno)d] '

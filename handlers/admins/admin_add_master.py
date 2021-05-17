@@ -12,7 +12,7 @@ from loader import dp, bot
 from states.admin_states import AdminAddMaster
 from utils.db_api.models import DBCommands
 from data.config import admins
-from handlers.users.appointment import return_kb_mes_services
+from utils.general_func import return_kb_mes_services
 
 db = DBCommands()
 
@@ -98,7 +98,7 @@ async def add_name_master(message: Message, state: FSMContext):
 
 async def process_print_kb_mes(message, state, change_list=False):
     data = await state.get_data()
-    mes_and_kb = await return_kb_mes_services(state=state, is_it_appointment=False)
+    mes_and_kb = await return_kb_mes_services(state=state)
     answer_mes = mes_and_kb[0]
     kb_services = mes_and_kb[1]
     # kb_services.add(InlineKeyboardButton('Подтвердить список сервисов', callback_data='confirm_services'))
@@ -148,9 +148,6 @@ async def add_id_master(message: Message, state: FSMContext):
 
 @dp.message_handler(Text(equals=['Подтвердить список сервисов']), chat_id=admins, state=AdminAddMaster.Services)
 async def confirm_master_service_list(message: Message, state: FSMContext):
-# @dp.callback_query_handler(chat_id=admins, state=AdminAddMaster.Services, text_contains='confirm_services')
-# async def confirm_master_service_list(call: CallbackQuery, state: FSMContext):
-#     await call.answer(cache_time=60)
     await AdminAddMaster.Confirm.set()
     data = await state.get_data()
     if len(data.get('services')) == 0:

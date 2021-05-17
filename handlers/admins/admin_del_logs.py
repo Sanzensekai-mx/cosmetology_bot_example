@@ -10,8 +10,8 @@ from utils.db_api.models import DBCommands
 from states.admin_states import AdminDelLog
 from keyboards.default import main_menu_admin, admin_default_cancel_del_log
 from data.config import admins, masters_id
-from handlers.users.appointment import date_process_enter
-from handlers.admins.admin_check_log import get_key
+from utils.general_func import date_process_enter
+from utils.general_func import get_key
 
 db = DBCommands()
 
