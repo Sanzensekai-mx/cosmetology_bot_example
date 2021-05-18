@@ -17,17 +17,6 @@ logging.basicConfig(format=u'%(filename)s [LINE:%(lineno)d] '
                            u'#%(levelname)-8s [%(asctime)s]  %(message)s',
                     level=logging.INFO)
 
-# Способ с inline-клавиатурой Закрытия просмотра записей
-
-# @dp.callback_query_handler(state=UserCheckLog.Check, text_contains='cancel_check_user_log')
-# async def inline_process_cancel_check_logs(call: CallbackQuery, state: FSMContext):
-#     await call.answer(cache_time=60)
-#     logging.info(f'from: {call.message.chat.full_name}, text: {call.message.text}, info: Отмена просмотра записей '
-#                  f'пользоватем.')
-#     await call.message.answer('Отмена просмотра записей.'
-#                               '\nВыберите кнопку ниже.', reply_markup=main_menu_client)
-#     await state.reset_state()
-
 
 @dp.message_handler(Text(equals=['Закрыть просмотр записей']), state=UserCheckLog.Check)
 async def default_process_cancel_check_logs(message: Message, state: FSMContext):

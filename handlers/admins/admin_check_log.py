@@ -11,7 +11,7 @@ from keyboards.default import main_menu_admin, main_menu_master, admin_default_c
     admin_default_cancel_2_back_check_log_week
 from keyboards.inline import check_logs_choice_range
 from loader import dp, bot
-from states.admin_states import AdminCheckLog, AdminDelLog
+from states.admin_states import AdminCheckLog
 from utils.db_api.models import DBCommands
 from data.config import admins, masters_id, months, days
 from utils.general_func import get_key, date_process_enter
@@ -55,8 +55,8 @@ async def inline_process_cancel_master_check_logs(call: CallbackQuery, state: FS
 @dp.message_handler(Text(equals='Отмена просмотра'), chat_id=masters_id, state=AdminCheckLog)
 async def default_process_cancel_master_check_logs(message: Message, state: FSMContext):
     # await call.answer(cache_time=60)
-    await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id - 2)
-    await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id - 1)
+    # await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id - 2)
+    # await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id - 1)
     if str(message.chat.id) in admins and str(message.chat.id) in masters_id:
         await message.answer('Отмена.', reply_markup=main_menu_admin)
     else:
@@ -66,8 +66,8 @@ async def default_process_cancel_master_check_logs(message: Message, state: FSMC
 
 @dp.message_handler(Text(equals='Назад в главное меню просмотра записей'), chat_id=masters_id, state=AdminCheckLog)
 async def default_process_back_master_check_logs(message: Message):
-    await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id - 2)
-    await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id - 1)
+    # await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id - 2)
+    # await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id - 1)
     await message.answer('Записи клиентов.', reply_markup=admin_default_cancel_check_log)
     await message.answer('Просмотр записи клиетов.', reply_markup=check_logs_choice_range)
     await AdminCheckLog.ChoiceRange.set()
@@ -77,8 +77,8 @@ async def default_process_back_master_check_logs(message: Message):
                     state=AdminCheckLog)
 async def process_back_to_calendar(message: Message, state: FSMContext):
     data = await state.get_data()
-    await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id - 2)
-    await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id - 1)
+    # await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id - 2)
+    # await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id - 1)
     await message.answer('Записи по месяцам', reply_markup=admin_default_cancel_back_check_log)
     await date_process_enter(message=message,
                              state=state,
@@ -91,8 +91,8 @@ async def process_back_to_calendar(message: Message, state: FSMContext):
 @dp.message_handler(Text(equals='Назад к выбору даты (неделя)'), chat_id=masters_id, state=AdminCheckLog)
 async def process_back_to_calendar(message: Message, state: FSMContext):
     # current_date = datetime.datetime.now()
-    await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id - 2)
-    await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id - 1)
+    # await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id - 2)
+    # await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id - 1)
     await process_choice_week(message=message, state=state)
     await AdminCheckLog.CheckWeek.set()
 
@@ -137,11 +137,6 @@ async def process_choice_time_callback(call, state):
                                 callback_data=f'back:to:time_{date_to}_{master_username}'))
     # kb.add(InlineKeyboardButton('Отмена просмотра', callback_data='cancel_check'))
     await call.message.answer(f'{log.phone_number}', reply_markup=kb)
-
-
-# @dp.callback_query_handler(text_contains='del_', state=AdminCheckLog)
-# async def delete_log_by_master():
-# pass
 
 
 @dp.callback_query_handler(text_contains='back:to:time_', state=AdminCheckLog)
