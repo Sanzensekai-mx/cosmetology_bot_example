@@ -5,10 +5,10 @@ from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters import Text
 from aiogram.types import Message, ReplyKeyboardRemove, InlineKeyboardMarkup, \
     InlineKeyboardButton, CallbackQuery
-from loader import dp
+from loader import dp, bot
 from utils.db_api.models import DBCommands
 from states.admin_states import AdminDelLog
-from keyboards.default import main_menu_admin, admin_default_cancel_del_log
+from keyboards.default import main_menu_admin, admin_default_cancel_del_log, admin_default_cancel_back_del_log
 from data.config import admins, masters_id
 from utils.general_func import date_process_enter
 from utils.general_func import get_key
@@ -40,9 +40,6 @@ async def start_del_log(message: Message, state: FSMContext):
     )
 
 
-# 'current_choice_month': '',
-# 'current_choice_year': '',
-
 @dp.callback_query_handler(text_contains='m_', chat_id=admins, state=AdminDelLog.ChoiceMaster)
 async def process_choice_master_date_del_log(call: CallbackQuery, state: FSMContext):
     await call.answer(cache_time=60)
@@ -53,8 +50,10 @@ async def process_choice_master_date_del_log(call: CallbackQuery, state: FSMCont
     # await AdminCheckLog.CheckMonths.set()
     await AdminDelLog.ChoiceDate.set()
     current_date = datetime.date.today()
-    await call.message.answer('Записи по месяцам')
-    await date_process_enter(call, state,
+    await bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id - 1)
+    await bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id)
+    await call.message.answer('Записи по месяцам', reply_markup=admin_default_cancel_del_log)
+    await date_process_enter(call=call, state=state,
                              year=current_date.year,
                              month=current_date.month,
                              day=current_date.day)
@@ -78,9 +77,9 @@ async def process_choice_day(call, date_time):
         for log in all_today_logs:
             kb_time.insert(InlineKeyboardButton(f'{log.time}',
                                                 callback_data=f'admin:datetime_{datetime_with_weekdays} {log.time}'))
-        kb_time.add(InlineKeyboardButton('Назад к выбору даты', callback_data='back_months'))
-        await call.message.answer(f'День: {day} '
-                                  f'\nВыберите время записи, чтобы просмотреть кто записался.',
+        # kb_time.add(InlineKeyboardButton('Назад к выбору даты', callback_data='back_months'))
+        await call.message.answer(f'День: {day} ', reply_markup=admin_default_cancel_del_log)
+        await call.message.answer(f'\nВыберите время записи, чтобы просмотреть кто записался.',
                                   reply_markup=kb_time)
     else:
         await call.message.answer('Записи клиентов.')
@@ -94,6 +93,8 @@ async def process_choice_day_of_month(call: CallbackQuery):
     date = [int(i.strip('()')) for i in call.data.split('_')[1].split(',')]
     # print(date)
     choice_day = datetime.date(date[0], date[1], date[2])
+    await bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id - 1)
+    await bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id)
     await process_choice_day(call=call, date_time=choice_day)
     await AdminDelLog.ChoiceTime.set()
 
@@ -102,6 +103,8 @@ async def process_choice_day_of_month(call: CallbackQuery):
                            state=AdminDelLog.ChoiceTime)
 async def process_choice_time(call: CallbackQuery, state: FSMContext):
     await call.answer(cache_time=60)
+    await bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id - 1)
+    await bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id)
     full_datetime = call.data.split('_')[1]
     # master_username = get_key(await db.get_master_and_id(), str(call.message.chat.id))
     data = await state.get_data()
@@ -117,12 +120,12 @@ async def process_choice_time(call: CallbackQuery, state: FSMContext):
 Дата -  {date[2]} / {date[1]} / {date[0]}\n
 Мастер - {log.name_master}\n
 Клиент - {log.name_client}\n
-Услуга - {log.service}''')
+Услуга - {log.service}''', reply_markup=admin_default_cancel_del_log)
     kb = InlineKeyboardMarkup()
     # написать callback
     # kb.add(InlineKeyboardButton(f'Удалить запись эту запись', callback_data=f'del_{full_datetime}_{master_username}'))
-    kb.add(InlineKeyboardButton(f'Вернуться к записям на {date[2]} число',
-                                callback_data=f'back:to:time_{date_to}_{master_username}'))
+    # kb.add(InlineKeyboardButton(f'Вернуться к записям на {date[2]} число',
+    #                             callback_data=f'back:to:time_{date_to}_{master_username}'))
     kb.add(InlineKeyboardButton(f'Удалить запись', callback_data=f'del_{full_datetime}_{master_username}'))
     # kb.add(InlineKeyboardButton('Отмена просмотра', callback_data='cancel_check'))
     await call.message.answer(f'{log.phone_number}', reply_markup=kb)

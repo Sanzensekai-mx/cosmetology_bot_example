@@ -11,7 +11,7 @@ from keyboards.default import main_menu_admin, main_menu_master, admin_default_c
     admin_default_cancel_2_back_check_log_week
 from keyboards.inline import check_logs_choice_range
 from loader import dp, bot
-from states.admin_states import AdminCheckLog
+from states.admin_states import AdminCheckLog, AdminDelLog
 from utils.db_api.models import DBCommands
 from data.config import admins, masters_id, months, days
 from utils.general_func import get_key, date_process_enter
@@ -25,7 +25,6 @@ logging.basicConfig(format=u'%(filename)s 'u'[LINE:%(lineno)d] '
 
 @dp.message_handler(commands=['time'])
 async def show_time(message: Message):
-    # tz = pytz.timezone('Europe/Ulyanovsk')
     current_date = datetime.datetime.now()
     await message.answer(f'\ntoday'
                          f'\n{current_date}'
@@ -33,11 +32,6 @@ async def show_time(message: Message):
                          f'\n{datetime.datetime.utcnow()}'
                          f'\nmaybe current'
                          f'\n{datetime.datetime.now()}')
-    # f'\n{datetime.datetime.now(tz_ulyanovsk)}'
-    # locale.setlocale(locale.LC_ALL, '')
-    # locale.setlocale(locale.LC_ALL, 'ru_RU')
-    # c = calendar.TextCalendar(calendar.MONDAY)
-    # print_month_c = c.formatmonth(current_date.year, current_date.month)
     await message.answer(months)
     await message.answer(days)
 
@@ -74,7 +68,7 @@ async def default_process_back_master_check_logs(message: Message):
 
 
 @dp.message_handler(Text(equals='Назад к выбору даты (месяц)'), chat_id=masters_id,
-                    state=AdminCheckLog)
+                    state=[AdminCheckLog, AdminDelLog])
 async def process_back_to_calendar(message: Message, state: FSMContext):
     data = await state.get_data()
     # await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id - 2)

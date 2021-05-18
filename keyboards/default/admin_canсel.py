@@ -114,7 +114,6 @@ admin_default_cancel_back_check_log = ReplyKeyboardMarkup(
         ]
     ], resize_keyboard=True)
 
-
 admin_default_cancel_2_back_check_log_month = ReplyKeyboardMarkup(
     keyboard=[
         [
@@ -143,6 +142,16 @@ admin_default_cancel_2_back_check_log_week = ReplyKeyboardMarkup(
 
 admin_default_cancel_del_log = ReplyKeyboardMarkup(
     keyboard=[
+        [
+            KeyboardButton('Закрыть меню удаления записей')
+        ]
+    ], resize_keyboard=True)
+
+admin_default_cancel_back_del_log = ReplyKeyboardMarkup(
+    keyboard=[
+        [
+            KeyboardButton('Назад к выбору даты (месяц)')
+        ],
         [
             KeyboardButton('Закрыть меню удаления записей')
         ]
