@@ -8,15 +8,19 @@ from keyboards.default import default_cancel_show_services, main_menu_client, de
 from loader import dp, bot
 from states.user_states import UserServices
 from utils.db_api.models import DBCommands
-from handlers.users.appointment import return_kb_mes_services
+from utils.general_func import return_kb_mes_services
 
 db = DBCommands()
 
 
 async def process_show_menu_services(message: Message, state: FSMContext):
-    services_mes, services_kb = await return_kb_mes_services(state=state)
+    # services_mes, services_kb = await return_kb_mes_services(state=state)
+    # data = await state.get_data()
     await message.answer('Выберите интересующую вас услугу.', reply_markup=default_cancel_show_services)
-    await message.answer(services_mes, reply_markup=services_kb)
+    await return_kb_mes_services(message, state)
+    # await message.answer(data.get('all_result_messages')[data.get('page')],
+    #                      reply_markup=data.get('keyboards')[data.get('page')])
+    # await message.answer(services_mes, reply_markup=services_kb)
 
 
 @dp.message_handler(Text(equals=['Закрыть просмотр услуг']), state=UserServices)
@@ -44,7 +48,7 @@ async def process_choice_service(call: CallbackQuery, state: FSMContext):
     data = await state.get_data()
     service_num = call.data.split('_')[1]
     await call.answer(cache_time=60)
-    all_services_names = data.get('current_services_dict')
+    all_services_names = data.get('services_by_page')[data.get('page')]
     chosen_service = await db.get_service(all_services_names[service_num])
     await bot.send_photo(chat_id=call.message.chat.id, photo=chosen_service.pic_file_id)
     await call.message.answer(text=f'{chosen_service.name}. Цена: {chosen_service.price} рублей.',

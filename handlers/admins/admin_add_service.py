@@ -11,7 +11,6 @@ from loader import dp, bot
 from states.admin_states import AdminAddService
 from utils.db_api.models import DBCommands
 from data.config import admins
-from handlers.users.appointment import return_kb_masters
 
 db = DBCommands()
 
