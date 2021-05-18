@@ -7,3 +7,4 @@ gino~=1.0.1
 asyncpg~=0.21.0
 aioschedule~=0.5.2
 pytz~=2021.1
+numpy~=1.20.3
