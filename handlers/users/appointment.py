@@ -164,7 +164,7 @@ async def choice_master(call: CallbackQuery, state: FSMContext):
         # Выбор даты, функция
         current_date = datetime.date.today()
         await call.message.answer('Выбор даты оказания услуги', reply_markup=default_cancel_appointment)
-        await date_process_enter(call, state,
+        await date_process_enter(call=call, state=state,
                                  year=current_date.year,
                                  month=current_date.month,
                                  day=current_date.day)

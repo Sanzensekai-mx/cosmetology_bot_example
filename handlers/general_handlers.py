@@ -63,7 +63,7 @@ async def change_month_process(call: CallbackQuery, state: FSMContext):
             await call.message.answer('Записи по месяцам', reply_markup=admin_default_cancel_back_check_log)
         await bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id - 1)
         await bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id)
-        await date_process_enter(call, state,
+        await date_process_enter(call=call, state=state,
                                  year=choice_year,
                                  month=choice_month,
                                  day=1, service=service_state)
@@ -80,7 +80,7 @@ async def change_month_process(call: CallbackQuery, state: FSMContext):
             await call.message.answer('Выбор даты оказания услуги', reply_markup=default_cancel_appointment)
         else:
             await call.message.answer('Записи по месяцам', reply_markup=admin_default_cancel_back_check_log)
-        await date_process_enter(call, state,
+        await date_process_enter(call=call, state=state,
                                  year=choice_year,
                                  month=choice_month,
                                  day=1, service=service_state)

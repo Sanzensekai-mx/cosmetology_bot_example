@@ -88,7 +88,8 @@ async def return_kb_mes_services(message, state):
     # return res_message, choice_service_kb
 
 
-async def date_process_enter(call, state, year, month, day, service=True):
+async def date_process_enter(state, year, month, day, service=True, call=None, message=None):
+    response = call.message if call else message
     data = await state.get_data()
     c = calendar.TextCalendar(calendar.MONDAY)
     if service:
@@ -139,11 +140,11 @@ async def date_process_enter(call, state, year, month, day, service=True):
         inline_calendar.insert(InlineKeyboardButton(day_cal[2], callback_data=f'date_{day_cal}'))
     # inline_calendar.add(InlineKeyboardButton('Отмена записи', callback_data='cancel_appointment'))
     if service:
-        await call.message.answer(f'Ваше Фамилия и Имя: "{data.get("name_client")}". '
-                                  f'\nМастер: "{data.get("name_master")}"'
-                                  f'\nУслуга: "{service.name}"', reply_markup=inline_calendar)
+        await response.answer(f'Ваше Фамилия и Имя: "{data.get("name_client")}". '
+                              f'\nМастер: "{data.get("name_master")}"'
+                              f'\nУслуга: "{service.name}"', reply_markup=inline_calendar)
     else:
-        await call.message.answer(f'Выберите дату.', reply_markup=inline_calendar)
+        await response.answer(f'Выберите дату.', reply_markup=inline_calendar)
 
 
 def get_key(d, value):

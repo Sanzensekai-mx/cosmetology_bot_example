@@ -1,17 +1,16 @@
-import locale
 import logging
-import pytz
 import datetime
 import calendar
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters import Text
-from aiogram.types import Message, ReplyKeyboardRemove, InlineKeyboardMarkup, \
+from aiogram.types import Message, InlineKeyboardMarkup, \
     InlineKeyboardButton, CallbackQuery
 
 from keyboards.default import main_menu_admin, main_menu_master, admin_default_cancel_check_log, \
-    admin_default_cancel_back_check_log
+    admin_default_cancel_back_check_log, admin_default_cancel_2_back_check_log_month, \
+    admin_default_cancel_2_back_check_log_week
 from keyboards.inline import check_logs_choice_range
-from loader import dp
+from loader import dp, bot
 from states.admin_states import AdminCheckLog, AdminDelLog
 from utils.db_api.models import DBCommands
 from data.config import admins, masters_id, months, days
@@ -30,7 +29,7 @@ async def show_time(message: Message):
     current_date = datetime.datetime.now()
     await message.answer(f'\ntoday'
                          f'\n{current_date}'
-                         f'\nutcnow'
+                         f'\nutc_now'
                          f'\n{datetime.datetime.utcnow()}'
                          f'\nmaybe current'
                          f'\n{datetime.datetime.now()}')
@@ -64,45 +63,66 @@ async def default_process_cancel_master_check_logs(message: Message, state: FSMC
 
 
 @dp.message_handler(Text(equals='Назад в главное меню просмотра записей'), chat_id=masters_id, state=AdminCheckLog)
-async def default_process_back_master_check_logs(message: Message, state: FSMContext):
+async def default_process_back_master_check_logs(message: Message):
     await message.answer('Записи клиентов.', reply_markup=admin_default_cancel_check_log)
     await message.answer('Просмотр записи клиетов.', reply_markup=check_logs_choice_range)
     await AdminCheckLog.ChoiceRange.set()
 
 
-@dp.callback_query_handler(chat_id=masters_id, state=[AdminCheckLog.CheckMonths, AdminDelLog.ChoiceDate],
-                           text_contains='back_months')
-async def inline_process_back_to_months(call: CallbackQuery, state: FSMContext):
-    await call.answer(cache_time=60)
+@dp.message_handler(Text(equals='Назад к выбору даты (месяц)'), chat_id=masters_id,
+                    state=AdminCheckLog)
+async def process_back_to_calendar(message: Message, state: FSMContext):
     data = await state.get_data()
-    # await state.reset_state(with_data=True)
-    # await AdminCheckLog.CheckMonths.set()
-    # current_date = datetime.datetime.now(tz_ulyanovsk)
-    current_date = datetime.datetime.now()
-    await call.message.answer('Записи по месяцам', reply_markup=admin_default_cancel_back_check_log)
-    await date_process_enter(call=call,
+    await message.answer('Записи по месяцам', reply_markup=admin_default_cancel_back_check_log)
+    await date_process_enter(message=message,
                              state=state,
                              year=data.get('current_choice_year'),
                              month=data.get('current_choice_month'),
                              day=1, service=False)
+    await AdminCheckLog.CheckMonths.set()
 
 
-@dp.callback_query_handler(chat_id=masters_id, state=AdminCheckLog.CheckWeek, text_contains='back_weekdays')
-async def inline_process_back_to_weekdays(call: CallbackQuery, state: FSMContext):
-    await call.answer(cache_time=60)
-    # current_date = datetime.datetime.now(tz_ulyanovsk)
-    current_date = datetime.datetime.now()
-    await process_choice_week(call=call, date_time=current_date, state=state)
+@dp.message_handler(Text(equals='Назад к выбору даты (неделя)'), chat_id=masters_id, state=AdminCheckLog)
+async def process_back_to_calendar(message: Message, state: FSMContext):
+    # current_date = datetime.datetime.now()
+    await process_choice_week(message=message, state=state)
+    await AdminCheckLog.CheckWeek.set()
+
+
+# @dp.callback_query_handler(chat_id=masters_id, state=[AdminCheckLog.CheckMonths, AdminDelLog.ChoiceDate],
+#                            text_contains='back_months')
+# @dp.callback_query_handler(chat_id=masters_id, text_contains='back_months')
+# async def inline_process_back_to_months(call: CallbackQuery, state: FSMContext):
+#     await call.answer(cache_time=60)
+#     data = await state.get_data()
+#     # await state.reset_state(with_data=True)
+#     # await AdminCheckLog.CheckMonths.set()
+#     # current_date = datetime.datetime.now(tz_ulyanovsk)
+#     await call.message.answer('Записи по месяцам', reply_markup=admin_default_cancel_back_check_log)
+#     await date_process_enter(call=call,
+#                              state=state,
+#                              year=data.get('current_choice_year'),
+#                              month=data.get('current_choice_month'),
+#                              day=1, service=False)
+
+
+# @dp.callback_query_handler(chat_id=masters_id, state=AdminCheckLog.CheckWeek, text_contains='back_weekdays')
+# @dp.callback_query_handler(chat_id=masters_id, text_contains='back_weekdays')
+# async def inline_process_back_to_weekdays(call: CallbackQuery, state: FSMContext):
+#     await call.answer(cache_time=60)
+#     current_date = datetime.datetime.now()
+#     await process_choice_week(call=call, date_time=current_date, state=state)
 
 
 @dp.message_handler(Text(equals=['Посмотреть записи ко мне',
                                  'Посмотреть записи ко мне (супер-мастер)',
                                  'Посмотреть записи ко мне (мастер)']), chat_id=masters_id)
-async def start_check_logs(message: Message):
+async def start_check_logs(message: Message, state: FSMContext):
     logging.info(f'from: {message.chat.full_name}, text: {message.text.upper()}')
     await message.answer('Записи клиентов.', reply_markup=admin_default_cancel_check_log)
     await message.answer('Просмотр записи клиентов.', reply_markup=check_logs_choice_range)
     # print(await db.get_master_and_id())
+    await state.update_data({'current_kb': ''})
     await AdminCheckLog.ChoiceRange.set()
 
 
@@ -123,10 +143,11 @@ async def process_choice_time_callback(call):
 Услуга - {log.service}''', reply_markup=admin_default_cancel_back_check_log)
     kb = InlineKeyboardMarkup()
     # написать callback
-    # kb.add(InlineKeyboardButton(f'Удалить запись эту запись', callback_data=f'del_{full_datetime}_{master_username}'))
     kb.add(InlineKeyboardButton(f'Вернуться к записям на {date[2]} число',
                                 callback_data=f'back:to:time_{date_to}_{master_username}'))
     # kb.add(InlineKeyboardButton('Отмена просмотра', callback_data='cancel_check'))
+    await bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id-1)
+    await bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id)
     await call.message.answer(f'{log.phone_number}', reply_markup=kb)
 
 
@@ -136,11 +157,12 @@ async def process_choice_time_callback(call):
 
 
 @dp.callback_query_handler(text_contains='back:to:time_', state=AdminCheckLog)
-async def back_to_date_timetable(call: CallbackQuery):
+async def back_to_date_timetable(call: CallbackQuery, state: FSMContext):
     await call.answer(cache_time=60)
+    data = await state.get_data()
     date = [int(i) for i in call.data.split('_')[1].split('-')]
     res = datetime.date(date[0], date[1], date[2])
-    await process_choice_day(call, res)
+    await process_choice_day(call, res, kb=data.get('current_kb'))
     await AdminCheckLog.ChoiceRange.set()
 
 
@@ -167,11 +189,11 @@ async def process_choice_day(call, date_time, kb=None):
             kb_time.insert(InlineKeyboardButton(f'{log.time}',
                                                 callback_data=f'admin:datetime_{datetime_with_weekdays} {log.time}'))
         if kb == 'month':
-            kb_time.add(InlineKeyboardButton('Назад к выбору даты', callback_data='back_months'))
+            await call.message.answer(f'День: {day}', reply_markup=admin_default_cancel_2_back_check_log_month)
         elif kb == 'week':
-            kb_time.add(InlineKeyboardButton('Назад к выбору даты', callback_data='back_weekdays'))
-        await call.message.answer(f'День: {day} '
-                                  f'\nВыберите время записи, чтобы просмотреть кто записался.',
+            await call.message.answer(f'День: {day}', reply_markup=admin_default_cancel_2_back_check_log_week)
+        # await bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id-1)
+        await call.message.answer(f'\nВыберите время записи, чтобы просмотреть кто записался.',
                                   reply_markup=kb_time)
     else:
         await call.message.answer('Записи клиентов.', reply_markup=admin_default_cancel_check_log)
@@ -183,10 +205,11 @@ async def process_choice_day(call, date_time, kb=None):
     # await call.message.answer(all_today_logs)
 
 
-async def process_choice_week(call, date_time, state):
+async def process_choice_week(state, call=None, message=None):
     # await state.update_data('kb': None)
     # data = await state.get_data()
-    current_date = date_time
+    response = call.message if call else message
+    current_date = datetime.datetime.now()
     c = calendar.TextCalendar(calendar.MONDAY)
     month_c = calendar.monthcalendar(current_date.year, current_date.month)
     print_month_c = c.formatmonth(current_date.year, current_date.month)
@@ -207,16 +230,10 @@ async def process_choice_week(call, date_time, state):
                                  callback_data=f'date_{current_date.year}, {current_date.month}, {day}'))
     # kb_week.add(InlineKeyboardButton('Отмена просмотра', callback_data='cancel_check'))
     await state.update_data({'kb': kb_week})
-    await call.message.answer('Записи на неделю', reply_markup=admin_default_cancel_back_check_log)
-    await call.message.answer('Выберите дату записи, '
-                              'чтобы просмотреть кто записался на текущей неделе.',
-                              reply_markup=kb_week)
-
-
-# @dp.callback_query_handler(state=[AdminCheckLog, AdminDelLog], text_contains='wrong_date')
-# async def wrong_date_process(call: CallbackQuery):
-#     await call.answer(cache_time=60)
-#     await call.message.answer('Дата неактуальна, выберите не пустую дату.')
+    await response.answer('Записи на неделю', reply_markup=admin_default_cancel_back_check_log)
+    await response.answer('Выберите дату записи, '
+                          'чтобы просмотреть кто записался на текущей неделе.',
+                          reply_markup=kb_week)
 
 
 @dp.callback_query_handler(state=AdminCheckLog.CheckWeek, text_contains='date_')
@@ -252,15 +269,17 @@ async def choice_range_log(call: CallbackQuery, state: FSMContext):
         await AdminCheckLog.ChoiceRange.set()
     elif result == 'week':
         await AdminCheckLog.CheckWeek.set()
-        await process_choice_week(call, current_date, state=state)
+        await process_choice_week(call=call, state=state)
+        await state.update_data({'current_kb': 'week'})
     elif result == 'months':
         await AdminCheckLog.CheckMonths.set()
         await state.update_data(
             {'current_choice_month': '',
              'current_choice_year': ''})
         await call.message.answer('Записи по месяцам', reply_markup=admin_default_cancel_back_check_log)
-        await date_process_enter(call, state=state,
+        await date_process_enter(call=call, state=state,
                                  year=current_date.year,
                                  month=current_date.month,
                                  day=current_date.day,
                                  service=False)
+        await state.update_data({'current_kb': 'month'})
