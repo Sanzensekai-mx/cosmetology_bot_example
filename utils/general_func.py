@@ -108,13 +108,19 @@ async def date_process_enter(call, state, year, month, day, service=True):
     if (month != current_date.month and year == current_date.year) \
             or ((month != current_date.month or month == current_date.month)
                 and year != current_date.year):
-        inline_calendar.add(InlineKeyboardButton('<', callback_data='month_previous'))
+        if service:
+            inline_calendar.add(InlineKeyboardButton('<', callback_data='month_previous_appointment'))
+        else:
+            inline_calendar.add(InlineKeyboardButton('<', callback_data='month_previous_checks'))
     data['current_choice_month'] = month
     data['current_choice_year'] = year
     await state.update_data(data)
     inline_calendar.insert(InlineKeyboardButton(f'{months.get(print_c.split()[0])} {print_c.split()[1]}',
                                                 callback_data=' '))
-    inline_calendar.insert(InlineKeyboardButton('>', callback_data='month_next'))
+    if service:
+        inline_calendar.insert(InlineKeyboardButton('>', callback_data='month_next_appointment'))
+    else:
+        inline_calendar.insert(InlineKeyboardButton('>', callback_data='month_next_checks'))
     for week_day in [item for item in print_c.split()][2:9]:
         if week_day == 'Mo':
             inline_calendar.add(InlineKeyboardButton(days.get(week_day), callback_data=days.get(week_day)))

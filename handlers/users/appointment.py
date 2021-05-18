@@ -8,7 +8,7 @@ from aiogram.types import Message, ReplyKeyboardRemove, InlineKeyboardMarkup, \
 from keyboards.default import main_menu_client, phone_number, default_cancel_appointment, \
     default_cancel_appointment_confirm
 from keyboards.inline import inline_cancel_appointment
-from loader import dp
+from loader import dp, bot
 from states.user_states import UserAppointment
 from utils.db_api.models import DBCommands
 
@@ -174,54 +174,6 @@ async def choice_master(call: CallbackQuery, state: FSMContext):
         await confirm_or_change(data, call.message)
 
 
-@dp.callback_query_handler(state=UserAppointment.Date, text_contains='month_')
-async def change_month_process(call: CallbackQuery, state: FSMContext):
-    data = await state.get_data()
-    await call.answer(cache_time=60)
-    current_date = datetime.datetime.now()
-    # current_date = datetime.datetime.now(tz_ulyanovsk)
-    # ?
-    # current_date += datetime.timedelta(hours=4)
-    # await call.message.answer(f'{current_date.hour}:{current_date.minute}')
-    result = call.data.split('_')[1]
-    choice_year = data.get('current_choice_year')
-    choice_month = data.get('current_choice_month')
-    if result == 'next':
-        if choice_month == 12:
-            choice_year = current_date.year + 1
-            choice_month = 1
-        else:
-            choice_month = int(choice_month) + 1
-        data['current_choice_year'] = choice_year
-        data['current_choice_month'] = choice_month
-        await state.update_data()
-        await call.message.answer('Выбор даты оказания услуги', reply_markup=default_cancel_appointment)
-        await date_process_enter(call, state,
-                                 year=choice_year,
-                                 month=choice_month,
-                                 day=1)
-    elif result == 'previous':
-        if choice_month == 1:
-            choice_year = choice_year - 1
-            choice_month = 12
-        else:
-            choice_month = int(choice_month) - 1
-        data['current_choice_year'] = choice_year
-        data['current_choice_month'] = choice_month
-        await state.update_data()
-        await call.message.answer('Выбор даты оказания услуги', reply_markup=default_cancel_appointment)
-        await date_process_enter(call, state,
-                                 year=choice_year,
-                                 month=choice_month,
-                                 day=1)
-
-
-@dp.callback_query_handler(state=UserAppointment.Date, text_contains='wrong_date')
-async def wrong_date_process(call: CallbackQuery):
-    await call.answer(cache_time=60)
-    await call.message.answer('Дата неактуальна, выберите не пустую дату.')
-
-
 @dp.callback_query_handler(state=UserAppointment.Date, text_contains='date_')
 async def choice_date(call: CallbackQuery, state: FSMContext):
     data = await state.get_data()
@@ -317,35 +269,8 @@ async def choice_date(message: Message, state: FSMContext):
         await confirm_or_change(data, message)
 
 
-# @dp.callback_query_handler(text_contains='change', state=UserAppointment.Confirm)
-# async def change_some_data(call: CallbackQuery, state: FSMContext):
-#     await call.answer(cache_time=60)
-#     what_to_change = call.data.split(':')[1]
-#     if what_to_change == 'name_client':
-#         await call.message.answer('Введите новое имя клиента.')
-#         await UserAppointment.Name.set()
-#     elif what_to_change == 'name_master':
-#         await call.message.answer('Выберите другого мастера.', reply_markup=await return_kb_masters())
-#         await UserAppointment.Master.set()
-#     elif what_to_change == 'service':
-#         res_mes_and_kb = await return_kb_mes_services(state)
-#         await call.message.answer(f'Выберите другую услугу. \n{res_mes_and_kb[0]}',
-#                                   reply_markup=res_mes_and_kb[1])
-#
-#         await UserAppointment.Service.set()
-#     elif what_to_change == 'date':
-#         await call.message.answer('Выберите другую дату.')
-#         await UserAppointment.Date.set()
-#     elif what_to_change == 'time':
-#         await call.message.answer('Выберите другое время.')
-#         await UserAppointment.Time.set()
-
-
-# @dp.callback_query_handler(text_contains='confirm_appointment', state=UserAppointment.Confirm)
-# async def confirm_to_db(call: CallbackQuery, state: FSMContext):
 @dp.message_handler(Text(equals=['Подтвердить']), state=UserAppointment.Confirm)
 async def confirm_to_db(message: Message, state: FSMContext):
-    # await call.answer(cache_time=60)
     data = await state.get_data()
     await db.add_update_date(datetime_one=data.get('date'),
                              time=data.get('time'), master=data.get('name_master'))
@@ -359,7 +284,7 @@ async def confirm_to_db(message: Message, state: FSMContext):
         time=data.get('time'),
         phone_number=data.get('phone_number'))
     await message.answer('Вы записаны. Нажмите на кнопку \"Мои записи\", чтобы увидеть подробности записи',
-                         reply_markup=main_menu_client)  # Исправить reply_markup
+                         reply_markup=main_menu_client)
     # Тест отправки
     # pic = await db.show_service_test()
     # await bot.send_photo(chat_id=591763264, photo=pic.pic_file_id)
