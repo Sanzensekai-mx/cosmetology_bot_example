@@ -285,6 +285,14 @@ async def confirm_to_db(message: Message, state: FSMContext):
         phone_number=data.get('phone_number'))
     await message.answer('Вы записаны. Нажмите на кнопку \"Мои записи\", чтобы увидеть подробности записи',
                          reply_markup=main_menu_client)
+    master_obj = await db.get_master(data.get('name_master'))
+    date = [d.strip() for d in data.get("date").strip("()").split(",")]
+    await bot.send_message(text='К вам записались.'
+                                f'\nДата: {date[2]} / {date[1]} / {date[0]}'
+                                f'\nВремя: {data.get("time")}'
+                                f'\nИмя клиента: {data.get("name_client")}', chat_id=master_obj.master_user_id)
+    await bot.send_message(text=data.get('phone_number'), chat_id=master_obj.master_user_id)
+
     # Тест отправки
     # pic = await db.show_service_test()
     # await bot.send_photo(chat_id=591763264, photo=pic.pic_file_id)
