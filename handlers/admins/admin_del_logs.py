@@ -62,7 +62,7 @@ async def process_choice_master_date_del_log(call: CallbackQuery, state: FSMCont
     # print(data.get('current_choice_year'))
 
 
-async def process_choice_day(call, date_time):
+async def process_choice_day(call, date_time, state):
     current_date = date_time
     year, month, day = current_date.year, current_date.month, current_date.day
     c = calendar.TextCalendar(calendar.MONDAY)
@@ -82,12 +82,17 @@ async def process_choice_day(call, date_time):
         await call.message.answer(f'\nВыберите время записи, чтобы просмотреть кто записался.',
                                   reply_markup=kb_time)
     else:
-        await call.message.answer('Записи клиентов.')
+        await call.message.answer('Записи клиентов.', reply_markup=admin_default_cancel_del_log)
         await call.message.answer('Никто не записывался на этот день.')
+        await AdminDelLog.ChoiceDate.set()
+        await date_process_enter(call=call, state=state,
+                                 year=current_date.year,
+                                 month=current_date.month,
+                                 day=current_date.day)
 
 
 @dp.callback_query_handler(state=AdminDelLog.ChoiceDate, text_contains='date_')
-async def process_choice_day_of_month(call: CallbackQuery):
+async def process_choice_day_of_month(call: CallbackQuery, state: FSMContext):
     await call.answer(cache_time=60)
     # print(call.data.split('_')[1])
     date = [int(i.strip('()')) for i in call.data.split('_')[1].split(',')]
@@ -95,8 +100,8 @@ async def process_choice_day_of_month(call: CallbackQuery):
     choice_day = datetime.date(date[0], date[1], date[2])
     await bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id - 1)
     await bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id)
-    await process_choice_day(call=call, date_time=choice_day)
     await AdminDelLog.ChoiceTime.set()
+    await process_choice_day(call=call, date_time=choice_day, state=state)
 
 
 @dp.callback_query_handler(text_contains='admin:datetime_', chat_id=masters_id,
