@@ -42,6 +42,7 @@ async def inline_process_cancel_add_service(call: CallbackQuery, state: FSMConte
 
 @dp.message_handler(Text(equals=['Отмена записи']), state=UserAppointment)
 async def default_kb_process_cancel_add_service(message: Message, state: FSMContext):
+    logging.info(f'from: {message.chat.full_name}, text: {message.text.upper()}')
     await message.answer('Отмена записи.', reply_markup=main_menu_client)
     await state.reset_state()
 
@@ -271,6 +272,7 @@ async def choice_date(message: Message, state: FSMContext):
 
 @dp.message_handler(Text(equals=['Подтвердить']), state=UserAppointment.Confirm)
 async def confirm_to_db(message: Message, state: FSMContext):
+    logging.info(f'from: {message.chat.full_name}, text: {message.text.upper()}')
     data = await state.get_data()
     await db.add_update_date(datetime_one=data.get('date'),
                              time=data.get('time'), master=data.get('name_master'))

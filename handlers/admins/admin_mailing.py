@@ -32,6 +32,7 @@ async def process_cancel_add_service(call: CallbackQuery, state: FSMContext):
 
 @dp.message_handler(Text(equals='Отмена рассылки'), chat_id=admins, state=AdminMailing)
 async def cancel_mail(message: Message, state: FSMContext):
+    logging.info(f'from: {message.chat.full_name}, text: {message.text.upper()}')
     await message.answer('Отмена рассылки.', reply_markup=main_menu_admin)
     await state.reset_state()
 

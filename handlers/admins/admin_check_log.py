@@ -48,6 +48,7 @@ async def inline_process_cancel_master_check_logs(call: CallbackQuery, state: FS
 
 @dp.message_handler(Text(equals='Отмена просмотра'), chat_id=masters_id, state=AdminCheckLog)
 async def default_process_cancel_master_check_logs(message: Message, state: FSMContext):
+    logging.info(f'from: {message.chat.full_name}, text: {message.text.upper()}')
     # await call.answer(cache_time=60)
     # await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id - 2)
     # await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id - 1)
@@ -60,6 +61,7 @@ async def default_process_cancel_master_check_logs(message: Message, state: FSMC
 
 @dp.message_handler(Text(equals='Назад в главное меню просмотра записей'), chat_id=masters_id, state=AdminCheckLog)
 async def default_process_back_master_check_logs(message: Message):
+    logging.info(f'from: {message.chat.full_name}, text: {message.text.upper()}')
     # await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id - 2)
     # await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id - 1)
     await message.answer('Записи клиентов.', reply_markup=admin_default_cancel_check_log)
@@ -71,6 +73,7 @@ async def default_process_back_master_check_logs(message: Message):
                     state=[AdminCheckLog, AdminDelLog])
 async def process_back_to_calendar(message: Message, state: FSMContext):
     data = await state.get_data()
+    logging.info(f'from: {message.chat.full_name}, text: {message.text.upper()}')
     # await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id - 2)
     # await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id - 1)
     await message.answer('Записи по месяцам', reply_markup=admin_default_cancel_back_check_log)
@@ -84,6 +87,7 @@ async def process_back_to_calendar(message: Message, state: FSMContext):
 
 @dp.message_handler(Text(equals='Назад к выбору даты (неделя)'), chat_id=masters_id, state=AdminCheckLog)
 async def process_back_to_calendar(message: Message, state: FSMContext):
+    logging.info(f'from: {message.chat.full_name}, text: {message.text.upper()}')
     # current_date = datetime.datetime.now()
     # await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id - 2)
     # await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id - 1)

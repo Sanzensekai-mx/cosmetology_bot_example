@@ -22,6 +22,7 @@ async def inline_process_cancel_del_service(call: CallbackQuery, state: FSMConte
 
 @dp.message_handler(Text(equals=['Отмена удаления услуги']), chat_id=admins, state=AdminDelService)
 async def default_process_cancel_del_service(message: Message, state: FSMContext):
+    logging.info(f'from: {message.chat.full_name}, text: {message.text.upper()}')
     await message.answer('Отмена удаления.', reply_markup=main_menu_admin)
     await state.reset_state()
 

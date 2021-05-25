@@ -25,6 +25,7 @@ async def process_show_menu_services(message: Message, state: FSMContext):
 
 @dp.message_handler(Text(equals=['Закрыть просмотр услуг']), state=UserServices)
 async def cancel_show_services(message: Message, state: FSMContext):
+    logging.info(f'from: {message.chat.full_name}, text: {message.text.upper()}')
     await message.answer('Отмена просмотра услуг.', reply_markup=main_menu_client)
     await state.reset_state()
 
@@ -39,6 +40,7 @@ async def start_show_services(message: Message, state: FSMContext):
 
 @dp.message_handler(Text(equals=['Вернуться к списку услуг']), state=UserServices.ServicesList)
 async def show_services_again(message: Message, state: FSMContext):
+    logging.info(f'from: {message.chat.full_name}, text: {message.text.upper()}')
     await process_show_menu_services(message=message, state=state)
     await UserServices.ServicesList.set()
 

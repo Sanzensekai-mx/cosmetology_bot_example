@@ -50,6 +50,7 @@ async def inline_process_cancel_add_master(call: CallbackQuery, state: FSMContex
 
 @dp.message_handler(Text(equals=['Отмена добавления мастера']), chat_id=admins, state=AdminAddMaster)
 async def default_process_cancel_add_master(message: Message, state: FSMContext):
+    logging.info(f'from: {message.chat.full_name}, text: {message.text.upper()}')
     await message.answer('Отмена добавления нового мастера.', reply_markup=main_menu_admin)
     await state.reset_state()
 
@@ -140,6 +141,7 @@ async def add_id_master(message: Message, state: FSMContext):
 
 @dp.message_handler(Text(equals=['Подтвердить список сервисов']), chat_id=admins, state=AdminAddMaster.Services)
 async def confirm_master_service_list(message: Message, state: FSMContext):
+    logging.info(f'from: {message.chat.full_name}, text: {message.text.upper()}')
     await AdminAddMaster.Confirm.set()
     data = await state.get_data()
     if len(data.get('services')) == 0:
@@ -185,6 +187,7 @@ async def change_some_data(call: CallbackQuery, state: FSMContext):
 # async def confirm_new_meme(call: CallbackQuery, state: FSMContext):
 @dp.message_handler(Text(equals=['Подтвердить добавление']), chat_id=admins, state=AdminAddMaster.Confirm)
 async def confirm_new_master(message: Message, state: FSMContext):
+    logging.info(f'from: {message.chat.full_name}, text: {message.text.upper()}')
     # await call.answer(cache_time=60)
     data_from_state = await state.get_data()
     await db.add_master(
