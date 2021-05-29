@@ -1,4 +1,4 @@
-# Beauty_salon_bot
+# Cosmetology_bot_example
  Telegram bot that allows you to make an appointment in a beauty salon 
  
  Иван Яманчев. [bot](https://t.me/SalonExampleBot)
