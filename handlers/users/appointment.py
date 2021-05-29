@@ -13,6 +13,7 @@ from states.user_states import UserAppointment
 from utils.db_api.models import DBCommands
 
 from utils.general_func import return_kb_mes_services, date_process_enter
+from data.config import masters_id
 
 db = DBCommands()
 
@@ -76,7 +77,7 @@ async def return_kb_masters(service):
     appointment_choice_master = InlineKeyboardMarkup()
     all_masters = await db.all_masters()
     for master in all_masters:
-        if service in master.master_services:
+        if service in master.master_services and str(master.master_user_id) in masters_id:
             appointment_choice_master.add(InlineKeyboardButton(f'{master.master_name}',
                                                                callback_data=f'm_{master.master_name}'))
     return appointment_choice_master
