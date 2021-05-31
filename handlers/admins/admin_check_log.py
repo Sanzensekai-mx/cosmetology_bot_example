@@ -163,8 +163,6 @@ async def process_choice_day(call, date_time, kb=None):
     year, month, day = current_date.year, current_date.month, current_date.day
     c = calendar.TextCalendar(calendar.MONDAY)
     datetime_with_weekdays = [date for date in c.itermonthdays4(year, month) if date[2] == day][0]
-    # today_datetime_log = await db.get_datetime()
-    # print(get_key(await db.get_master_and_id(), str(call.message.chat.id)))
     all_today_logs = await db.get_logs_only_date(f'{datetime_with_weekdays}',
                                                  get_key(await db.get_master_and_id(), str(call.message.chat.id)))
     # result_message_list = []
@@ -186,22 +184,14 @@ async def process_choice_day(call, date_time, kb=None):
         await call.message.answer('Записи клиентов.', reply_markup=admin_default_cancel_check_log)
         await call.message.answer('Никто не записывался на этот день.', reply_markup=check_logs_choice_range)
 
-    # for num, log in enumerate(all_today_logs, 1):
-    #     result_message_list.append(f'\n{log}. {log.time} - {log.name_client} - {log.service} - {log.phone_number}')
-    #     result_message_list.append('\n')
-    # await call.message.answer(all_today_logs)
-
 
 async def process_choice_week(state, call=None, message=None):
-    # await state.update_data('kb': None)
-    # data = await state.get_data()
     response = call.message if call else message
     master = await db.get_master_by_id(response.chat.id)
     all_date_logs = [log.date for log in await db.get_all_master_logs(master.master_name)]
     current_date = datetime.datetime.now()
     c = calendar.TextCalendar(calendar.MONDAY)
-    # month_c = calendar.monthcalendar(current_date.year, current_date.month)
-    month_b = c.monthdays2calendar(current_date.year, current_date.month)
+    # month_b = c.monthdays2calendar(current_date.year, current_date.month)
     month_c = c.monthdatescalendar(current_date.year, current_date.month)
     print_month_c = c.formatmonth(current_date.year, current_date.month)
     # print(month_c)
@@ -212,7 +202,7 @@ async def process_choice_week(state, call=None, message=None):
     for week_day in [item for item in print_month_c.split()][2:9]:
         kb_week.insert(InlineKeyboardButton(days.get(week_day), callback_data=days.get(week_day)))
     for day in current_week_days:
-        if day[2] < current_date.day or day in current_week_days[5:]:
+        if (day[2] < current_date.day and current_date.month == day[1]) or day in current_week_days[5:]:
             kb_week.insert(InlineKeyboardButton(' ', callback_data=f'wrong_date'))
             continue
         if str(day) in all_date_logs:
