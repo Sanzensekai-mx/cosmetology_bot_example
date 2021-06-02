@@ -202,7 +202,8 @@ async def process_choice_week(state, call=None, message=None):
     for week_day in [item for item in print_month_c.split()][2:9]:
         kb_week.insert(InlineKeyboardButton(days.get(week_day), callback_data=days.get(week_day)))
     for day in current_week_days:
-        if (day[2] < current_date.day and current_date.month == day[1]) or day in current_week_days[5:]:
+        if (day[2] < current_date.day and current_date.month == day[1]) or day in current_week_days[5:] \
+                or day[1] < current_date.month:
             kb_week.insert(InlineKeyboardButton(' ', callback_data=f'wrong_date'))
             continue
         if str(day) in all_date_logs:

@@ -47,17 +47,21 @@ async def process_choice_master_date_del_log(call: CallbackQuery, state: FSMCont
     data = await state.get_data()
     choice_master = call.data.split('_')[1]
     data['name_master'] = choice_master
+    master = await db.get_master(choice_master)
     await state.update_data(data)
     # await AdminCheckLog.CheckMonths.set()
     await AdminDelLog.ChoiceDate.set()
     current_date = datetime.date.today()
     await bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id - 1)
     await bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id)
-    await call.message.answer('Записи по месяцам', reply_markup=admin_default_cancel_del_log)
+    await call.message.answer(f'Записи по месяцам. Мастер: {master.master_name}',
+                              reply_markup=admin_default_cancel_del_log)
     await date_process_enter(call=call, state=state,
                              year=current_date.year,
                              month=current_date.month,
-                             day=current_date.day)
+                             day=current_date.day,
+                             is_it_for_master=True,
+                             master_id=master.master_user_id)
     # data = await state.get_data()
     # print(data.get('current_choice_month'))
     # print(data.get('current_choice_year'))
@@ -69,9 +73,10 @@ async def process_choice_day(call, date_time, state):
     c = calendar.TextCalendar(calendar.MONDAY)
     datetime_with_weekdays = [date for date in c.itermonthdays4(year, month) if date[2] == day][0]
     # today_datetime_log = await db.get_datetime()
-    print(get_key(await db.get_master_and_id(), str(call.message.chat.id)))
-    all_today_logs = await db.get_logs_only_date(f'{datetime_with_weekdays}',
-                                                 get_key(await db.get_master_and_id(), str(call.message.chat.id)))
+    choice_master = call.data.split('_')[2]
+    master = await db.get_master(choice_master)
+    # print(get_key(await db.get_master_and_id(), str(call.message.chat.id)))
+    all_today_logs = await db.get_logs_only_date(f'{datetime_with_weekdays}', master.master_name)
     # result_message_list = []
     if all_today_logs:
         kb_time = InlineKeyboardMarkup(row_width=5)
@@ -79,7 +84,8 @@ async def process_choice_day(call, date_time, state):
             kb_time.insert(InlineKeyboardButton(f'{log.time}',
                                                 callback_data=f'admin:datetime_{datetime_with_weekdays} {log.time}'))
         # kb_time.add(InlineKeyboardButton('Назад к выбору даты', callback_data='back_months'))
-        await call.message.answer(f'День: {day} ', reply_markup=admin_default_cancel_del_log)
+        await call.message.answer(f'День: {day}, Мастер: {master.master_name}',
+                                  reply_markup=admin_default_cancel_del_log)
         await call.message.answer(f'\nВыберите время записи, чтобы просмотреть кто записался.',
                                   reply_markup=kb_time)
     else:
@@ -89,7 +95,9 @@ async def process_choice_day(call, date_time, state):
         await date_process_enter(call=call, state=state,
                                  year=current_date.year,
                                  month=current_date.month,
-                                 day=current_date.day)
+                                 day=current_date.day,
+                                 is_it_for_master=True,
+                                 master_id=master.master_user_id)
 
 
 @dp.callback_query_handler(state=AdminDelLog.ChoiceDate, text_contains='date_')
@@ -145,6 +153,7 @@ async def process_del_log(call: CallbackQuery, state: FSMContext):
     log_one = await db.get_log_by_full_datetime(full_datetime, master_username)
     # datetime_obj = await db.get_datetime(log_one, master_username)
     # chat_id = await db.get_log_by_full_datetime(full_datetime, master_username)
+    master = await db.get_master(master_username)
     await db.del_log(full_datetime, master_username)
     choice_time = full_datetime.split()[-1]
     date = log_one.date
@@ -152,9 +161,14 @@ async def process_del_log(call: CallbackQuery, state: FSMContext):
     format_date = f'{format_date[2]} / {format_date[1]} / {format_date[0]}'
     # await db.del_datetime(log_one, master_username)
     await db.add_update_date(datetime_one=date, time=choice_time, master=master_username)
-    await bot.send_message(chat_id=log_one.user_id, text=f'Ваша запись:\n'
-                                                              f'Дата: {format_date}\n'
-                                                              f'Время: {choice_time}\n'
-                                                              f'Была удалена.')
     await call.message.answer('Запись удалена', reply_markup=main_menu_admin)
+    await bot.send_message(chat_id=log_one.user_id, text=f'Ваша запись:\n'
+                                                         f'Дата: {format_date}\n'
+                                                         f'Время: {choice_time}\n'
+                                                         f'Была удалена.')
+    await bot.send_message(chat_id=master.master_user_id, text=f'Запись к вам:\n'
+                                                               f'Дата: {format_date}\n'
+                                                               f'Время: {choice_time}\n'
+                                                               f'Клиент: {log_one.name_client}\n'
+                                                               f'Была удалена администратором.')
     await state.reset_state()

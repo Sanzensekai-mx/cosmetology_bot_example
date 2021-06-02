@@ -4,9 +4,13 @@ from aiogram.types import CallbackQuery
 from states.user_states import UserAppointment, UserServices
 from states.admin_states import AdminAddMaster, AdminAddService, AdminDelService, AdminCheckLog, AdminDelLog
 from utils.general_func import date_process_enter
-from keyboards.default import admin_default_cancel_back_check_log, default_cancel_appointment
+from keyboards.default import admin_default_cancel_back_check_log, default_cancel_appointment, \
+    admin_default_cancel_del_log
 
 from loader import dp, bot
+from utils.db_api.models import DBCommands
+
+db = DBCommands()
 
 
 @dp.callback_query_handler(text_contains='page',
@@ -44,10 +48,16 @@ async def change_month_process(call: CallbackQuery, state: FSMContext):
     data = await state.get_data()
     current_date = datetime.date.today()
     result, service_state = call.data.split('_')[1], call.data.split('_')[2]
+    try:
+        master = await db.get_master(call.data.split('_')[3])
+    except Exception as e:
+        print(e)
     if service_state == 'appointment':
-        service_state = True
+        service_bool = True
     elif service_state == 'checks':
-        service_state = False
+        service_bool = False
+    elif service_state == 'del':
+        service_bool = False
     choice_year = data.get('current_choice_year')
     choice_month = data.get('current_choice_month')
     if result == 'next':
@@ -59,22 +69,31 @@ async def change_month_process(call: CallbackQuery, state: FSMContext):
         data['current_choice_year'] = choice_year
         data['current_choice_month'] = choice_month
         await state.update_data()
-        if service_state:
+        if service_state == 'appointment':
             await call.message.answer('Выбор даты оказания услуги', reply_markup=default_cancel_appointment)
-        else:
+        elif service_state == 'checks':
             await call.message.answer('Записи по месяцам', reply_markup=admin_default_cancel_back_check_log)
+        elif service_state == 'del':
+            await call.message.answer(f'Записи по месяцам. Мастер: {master.master_name}',
+                                      reply_markup=admin_default_cancel_del_log)
         await bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id - 1)
         await bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id)
         if current_state == 'AdminCheckLog:CheckMonths':
             await date_process_enter(call=call, state=state,
                                      year=choice_year,
                                      month=choice_month,
-                                     day=1, service=service_state, is_it_for_master=True)
+                                     day=1, service=service_bool, is_it_for_master=True)
+        elif current_state == 'AdminDelLog:ChoiceDate':
+            await date_process_enter(call=call, state=state,
+                                     year=choice_year,
+                                     month=choice_month,
+                                     day=1, service=service_bool, is_it_for_master=True,
+                                     master_id=master.master_user_id)
         else:
             await date_process_enter(call=call, state=state,
                                      year=choice_year,
                                      month=choice_month,
-                                     day=1, service=service_state)
+                                     day=1, service=service_bool)
     elif result == 'previous':
         if choice_month == 1:
             choice_year = choice_year - 1
@@ -84,10 +103,13 @@ async def change_month_process(call: CallbackQuery, state: FSMContext):
         data['current_choice_year'] = choice_year
         data['current_choice_month'] = choice_month
         await state.update_data()
-        if service_state:
+        if service_state == 'appointment':
             await call.message.answer('Выбор даты оказания услуги', reply_markup=default_cancel_appointment)
-        else:
+        elif service_state == 'checks':
             await call.message.answer('Записи по месяцам', reply_markup=admin_default_cancel_back_check_log)
+        elif service_state == 'del':
+            await call.message.answer(f'Записи по месяцам. Мастер: {master.master_name}',
+                                      reply_markup=admin_default_cancel_del_log)
         await bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id - 1)
         await bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id)
         if current_state == 'AdminCheckLog:CheckMonths':
@@ -95,6 +117,12 @@ async def change_month_process(call: CallbackQuery, state: FSMContext):
                                      year=choice_year,
                                      month=choice_month,
                                      day=1, service=service_state, is_it_for_master=True)
+        elif current_state == 'AdminDelLog:ChoiceDate':
+            await date_process_enter(call=call, state=state,
+                                     year=choice_year,
+                                     month=choice_month,
+                                     day=1, service=service_state, is_it_for_master=True,
+                                     master_id=master.master_user_id)
         else:
             await date_process_enter(call=call, state=state,
                                      year=choice_year,
