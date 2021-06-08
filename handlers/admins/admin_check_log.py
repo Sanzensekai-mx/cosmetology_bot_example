@@ -195,8 +195,9 @@ async def process_choice_day(call, date_time, kb=None):
 async def process_choice_week(state, call=None, message=None):
     # await state.update_data('kb': None)
     # data = await state.get_data()
-    all_date_logs = [log.date for log in await db.get_all_logs()]
     response = call.message if call else message
+    master = await db.get_master_by_id(response.chat.id)
+    all_date_logs = [log.date for log in await db.get_all_master_logs(master.master_name)]
     current_date = datetime.datetime.now()
     c = calendar.TextCalendar(calendar.MONDAY)
     # month_c = calendar.monthcalendar(current_date.year, current_date.month)

@@ -1,4 +1,5 @@
 import logging
+import asyncpg
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters import Text
 from aiogram.types import Message, ReplyKeyboardRemove, InlineKeyboardMarkup, InlineKeyboardButton, \
@@ -190,14 +191,18 @@ async def confirm_new_master(message: Message, state: FSMContext):
     logging.info(f'from: {message.chat.full_name}, text: {message.text.upper()}')
     # await call.answer(cache_time=60)
     data_from_state = await state.get_data()
-    await db.add_master(
-        master_name=data_from_state.get("name"),
-        master_user_id=data_from_state.get("user_id"),
-        master_services=data_from_state.get("services"),
-    )
     try:
-        await bot.send_message(chat_id=data_from_state.get("user_id"), text='Вы добавлены в качестве мастера.')
-    except ChatNotFound:
-        print('При отправке сообщения мастеру возникла ошибка. Такого чата не существует.')
-    await message.answer('Мастер добавлен.', reply_markup=main_menu_admin)
-    await state.finish()
+        await db.add_master(
+            master_name=data_from_state.get("name"),
+            master_user_id=data_from_state.get("user_id"),
+            master_services=data_from_state.get("services"),
+        )
+        try:
+            await bot.send_message(chat_id=data_from_state.get("user_id"), text='Вы добавлены в качестве мастера.')
+        except ChatNotFound:
+            print('При отправке сообщения мастеру возникла ошибка. Такого чата не существует.')
+        await message.answer('Мастер добавлен.', reply_markup=main_menu_admin)
+        await state.finish()
+    except asyncpg.exceptions.UniqueViolationError:
+        await message.answer('Мастер с таким user_id уже существует в БД. Измените user_id добавляемого мастера!!!')
+        await confirm_or_change(data=data_from_state, mes=message)

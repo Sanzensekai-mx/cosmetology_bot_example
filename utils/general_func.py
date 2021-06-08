@@ -92,7 +92,8 @@ async def date_process_enter(state, year, month, day, service=True, call=None, m
     response = call.message if call else message
     data = await state.get_data()
     c = calendar.TextCalendar(calendar.MONDAY)
-    all_date_logs = [log.date for log in await db.get_all_logs()]
+    master = await db.get_master_by_id(response.chat.id)
+    all_date_logs = [log.date for log in await db.get_all_master_logs(master.master_name)]
     if service:
         service = await db.get_service(data.get('service'))
     # current_date = datetime.datetime.now(tz_ulyanovsk)

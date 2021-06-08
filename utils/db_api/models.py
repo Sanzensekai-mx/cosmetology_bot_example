@@ -154,6 +154,11 @@ class DBCommands:
         return logs
 
     @staticmethod
+    async def get_all_master_logs(master_name):
+        logs = await Log.query.where(Log.name_master == master_name).gino.all()
+        return logs
+
+    @staticmethod
     async def get_log_by_client(name_client):
         log = await Log.query.where(Log.name_client == name_client).gino.first()
         return log
@@ -333,6 +338,11 @@ class DBCommands:
     @staticmethod
     async def get_master(master_name):
         master = await Master.query.where(Master.master_name == master_name).gino.first()
+        return master
+
+    @staticmethod
+    async def get_master_by_id(master_chat_id):
+        master = await Master.query.where(Master.master_user_id == master_chat_id).gino.first()
         return master
 
     async def is_this_master_in_db(self, master_name):
