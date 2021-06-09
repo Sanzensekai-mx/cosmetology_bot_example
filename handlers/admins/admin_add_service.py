@@ -132,7 +132,8 @@ async def add_price_service(message: Message, state: FSMContext):
         await message.answer(f'Название: "{data.get("name")}". '
                              f'\n{data.get("is_service_in_db")}'
                              f'\nЦена услуги: {data.get("price")}'
-                             '\nНапишите время на оказание услуги. (В разработке или нет)',
+                             '\nНапишите время на оказание услуги. (Написать любое число. '
+                             'Этот параметр ни на что не влияет и нигде пока не отображается)',
                              reply_markup=cancel_add_service)
         await AdminAddService.Time.set()
     else:

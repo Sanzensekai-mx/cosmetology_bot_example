@@ -81,7 +81,7 @@ async def process_back_to_calendar(message: Message, state: FSMContext):
                              state=state,
                              year=data.get('current_choice_year'),
                              month=data.get('current_choice_month'),
-                             day=1, service=False)
+                             day=1, service=False, is_it_for_master=True)
     await AdminCheckLog.CheckMonths.set()
 
 
@@ -195,26 +195,33 @@ async def process_choice_day(call, date_time, kb=None):
 async def process_choice_week(state, call=None, message=None):
     # await state.update_data('kb': None)
     # data = await state.get_data()
+    all_date_logs = [log.date for log in await db.get_all_logs()]
     response = call.message if call else message
     current_date = datetime.datetime.now()
     c = calendar.TextCalendar(calendar.MONDAY)
-    month_c = calendar.monthcalendar(current_date.year, current_date.month)
+    # month_c = calendar.monthcalendar(current_date.year, current_date.month)
+    month_b = c.monthdays2calendar(current_date.year, current_date.month)
+    month_c = c.monthdatescalendar(current_date.year, current_date.month)
     print_month_c = c.formatmonth(current_date.year, current_date.month)
     # print(month_c)
     # Дни недели в текущей неделе
-    # print([day for seq in month_c for day in seq if current_date.day in seq])
-    current_week_days = [day for seq in month_c for day in seq if current_date.day in seq]
-    # print(current_week_days)
+    current_week_days = [(day.year, day.month, day.day, seq.index(day)) for seq in month_c for day in seq if
+                         current_date.date() in seq]
     kb_week = InlineKeyboardMarkup(row_width=7)
     for week_day in [item for item in print_month_c.split()][2:9]:
         kb_week.insert(InlineKeyboardButton(days.get(week_day), callback_data=days.get(week_day)))
     for day in current_week_days:
-        if day < current_date.day or day in current_week_days[5:]:
+        if day[2] < current_date.day or day in current_week_days[5:]:
             kb_week.insert(InlineKeyboardButton(' ', callback_data=f'wrong_date'))
             continue
-        kb_week.insert(
-            InlineKeyboardButton(day,
-                                 callback_data=f'date_{current_date.year}, {current_date.month}, {day}'))
+        if str(day) in all_date_logs:
+            kb_week.insert(
+                InlineKeyboardButton(f'{day[2]} +',
+                                     callback_data=f'date_{current_date.year}, {current_date.month}, {day[2]}'))
+        else:
+            kb_week.insert(
+                InlineKeyboardButton(day[2],
+                                     callback_data=f'date_{current_date.year}, {current_date.month}, {day[2]}'))
     # kb_week.add(InlineKeyboardButton('Отмена просмотра', callback_data='cancel_check'))
     await state.update_data({'kb': kb_week})
     await response.answer('Записи на неделю', reply_markup=admin_default_cancel_back_check_log)
@@ -278,5 +285,5 @@ async def choice_range_log(call: CallbackQuery, state: FSMContext):
                                  year=current_date.year,
                                  month=current_date.month,
                                  day=current_date.day,
-                                 service=False)
+                                 service=False, is_it_for_master=True)
         await state.update_data({'current_kb': 'month'})

@@ -38,6 +38,8 @@ async def wrong_date_process(call: CallbackQuery):
 @dp.callback_query_handler(state=[AdminCheckLog.CheckMonths, AdminDelLog.ChoiceDate, UserAppointment.Date],
                            text_contains='month_')
 async def change_month_process(call: CallbackQuery, state: FSMContext):
+    current_state = await state.get_state()
+    # print(k)
     await call.answer(cache_time=60)
     data = await state.get_data()
     current_date = datetime.date.today()
@@ -63,10 +65,16 @@ async def change_month_process(call: CallbackQuery, state: FSMContext):
             await call.message.answer('Записи по месяцам', reply_markup=admin_default_cancel_back_check_log)
         await bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id - 1)
         await bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id)
-        await date_process_enter(call=call, state=state,
-                                 year=choice_year,
-                                 month=choice_month,
-                                 day=1, service=service_state)
+        if current_state == 'AdminCheckLog:CheckMonths':
+            await date_process_enter(call=call, state=state,
+                                     year=choice_year,
+                                     month=choice_month,
+                                     day=1, service=service_state, is_it_for_master=True)
+        else:
+            await date_process_enter(call=call, state=state,
+                                     year=choice_year,
+                                     month=choice_month,
+                                     day=1, service=service_state)
     elif result == 'previous':
         if choice_month == 1:
             choice_year = choice_year - 1
@@ -82,7 +90,13 @@ async def change_month_process(call: CallbackQuery, state: FSMContext):
             await call.message.answer('Записи по месяцам', reply_markup=admin_default_cancel_back_check_log)
         await bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id - 1)
         await bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id)
-        await date_process_enter(call=call, state=state,
-                                 year=choice_year,
-                                 month=choice_month,
-                                 day=1, service=service_state)
+        if current_state == 'AdminCheckLog:CheckMonths':
+            await date_process_enter(call=call, state=state,
+                                     year=choice_year,
+                                     month=choice_month,
+                                     day=1, service=service_state, is_it_for_master=True)
+        else:
+            await date_process_enter(call=call, state=state,
+                                     year=choice_year,
+                                     month=choice_month,
+                                     day=1, service=service_state)

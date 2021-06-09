@@ -149,6 +149,11 @@ class DBCommands:
 
     # Методы для таблицы log
     @staticmethod
+    async def get_all_logs():
+        logs = await Log.query.gino.all()
+        return logs
+
+    @staticmethod
     async def get_log_by_client(name_client):
         log = await Log.query.where(Log.name_client == name_client).gino.first()
         return log

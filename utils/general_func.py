@@ -88,10 +88,11 @@ async def return_kb_mes_services(message, state):
     # return res_message, choice_service_kb
 
 
-async def date_process_enter(state, year, month, day, service=True, call=None, message=None):
+async def date_process_enter(state, year, month, day, service=True, call=None, message=None, is_it_for_master=False):
     response = call.message if call else message
     data = await state.get_data()
     c = calendar.TextCalendar(calendar.MONDAY)
+    all_date_logs = [log.date for log in await db.get_all_logs()]
     if service:
         service = await db.get_service(data.get('service'))
     # current_date = datetime.datetime.now(tz_ulyanovsk)
@@ -137,7 +138,10 @@ async def date_process_enter(state, year, month, day, service=True, call=None, m
                 or day_cal[1] != month:
             inline_calendar.insert(InlineKeyboardButton(' ', callback_data=f'wrong_date'))
             continue
-        inline_calendar.insert(InlineKeyboardButton(day_cal[2], callback_data=f'date_{day_cal}'))
+        if is_it_for_master and str(day_cal) in all_date_logs:
+            inline_calendar.insert(InlineKeyboardButton(f'{day_cal[2]} +', callback_data=f'date_{day_cal}'))
+        else:
+            inline_calendar.insert(InlineKeyboardButton(day_cal[2], callback_data=f'date_{day_cal}'))
     # inline_calendar.add(InlineKeyboardButton('Отмена записи', callback_data='cancel_appointment'))
     if service:
         await response.answer(f'Ваше Фамилия и Имя: "{data.get("name_client")}". '
