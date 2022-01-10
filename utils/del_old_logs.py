@@ -12,12 +12,12 @@ async def del_logs_and_datetime():
     # current_date = datetime.datetime.now(tz_ulyanovsk)
     current_date = datetime.datetime.now()
     current_date += datetime.timedelta(hours=4)
-    old_logs = await db.get_old_logs(current_date)
-    old_datetime = await db.get_old_datetime(current_date)
+    old_logs = await db.get_old_recs(current_date)
+    old_datetime = await db.get_old_timetables(current_date)
     for log in old_logs:
-        await db.del_log(log.full_datetime, log.name_master)
+        await db.del_rec(log.full_datetime, log.name_master)
     for d in old_datetime:
-        await db.del_datetime(d.datetime, d.master)
+        await db.del_timetable(d.datetime, d.master)
     for admin in admins:
         await bot.send_message(chat_id=admin, text='Старые записи удалены из базы данных.')
 

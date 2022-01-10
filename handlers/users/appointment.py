@@ -1,4 +1,5 @@
 import logging
+import time
 import datetime
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters import Text
@@ -22,13 +23,13 @@ logging.basicConfig(format=u'%(filename)s [LINE:%(lineno)d] '
 
 
 async def confirm_or_change(data, mes):
-    date = [d.strip() for d in data.get("date").strip("()").split(",")]
+    datetime_obj = data.get("full_datetime")
     await mes.answer(f''' 
 Имя клиента - {data.get("name_client")}\n
 Услуга - {data.get("service")}\n
 Мастер - {data.get("name_master")}\n
-Дата - {date[2]} / {date[1]} / {date[0]}\n
-Время - {data.get("time")}\n
+Дата - {datetime_obj.day}.{datetime_obj.month}.{datetime_obj.year}\n
+Время - {datetime_obj.hour}:{datetime_obj.minute}0\n
 Номер телефона - {data.get("phone_number")}''', reply_markup=default_cancel_appointment_confirm)
     await UserAppointment.Confirm.set()
 
@@ -59,9 +60,9 @@ async def open_appointment_start(message: Message, state: FSMContext):
          'name_master': '',
          'service': '',
          'user_id': '',
-         'full_datetime': '',
-         'date': '',
-         'time': '',
+         'full_datetime': None,
+         'date': None,
+         'time': None,
          'phone_number': '',
          'is_this_log_5_in_db': '',
          'current_choice_month': '',
@@ -97,7 +98,7 @@ async def open_appointment_enter_name(message: Message, state: FSMContext):
         name_client = message.text.strip()
         data['name_client'] = name_client
         data['user_id'] = message.chat.id
-        data['is_this_log_5_in_db'] = await db.is_this_log_5_in_db(message.chat.id)
+        data['is_this_log_5_in_db'] = await db.is_this_rec_5_in_db(message.chat.id)
         await state.update_data(data)
         is_this_log_5_in_db = data.get('is_this_log_5_in_db')
         # Если существует 5 записей с одного chat_id, то выводится предупреждение и состояние сбрасывается
@@ -120,7 +121,7 @@ async def open_appointment_enter_name(message: Message, state: FSMContext):
 
 # Обработка выбранной услуги и занесение ее в state data
 @dp.callback_query_handler(state=UserAppointment.Service, text_contains='s_')
-async def choice_master(call: CallbackQuery, state: FSMContext):
+async def choice_service(call: CallbackQuery, state: FSMContext):
     data = await state.get_data()
     service_num = call.data.split('_')[1]
     await call.answer(cache_time=60)
@@ -181,10 +182,10 @@ async def choice_date(call: CallbackQuery, state: FSMContext):
     await call.answer(cache_time=60)
     if not data.get('date'):
         # Принятие выбора услуги
-        data['date'] = date
+        data['date'] = datetime.datetime.fromtimestamp(int(date)).date()
         await state.update_data(data)
         # print(await state.get_data())
-        await db.add_log_datetime(data.get('date'), data.get('name_master'))
+        await db.add_rec_timetable(data.get('date'), data.get('name_master'))
         await UserAppointment.Time.set()
         # Выбор даты, функция
         await time_process_enter(call, state)
@@ -206,23 +207,26 @@ async def time_process_enter(call, state):
                 time_kb.insert(InlineKeyboardButton(f'{time}', callback_data=f'time_{time}'))
     # time_kb.add(InlineKeyboardButton('Отмена записи', callback_data='cancel_appointment'))
     # Формат даты День/месяц/год
-    date = [d.strip() for d in data.get("date").strip("()").split(",")]
+    # date = [d.strip() for d in data.get("date").strip("()").split(",")]
+    date = data.get('date')
     await call.message.answer('Выбор времени оказания услуги', reply_markup=default_cancel_appointment)
     await call.message.answer(f'Ваше Фамилия и Имя: "{data.get("name_client")}". '
                               f'\nМастер: "{data.get("name_master")}"'
                               f'\nУслуга: "{data.get("service")}"'
-                              f'\nДата:  {date[2]} / {date[1]} / {date[0]}', reply_markup=time_kb)  # reply_markup
+                              f'\nДата:  {date.day}.{date.month}.{date.year}', reply_markup=time_kb)  # reply_markup
 
 
 @dp.callback_query_handler(state=UserAppointment.Time, text_contains='time_')
-async def choice_date(call: CallbackQuery, state: FSMContext):
+async def choice_time(call: CallbackQuery, state: FSMContext):
     data = await state.get_data()
-    time = call.data.split('_')[1]
+    time_str = call.data.split('_')[1]
     await call.answer(cache_time=60)
     if not data.get('time'):
         # Принятие выбора услуги
-        data['time'] = time
-        data['full_datetime'] = f'{data.get("date")} {data.get("time")}'
+        time_l = [int(i) for i in time_str.split(':')]
+        time_obj = datetime.time(hour=time_l[0], minute=time_l[1])
+        data['time'] = time_obj
+        data['full_datetime'] = datetime.datetime.combine(data.get('date'), time_obj)
         await state.update_data(data)
         if await db.is_client_full_datetime_in_db(data.get('full_datetime'), data.get('name_client')):
             await call.message.answer('Вы уже записаны на это время у другого мастера',
@@ -231,11 +235,11 @@ async def choice_date(call: CallbackQuery, state: FSMContext):
         # print(await state.get_data())
         else:
             await UserAppointment.PhoneNumber.set()
-            date = [d.strip() for d in data.get("date").strip("()").split(",")]
+            date = data.get("date")
             await call.message.answer(f'Ваше Фамилия и Имя: "{data.get("name_client")}". '
                                       f'\nМастер: "{data.get("name_master")}"'
                                       f'\nУслуга: "{data.get("service")}"'
-                                      f'\nДата:  {date[2]} / {date[1]} / {date[0]}'
+                                      f'\nДата:  {date.day}.{date.month}.{date.year}'
                                       f'\nВремя:  {data.get("time")}', reply_markup=default_cancel_appointment)
             await call.message.answer('Нажмите на кнопку ниже, чтобы отправить номер телефона.',
                                       reply_markup=phone_number)
@@ -272,9 +276,9 @@ async def choice_date(message: Message, state: FSMContext):
 @dp.message_handler(Text(equals=['Подтвердить']), state=UserAppointment.Confirm)
 async def confirm_to_db(message: Message, state: FSMContext):
     data = await state.get_data()
-    await db.add_update_date(datetime_one=data.get('date'),
+    await db.add_update_date(date=data.get('date'),
                              time=data.get('time'), master=data.get('name_master'))
-    await db.add_log(
+    await db.add_rec(
         user_id=data.get('user_id'),
         name_client=data.get('name_client'),
         name_master=data.get('name_master'),

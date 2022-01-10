@@ -41,7 +41,7 @@ async def check_users_logs(message: Message, state: FSMContext):
     # print(await db.get_old_datetime(datetime.date.today()))
     await UserCheckLog.Check.set()
     logging.info(f'from: {message.chat.full_name}, text: {message.text.upper()}')
-    logs_list = await db.get_all_logs_by_user_id(message.chat.id)
+    logs_list = await db.get_all_recs_by_user_id(message.chat.id)
     kb_logs = InlineKeyboardMarkup(row_width=5)
     await state.update_data(
         {'user_logs': {}}
@@ -71,7 +71,7 @@ async def process_one_log(call: CallbackQuery, state: FSMContext):
     num = int(call.data.split('_')[1])  # Порядковый номер записи из словаря записей пользователя
     data = await state.get_data()
     choice_log_datetime, choice_master = data['user_logs'][num]['datetime'], data['user_logs'][num]['name_master']
-    log = await db.get_log_by_full_datetime(choice_log_datetime, choice_master)
+    log = await db.get_rec_by_full_datetime(choice_log_datetime, choice_master)
     date = [int(d.strip()) for d in log.date.strip('()').split(',')]
     service = await db.get_service(log.service)
     # Кнопка со ссылкой на описание и фото услуги?

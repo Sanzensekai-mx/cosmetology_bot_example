@@ -112,7 +112,7 @@ async def start_check_logs(message: Message, state: FSMContext):
 async def process_choice_time_callback(call, state):
     full_datetime = call.data.split('_')[1]
     master_username = get_key(await db.get_master_and_id(), str(call.message.chat.id))
-    log = await db.get_log_by_full_datetime(full_datetime,
+    log = await db.get_rec_by_full_datetime(full_datetime,
                                             master_username)
     date = [int(d.strip()) for d in log.date.strip('()').split(',')]
     # День, месяц, год
@@ -172,7 +172,7 @@ async def process_choice_day(call, date_time, kb=None):
     datetime_with_weekdays = [date for date in c.itermonthdays4(year, month) if date[2] == day][0]
     # today_datetime_log = await db.get_datetime()
     # print(get_key(await db.get_master_and_id(), str(call.message.chat.id)))
-    all_today_logs = await db.get_logs_only_date(f'{datetime_with_weekdays}',
+    all_today_logs = await db.get_recs_only_date(f'{datetime_with_weekdays}',
                                                  get_key(await db.get_master_and_id(), str(call.message.chat.id)))
     # result_message_list = []
     if all_today_logs:

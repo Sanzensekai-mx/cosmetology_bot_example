@@ -137,7 +137,9 @@ async def date_process_enter(state, year, month, day, service=True, call=None, m
                 or day_cal[1] != month:
             inline_calendar.insert(InlineKeyboardButton(' ', callback_data=f'wrong_date'))
             continue
-        inline_calendar.insert(InlineKeyboardButton(day_cal[2], callback_data=f'date_{day_cal}'))
+        day_obj = datetime.datetime(year=day_cal[0], month=day_cal[1], day=day_cal[2])
+        day_stamp = int(datetime.datetime.timestamp(day_obj))
+        inline_calendar.insert(InlineKeyboardButton(day_cal[2], callback_data=f'date_{day_stamp}'))
     # inline_calendar.add(InlineKeyboardButton('Отмена записи', callback_data='cancel_appointment'))
     if service:
         await response.answer(f'Ваше Фамилия и Имя: "{data.get("name_client")}". '

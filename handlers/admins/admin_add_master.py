@@ -142,12 +142,12 @@ async def add_id_master(message: Message, state: FSMContext):
 async def confirm_master_service_list(message: Message, state: FSMContext):
     await AdminAddMaster.Confirm.set()
     data = await state.get_data()
-    if len(data.get('services')) == 0:
-        await message.answer('Ошибка. Список оказываемых услуг не может быть пустым.')
-        await process_print_kb_mes(message=message, state=state)
-        return
-    else:
-        await confirm_or_change(data=data, mes=message)
+    # if len(data.get('services')) == 0:
+    #     await message.answer('Ошибка. Список оказываемых услуг не может быть пустым.')
+    #     await process_print_kb_mes(message=message, state=state)
+    #     return
+    # else:
+    await confirm_or_change(data=data, mes=message)
 
 
 @dp.callback_query_handler(chat_id=admins, state=AdminAddMaster.Services, text_contains='s_')

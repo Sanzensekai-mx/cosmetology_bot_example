@@ -70,7 +70,7 @@ async def process_choice_day(call, date_time):
     datetime_with_weekdays = [date for date in c.itermonthdays4(year, month) if date[2] == day][0]
     # today_datetime_log = await db.get_datetime()
     print(get_key(await db.get_master_and_id(), str(call.message.chat.id)))
-    all_today_logs = await db.get_logs_only_date(f'{datetime_with_weekdays}',
+    all_today_logs = await db.get_recs_only_date(f'{datetime_with_weekdays}',
                                                  get_key(await db.get_master_and_id(), str(call.message.chat.id)))
     # result_message_list = []
     if all_today_logs:
@@ -106,7 +106,7 @@ async def process_choice_time(call: CallbackQuery, state: FSMContext):
     # master_username = get_key(await db.get_master_and_id(), str(call.message.chat.id))
     data = await state.get_data()
     master_username = data.get('name_master')
-    log = await db.get_log_by_full_datetime(full_datetime,
+    log = await db.get_rec_by_full_datetime(full_datetime,
                                             master_username)
     date = [int(d.strip()) for d in log.date.strip('()').split(',')]
     # День, месяц, год
@@ -133,9 +133,9 @@ async def process_del_log(call: CallbackQuery, state: FSMContext):
     await call.answer(cache_time=60)
     callback_data = call.data.split('_')
     full_datetime, master_username = callback_data[1], callback_data[2]
-    datetime_one = await db.get_log_by_full_datetime(full_datetime, master_username)
+    datetime_one = await db.get_rec_by_full_datetime(full_datetime, master_username)
     # datetime_obj = await db.get_datetime(datetime_one, master_username)
-    await db.del_log(full_datetime, master_username)
+    await db.del_rec(full_datetime, master_username)
     choice_time = full_datetime.split()[-1]
     # await db.del_datetime(datetime_one, master_username)
     await db.add_update_date(datetime_one=datetime_one.date, time=choice_time, master=master_username)
