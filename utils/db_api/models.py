@@ -205,7 +205,7 @@ class DBCommands:
                 return True
         return False
 
-    async def is_this_log_in_db(self, name_client):
+    async def is_this_rec_in_db(self, name_client):
         record = await self.get_rec_by_full_datetime(name_client)
         if record:
             return True
@@ -225,8 +225,8 @@ class DBCommands:
 
     @staticmethod
     async def get_all_recs_by_user_id(user_id):
-        logs = await Records.query.where(Records.user_id == user_id).gino.all()
-        return logs
+        recs = await Records.query.where(Records.user_id == user_id).gino.all()
+        return recs
 
     async def add_rec(self, user_id, name_client, name_master, service, full_datetime, date, time, phone_number):
         rec_one = await self.get_rec_by_full_datetime(full_datetime, name_master)

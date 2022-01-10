@@ -3,7 +3,7 @@ from .start import dp
 from .appointment import dp
 from .about import dp
 from .stocks import dp
-from .check_my_logs import dp
+from .check_my_recs import dp
 from .send_user_id import dp
 from .services import dp
 

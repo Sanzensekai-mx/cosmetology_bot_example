@@ -38,25 +38,26 @@ async def default_process_cancel_check_logs(message: Message, state: FSMContext)
 
 @dp.message_handler(Text(equals='Мои записи'))
 async def check_users_logs(message: Message, state: FSMContext):
-    # print(await db.get_old_datetime(datetime.date.today()))
+    # print(await db.get_old_datetime(full_datetime.date.today()))
     await UserCheckLog.Check.set()
     logging.info(f'from: {message.chat.full_name}, text: {message.text.upper()}')
-    logs_list = await db.get_all_recs_by_user_id(message.chat.id)
+    recs_list = await db.get_all_recs_by_user_id(message.chat.id)
     kb_logs = InlineKeyboardMarkup(row_width=5)
     await state.update_data(
         {'user_logs': {}}
     )
-    if not logs_list:
+    if not recs_list:
         await message.answer('Вы еще не записывались. \nДля записи нажмите кнопку "Запись"',
                              reply_markup=main_menu_client)
         await state.finish()
     else:
         data = await state.get_data()
-        for num, log in enumerate(logs_list, 1):
-        # Список вида (2021, 2, 22, 0) 10:00
-            date = [x.strip('()').strip() for x in log.date.split(',')]
-            data['user_logs'][num] = {'datetime': f'{log.full_datetime}', 'name_master': f'{log.name_master}'}
-            kb_logs.add(InlineKeyboardButton(f'Дата:  {date[2]} / {date[1]} / {date[0]} Время: {log.time}',
+        for num, rec in enumerate(recs_list, 1):
+        #     date = [x.strip('()').strip() for x in rec.date.split(',')]
+            full_datetime = rec.full_datetime
+            data['user_logs'][num] = {'full_datetime': rec.full_datetime, 'name_master': rec.name_master}
+            kb_logs.add(InlineKeyboardButton(f'Дата: {full_datetime.day}.{full_datetime.month}.{full_datetime.year} | '
+                                             f'Время: {full_datetime.hour}:{full_datetime.minute}0',
                                              callback_data=f'ud_{num}'))
         # kb_logs.add(InlineKeyboardButton(f'Закрыть просмотр записей', callback_data='cancel_check_user_log'))
         await state.update_data(data)
@@ -70,20 +71,21 @@ async def process_one_log(call: CallbackQuery, state: FSMContext):
     await call.answer(cache_time=60)
     num = int(call.data.split('_')[1])  # Порядковый номер записи из словаря записей пользователя
     data = await state.get_data()
-    choice_log_datetime, choice_master = data['user_logs'][num]['datetime'], data['user_logs'][num]['name_master']
-    log = await db.get_rec_by_full_datetime(choice_log_datetime, choice_master)
-    date = [int(d.strip()) for d in log.date.strip('()').split(',')]
-    service = await db.get_service(log.service)
+    choice_log_datetime, choice_master = data['user_logs'][num]['full_datetime'], data['user_logs'][num]['name_master']
+    rec = await db.get_rec_by_full_datetime(choice_log_datetime, choice_master)
+    # date = [int(d.strip()) for d in rec.date.strip('()').split(',')]
+    full_datetime = rec.full_datetime
+    service = await db.get_service(rec.service)
     # Кнопка со ссылкой на описание и фото услуги?
     # kb_log_cancel = InlineKeyboardMarkup().add(InlineKeyboardButton(
     #     f'Закрыть просмотр записей', callback_data='cancel_check_user_log'))
     await call.message.answer(
         f'''
-Время - {log.time}\n
-Дата - {date[2]} / {date[1]} / {date[0]}\n
-Имя клиента - {log.name_client}\n
+Время - {rec.time}\n
+Дата - {full_datetime.day}.{full_datetime.month}.{full_datetime.year}\n
+Имя клиента - {rec.name_client}\n
 Мастер - {choice_master}\n
-Услуга - {log.service}\n
+Услуга - {rec.service}\n
 Стоимость - {service.price}''')
     # await state.finish()
     # Добавить кнопку-ссылку на пост в инстаграмм об услуге или показать описание услуги
