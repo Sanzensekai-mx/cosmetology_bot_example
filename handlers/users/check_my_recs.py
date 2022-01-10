@@ -9,6 +9,7 @@ from keyboards.default import main_menu_client, default_cancel_user_check_logs
 from loader import dp
 from states.user_states import UserCheckLog
 from utils.db_api.models import DBCommands
+
 # from data.config import masters_and_id
 
 db = DBCommands()
@@ -16,6 +17,7 @@ db = DBCommands()
 logging.basicConfig(format=u'%(filename)s [LINE:%(lineno)d] '
                            u'#%(levelname)-8s [%(asctime)s]  %(message)s',
                     level=logging.INFO)
+
 
 # Способ с inline-клавиатурой Закрытия просмотра записей
 
@@ -53,12 +55,13 @@ async def check_users_logs(message: Message, state: FSMContext):
     else:
         data = await state.get_data()
         for num, rec in enumerate(recs_list, 1):
-        #     date = [x.strip('()').strip() for x in rec.date.split(',')]
+            #     date = [x.strip('()').strip() for x in rec.date.split(',')]
             full_datetime = rec.full_datetime
             data['user_logs'][num] = {'full_datetime': rec.full_datetime, 'name_master': rec.name_master}
-            kb_logs.add(InlineKeyboardButton(f'Дата: {full_datetime.day}.{full_datetime.month}.{full_datetime.year} | '
-                                             f'Время: {full_datetime.hour}:{full_datetime.minute}0',
-                                             callback_data=f'ud_{num}'))
+            kb_logs.add(InlineKeyboardButton(
+                f'Дата: {full_datetime.day}.{str(full_datetime.month).ljust(2, "0")}.{full_datetime.year} | '
+                f'Время: {full_datetime.hour}:{str(full_datetime.minute).ljust(2, "0")}',
+                callback_data=f'ud_{num}'))
         # kb_logs.add(InlineKeyboardButton(f'Закрыть просмотр записей', callback_data='cancel_check_user_log'))
         await state.update_data(data)
         await message.answer('Нажмите на кнопки ниже, чтобы просмотреть подробную информацию о ваших записях.',

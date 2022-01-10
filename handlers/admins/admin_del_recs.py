@@ -54,7 +54,7 @@ async def process_choice_master_date_del_log(call: CallbackQuery, state: FSMCont
     await AdminDelLog.ChoiceDate.set()
     current_date = datetime.date.today()
     await call.message.answer('Записи по месяцам')
-    await date_process_enter(call, state,
+    await date_process_enter(call=call, state=state,
                              year=current_date.year,
                              month=current_date.month,
                              day=current_date.day)

@@ -307,7 +307,7 @@ class DBCommands:
     async def add_update_date(self, date, time, master):
         timetable_first = await self.get_timetable(date, master)
         if timetable_first:
-            time_str = f'{time.hour}:{time.minute}0'
+            time_str = f'{time.hour}:{str(time.minute).ljust(2, "0")}'
             dict_time = timetable_first.time
             if dict_time[time_str] is False:
                 dict_time[time_str] = True

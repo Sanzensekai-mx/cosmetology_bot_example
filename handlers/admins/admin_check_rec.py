@@ -110,13 +110,13 @@ async def start_check_logs(message: Message, state: FSMContext):
 
 
 async def process_choice_time_callback(call, state):
-    full_datetime = call.data.split('_')[1]
+    full_datetime_stamp = call.data.split('_')[1]
+    full_datetime = datetime.datetime.fromtimestamp(int(full_datetime_stamp))
     master_username = get_key(await db.get_master_and_id(), str(call.message.chat.id))
-    log = await db.get_rec_by_full_datetime(full_datetime,
+    rec = await db.get_rec_by_full_datetime(full_datetime,
                                             master_username)
-    date = [int(d.strip()) for d in log.date.strip('()').split(',')]
     # День, месяц, год
-    date_to = datetime.date(date[0], date[1], date[2])
+    date_to = rec.date
     data = await state.get_data()
     if data.get('current_kb') == 'month':
         default_kb = admin_default_cancel_2_back_check_log_month
@@ -126,17 +126,17 @@ async def process_choice_time_callback(call, state):
         default_kb = admin_default_cancel_back_check_log
     await call.message.answer(
         f'''
-Время - {log.time}\n
-Дата -  {date[2]} / {date[1]} / {date[0]}\n
-Мастер - {log.name_master}\n
-Клиент - {log.name_client}\n
-Услуга - {log.service}''', reply_markup=default_kb)
+Время - {rec.time}\n
+Дата -  {date_to.day}.{date_to.month}.{date_to.year}\n
+Мастер - {rec.name_master}\n
+Клиент - {rec.name_client}\n
+Услуга - {rec.service}''', reply_markup=default_kb)
     kb = InlineKeyboardMarkup()
     # написать callback
-    kb.add(InlineKeyboardButton(f'Вернуться к записям на {date[2]} число',
-                                callback_data=f'back:to:time_{date_to}_{master_username}'))
+    kb.add(InlineKeyboardButton(f'Вернуться к записям на {date_to.day} число',
+                                callback_data=f'back:to:time_{full_datetime_stamp}_{master_username}'))
     # kb.add(InlineKeyboardButton('Отмена просмотра', callback_data='cancel_check'))
-    await call.message.answer(f'{log.phone_number}', reply_markup=kb)
+    await call.message.answer(f'{rec.phone_number}', reply_markup=kb)
 
 
 # @dp.callback_query_handler(text_contains='del_', state=AdminCheckLog)
@@ -148,11 +148,12 @@ async def process_choice_time_callback(call, state):
 async def back_to_date_timetable(call: CallbackQuery, state: FSMContext):
     await call.answer(cache_time=60)
     data = await state.get_data()
-    date = [int(i) for i in call.data.split('_')[1].split('-')]
-    res = datetime.date(date[0], date[1], date[2])
+    # date = [int(i) for i in call.data.split('_')[1].split('-')]
+    # res = datetime.date(date[0], date[1], date[2])
+    date = datetime.datetime.fromtimestamp(int(call.data.split('_')[1])).date()
     await bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id - 1)
     await bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id)
-    await process_choice_day(call, res, kb=data.get('current_kb'))
+    await process_choice_day(call, date, kb=data.get('current_kb'))
     await AdminCheckLog.ChoiceRange.set()
 
 
@@ -169,17 +170,19 @@ async def process_choice_day(call, date_time, kb=None):
     current_date = date_time
     year, month, day = current_date.year, current_date.month, current_date.day
     c = calendar.TextCalendar(calendar.MONDAY)
-    datetime_with_weekdays = [date for date in c.itermonthdays4(year, month) if date[2] == day][0]
+    datetime_with_weekdays = [date for date in c.itermonthdates(year, month) if date.day == day][0]
     # today_datetime_log = await db.get_datetime()
     # print(get_key(await db.get_master_and_id(), str(call.message.chat.id)))
-    all_today_logs = await db.get_recs_only_date(f'{datetime_with_weekdays}',
+
+    all_today_recs = await db.get_recs_only_date(datetime_with_weekdays,
                                                  get_key(await db.get_master_and_id(), str(call.message.chat.id)))
     # result_message_list = []
-    if all_today_logs:
+    if all_today_recs:
         kb_time = InlineKeyboardMarkup(row_width=5)
-        for log in all_today_logs:
-            kb_time.insert(InlineKeyboardButton(f'{log.time}',
-                                                callback_data=f'admin:datetime_{datetime_with_weekdays} {log.time}'))
+        for rec in all_today_recs:
+            datetime_stamp = int(datetime.datetime.timestamp(rec.full_datetime))
+            kb_time.insert(InlineKeyboardButton(rec.time.strftime("%H:%M"),
+                                                callback_data=f'admin:datetime_{datetime_stamp}'))
         if kb == 'month':
             await call.message.answer(f'День: {day}', reply_markup=admin_default_cancel_2_back_check_log_month)
         elif kb == 'week':
@@ -193,10 +196,10 @@ async def process_choice_day(call, date_time, kb=None):
         await call.message.answer('Записи клиентов.', reply_markup=admin_default_cancel_check_log)
         await call.message.answer('Никто не записывался на этот день.', reply_markup=check_logs_choice_range)
 
-    # for num, log in enumerate(all_today_logs, 1):
-    #     result_message_list.append(f'\n{log}. {log.time} - {log.name_client} - {log.service} - {log.phone_number}')
+    # for num, rec in enumerate(all_today_recs, 1):
+    #     result_message_list.append(f'\n{rec}. {rec.time} - {rec.name_client} - {rec.service} - {rec.phone_number}')
     #     result_message_list.append('\n')
-    # await call.message.answer(all_today_logs)
+    # await call.message.answer(all_today_recs)
 
 
 async def process_choice_week(state, call=None, message=None):
