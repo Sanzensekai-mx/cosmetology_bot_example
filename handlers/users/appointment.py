@@ -29,7 +29,7 @@ async def confirm_or_change(data, mes):
 Услуга - {data.get("service")}\n
 Мастер - {data.get("name_master")}\n
 Дата - {datetime_obj.day}.{datetime_obj.month}.{datetime_obj.year}\n
-Время - {datetime_obj.hour}:{datetime_obj.minute}0\n
+Время - {datetime_obj.hour}:{str(datetime_obj.minute).ljust(2, '0')}\n
 Номер телефона - {data.get("phone_number")}''', reply_markup=default_cancel_appointment_confirm)
     await UserAppointment.Confirm.set()
 
