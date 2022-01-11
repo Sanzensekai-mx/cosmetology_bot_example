@@ -15,8 +15,7 @@ masters_id = str(os.getenv("masters_id")).split(',')
 # masters_username = str(os.getenv("masters_username")).split(', ')
 
 # Ссылка подключения к базе данных
-# POSTGRES_URI = str(os.environ.get('DATABASE_URL'))
-POSTGRES_URI = str(os.getenv("DATABASE_URL"))
+POSTGRES_URI = str(os.environ.get('DATABASE_URL'))
 # masters_and_id = {m_name: m_id for m_name in masters_username for m_id in masters_id}
 # masters_and_id = dict(zip(masters_username, masters_id))
 rus_months = ['', 'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
