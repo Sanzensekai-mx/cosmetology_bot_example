@@ -173,19 +173,11 @@ class DBCommands:
 
     @staticmethod
     async def get_old_recs(current_datetime):
-        # year, month, day = current_date.year, current_date.month, current_date.day
-        # c = calendar.LocaleTextCalendar(calendar.MONDAY, locale='Russian_Russia')
-        # current_date_with_weekdays = [date for date in c.itermonthdays4(year, month) if date[2] == day][0]
         current_date = datetime.date(current_datetime.year, current_datetime.month, current_datetime.day)
         recs = []
         for rec in await Records.query.gino.all():
-            # !!!!!!!!!!!!!!!!!!
-            date_process = [int(d.strip()) for d in str(rec.date).strip('()').split(',')]
-            date = datetime.date(date_process[0], date_process[1], date_process[2])
-            # !!!!!!!!!!!!!!!!!!!!!!!!!!!
-            if date < current_date:
+            if rec.date < current_date:
                 recs.append(rec)
-        # logs = await Log.query.where(Log.date < current_date_with_weekdays).gino.all()
         return recs
 
     @staticmethod
@@ -261,7 +253,6 @@ class DBCommands:
     async def get_timetable(datetime_one, master):
         # datetime_list = await Datetime.query.where(Datetime.datetime == datetime).gino.all()
         timetable_list = await TimeTables.query.where(TimeTables.master == master).gino.all()
-        # datetime_with_master =
         for line in timetable_list:
             if line.date == datetime_one:
                 return line
@@ -271,18 +262,14 @@ class DBCommands:
         current_date = datetime.date(current_datetime.year, current_datetime.month, current_datetime.day)
         datetime_many = []
         for date_one in await TimeTables.query.gino.all():
-            # Убрать/переписать
-            date_process = [int(d.strip()) for d in str(date_one.datetime).strip('()').split(',')]
-            date = datetime.date(date_process[0], date_process[1], date_process[2])
-            # !!!!
-            if date < current_date:
+            if date_one.date < current_date:
                 datetime_many.append(date_one)
         return datetime_many
 
     async def del_timetable(self, datetime_one, master):
-        timetable_first = await self.get_timetable(datetime_one, master)
-        if timetable_first:
-            await timetable_first.delete()
+        timetable_one = await self.get_timetable(datetime_one, master)
+        if timetable_one:
+            await timetable_one.delete()
             return
         return
 

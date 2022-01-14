@@ -28,7 +28,7 @@ async def confirm_or_change(data, mes):
 Имя клиента - {data.get("name_client")}\n
 Услуга - {data.get("service")}\n
 Мастер - {data.get("name_master")}\n
-Дата - {datetime_obj.day}.{datetime_obj.month}.{datetime_obj.year}\n
+Дата - {str(datetime_obj.day).rjust(2, "0")}.{str(datetime_obj.month).rjust(2, "0")}.{datetime_obj.year}\n
 Время - {datetime_obj.hour}:{str(datetime_obj.minute).ljust(2, '0')}\n
 Номер телефона - {data.get("phone_number")}''', reply_markup=default_cancel_appointment_confirm)
     await UserAppointment.Confirm.set()
@@ -213,7 +213,7 @@ async def time_process_enter(call, state):
     await call.message.answer(f'Ваше Фамилия и Имя: "{data.get("name_client")}". '
                               f'\nМастер: "{data.get("name_master")}"'
                               f'\nУслуга: "{data.get("service")}"'
-                              f'\nДата:  {date.day}.{date.month}.{date.year}', reply_markup=time_kb)  # reply_markup
+                              f'\nДата:  {str(date.day).rjust(2, "0")}.{str(date.month).rjust(2, "0")}.{date.year}', reply_markup=time_kb)  # reply_markup
 
 
 @dp.callback_query_handler(state=UserAppointment.Time, text_contains='time_')
@@ -239,8 +239,9 @@ async def choice_time(call: CallbackQuery, state: FSMContext):
             await call.message.answer(f'Ваше Фамилия и Имя: "{data.get("name_client")}". '
                                       f'\nМастер: "{data.get("name_master")}"'
                                       f'\nУслуга: "{data.get("service")}"'
-                                      f'\nДата:  {date.day}.{date.month}.{date.year}'
-                                      f'\nВремя:  {data.get("time")}', reply_markup=default_cancel_appointment)
+                                      f'\nДата:  {str(date.day).rjust(2, "0")}.{str(date.month).rjust(2, "0")}.{date.year}'
+                                      f'\nВремя:  {data.get("time").strftime("%H:%M")}',
+                                      reply_markup=default_cancel_appointment)
             await call.message.answer('Нажмите на кнопку ниже, чтобы отправить номер телефона.',
                                       reply_markup=phone_number)
         # Выбор даты, функция

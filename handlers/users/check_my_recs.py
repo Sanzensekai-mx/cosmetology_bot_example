@@ -59,7 +59,7 @@ async def check_users_logs(message: Message, state: FSMContext):
             full_datetime = rec.full_datetime
             data['user_logs'][num] = {'full_datetime': rec.full_datetime, 'name_master': rec.name_master}
             kb_logs.add(InlineKeyboardButton(
-                f'Дата: {full_datetime.day}.{str(full_datetime.month).ljust(2, "0")}.{full_datetime.year} | '
+                f'Дата: {str(full_datetime.day).rjust(2, "0")}.{str(full_datetime.month).rjust(2, "0")}.{full_datetime.year} | '
                 f'Время: {full_datetime.hour}:{str(full_datetime.minute).ljust(2, "0")}',
                 callback_data=f'ud_{num}'))
         # kb_logs.add(InlineKeyboardButton(f'Закрыть просмотр записей', callback_data='cancel_check_user_log'))
@@ -84,8 +84,8 @@ async def process_one_log(call: CallbackQuery, state: FSMContext):
     #     f'Закрыть просмотр записей', callback_data='cancel_check_user_log'))
     await call.message.answer(
         f'''
-Время - {rec.time}\n
-Дата - {full_datetime.day}.{full_datetime.month}.{full_datetime.year}\n
+Время - {rec.time.strftime("%H:%M")}\n
+Дата - {str(full_datetime.day).rjust(2, "0")}.{str(full_datetime.month).rjust(2, "0")}.{full_datetime.year}\n
 Имя клиента - {rec.name_client}\n
 Мастер - {choice_master}\n
 Услуга - {rec.service}\n

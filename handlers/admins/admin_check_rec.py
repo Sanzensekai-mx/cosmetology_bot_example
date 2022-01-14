@@ -166,8 +166,8 @@ async def process_choice_time(call: CallbackQuery, state: FSMContext):
     await process_choice_time_callback(call, state)
 
 
-async def process_choice_day(call, date_time, kb=None):
-    current_date = date_time
+async def process_choice_day(call, date, kb=None):
+    current_date = date
     year, month, day = current_date.year, current_date.month, current_date.day
     c = calendar.TextCalendar(calendar.MONDAY)
     datetime_with_weekdays = [date for date in c.itermonthdates(year, month) if date.day == day][0]
@@ -222,9 +222,11 @@ async def process_choice_week(state, call=None, message=None):
         if day < current_date.day or day in current_week_days[5:]:
             kb_week.insert(InlineKeyboardButton(' ', callback_data=f'wrong_date'))
             continue
+        date_to = datetime.datetime.timestamp((datetime.datetime(year=current_date.year, month=current_date.month,
+                                                                 day=current_date.day, hour=00, minute=00)))
         kb_week.insert(
             InlineKeyboardButton(day,
-                                 callback_data=f'date_{current_date.year}, {current_date.month}, {day}'))
+                                 callback_data=f'date_{int(date_to)}'))
     # kb_week.add(InlineKeyboardButton('Отмена просмотра', callback_data='cancel_check'))
     await state.update_data({'kb': kb_week})
     await response.answer('Записи на неделю', reply_markup=admin_default_cancel_back_check_log)
@@ -237,12 +239,12 @@ async def process_choice_week(state, call=None, message=None):
 async def process_choice_day_of_week(call: CallbackQuery):
     await call.answer(cache_time=60)
     # print(call.data.split('_')[1])
-    date = [int(i) for i in call.data.split('_')[1].split(',')]
+    date = call.data.split('_')[1]
     # print(date)
-    choice_day = datetime.date(date[0], date[1], date[2])
+    choice_day = datetime.datetime.fromtimestamp(int(date)).date()
     await bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id - 1)
     await bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id)
-    await process_choice_day(call=call, date_time=choice_day, kb='week')
+    await process_choice_day(call=call, date=choice_day, kb='week')
     await AdminCheckLog.ChoiceRange.set()
 
 
@@ -250,12 +252,12 @@ async def process_choice_day_of_week(call: CallbackQuery):
 async def process_choice_day_of_month(call: CallbackQuery):
     await call.answer(cache_time=60)
     # print(call.data.split('_')[1])
-    date = [int(i.strip('()')) for i in call.data.split('_')[1].split(',')]
+    date = call.data.split('_')[1]
     # print(date)
-    choice_day = datetime.date(date[0], date[1], date[2])
+    choice_day = datetime.datetime.fromtimestamp(int(date)).date()
     await bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id - 1)
     await bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id)
-    await process_choice_day(call=call, date_time=choice_day, kb='month')
+    await process_choice_day(call=call, date=choice_day, kb='month')
     await AdminCheckLog.ChoiceRange.set()
 
 
