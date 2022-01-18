@@ -55,8 +55,8 @@ async def inline_process_cancel_master_check_logs(call: CallbackQuery, state: FS
 @dp.message_handler(Text(equals='Отмена просмотра'), chat_id=masters_id, state=AdminCheckLog)
 async def default_process_cancel_master_check_logs(message: Message, state: FSMContext):
     # await call.answer(cache_time=60)
-    await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id - 2)
-    await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id - 1)
+    # await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id - 2)
+    # await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id - 1)
     if str(message.chat.id) in admins and str(message.chat.id) in masters_id:
         await message.answer('Отмена.', reply_markup=main_menu_admin)
     else:
@@ -66,8 +66,8 @@ async def default_process_cancel_master_check_logs(message: Message, state: FSMC
 
 @dp.message_handler(Text(equals='Назад в главное меню просмотра записей'), chat_id=masters_id, state=AdminCheckLog)
 async def default_process_back_master_check_logs(message: Message):
-    await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id - 2)
-    await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id - 1)
+    # await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id - 2)
+    # await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id - 1)
     await message.answer('Записи клиентов.', reply_markup=admin_default_cancel_check_log)
     await message.answer('Просмотр записи клиетов.', reply_markup=check_logs_choice_range)
     await AdminCheckLog.ChoiceRange.set()
@@ -77,8 +77,8 @@ async def default_process_back_master_check_logs(message: Message):
                     state=AdminCheckLog)
 async def process_back_to_calendar(message: Message, state: FSMContext):
     data = await state.get_data()
-    await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id - 2)
-    await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id - 1)
+    # await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id - 2)
+    # await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id - 1)
     await message.answer('Записи по месяцам', reply_markup=admin_default_cancel_back_check_log)
     await date_process_enter(message=message,
                              state=state,
@@ -91,8 +91,8 @@ async def process_back_to_calendar(message: Message, state: FSMContext):
 @dp.message_handler(Text(equals='Назад к выбору даты (неделя)'), chat_id=masters_id, state=AdminCheckLog)
 async def process_back_to_calendar(message: Message, state: FSMContext):
     # current_date = datetime.datetime.now()
-    await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id - 2)
-    await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id - 1)
+    # await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id - 2)
+    # await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id - 1)
     await process_choice_week(message=message, state=state)
     await AdminCheckLog.CheckWeek.set()
 
@@ -151,8 +151,8 @@ async def back_to_date_timetable(call: CallbackQuery, state: FSMContext):
     # date = [int(i) for i in call.data.split('_')[1].split('-')]
     # res = datetime.date(date[0], date[1], date[2])
     date = datetime.datetime.fromtimestamp(int(call.data.split('_')[1])).date()
-    await bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id - 1)
-    await bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id)
+    # await bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id - 1)
+    # await bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id)
     await process_choice_day(call, date, kb=data.get('current_kb'))
     await AdminCheckLog.ChoiceRange.set()
 
@@ -161,8 +161,8 @@ async def back_to_date_timetable(call: CallbackQuery, state: FSMContext):
                            state=AdminCheckLog)
 async def process_choice_time(call: CallbackQuery, state: FSMContext):
     await call.answer(cache_time=60)
-    await bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id - 1)
-    await bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id)
+    # await bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id - 1)
+    # await bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id)
     await process_choice_time_callback(call, state)
 
 
@@ -228,7 +228,6 @@ async def process_choice_week(state, call=None, message=None):
             InlineKeyboardButton(day,
                                  callback_data=f'date_{int(date_to)}'))
     # kb_week.add(InlineKeyboardButton('Отмена просмотра', callback_data='cancel_check'))
-    await state.update_data({'kb': kb_week})
     await response.answer('Записи на неделю', reply_markup=admin_default_cancel_back_check_log)
     await response.answer('Выберите дату записи, '
                           'чтобы просмотреть кто записался на текущей неделе.',
@@ -242,8 +241,8 @@ async def process_choice_day_of_week(call: CallbackQuery):
     date = call.data.split('_')[1]
     # print(date)
     choice_day = datetime.datetime.fromtimestamp(int(date)).date()
-    await bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id - 1)
-    await bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id)
+    # await bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id - 1)
+    # await bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id)
     await process_choice_day(call=call, date=choice_day, kb='week')
     await AdminCheckLog.ChoiceRange.set()
 
@@ -255,8 +254,8 @@ async def process_choice_day_of_month(call: CallbackQuery):
     date = call.data.split('_')[1]
     # print(date)
     choice_day = datetime.datetime.fromtimestamp(int(date)).date()
-    await bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id - 1)
-    await bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id)
+    # await bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id - 1)
+    # await bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id)
     await process_choice_day(call=call, date=choice_day, kb='month')
     await AdminCheckLog.ChoiceRange.set()
 
@@ -267,20 +266,20 @@ async def choice_range_log(call: CallbackQuery, state: FSMContext):
     await call.answer(cache_time=60)
     current_date = datetime.date.today()
     if result == 'today':
-        await bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id - 1)
-        await bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id)
+        # await bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id - 1)
+        # await bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id)
         await AdminCheckLog.CheckToday.set()
         await process_choice_day(call, current_date)
         await AdminCheckLog.ChoiceRange.set()
     elif result == 'week':
-        await bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id - 1)
-        await bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id)
+        # await bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id - 1)
+        # await bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id)
         await AdminCheckLog.CheckWeek.set()
         await process_choice_week(call=call, state=state)
         await state.update_data({'current_kb': 'week'})
     elif result == 'months':
-        await bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id - 1)
-        await bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id)
+        # await bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id - 1)
+        # await bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id)
         await AdminCheckLog.CheckMonths.set()
         await state.update_data(
             {'current_choice_month': '',
