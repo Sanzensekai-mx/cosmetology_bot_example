@@ -84,7 +84,8 @@ async def process_back_to_calendar(message: Message, state: FSMContext):
                              state=state,
                              year=data.get('current_choice_year'),
                              month=data.get('current_choice_month'),
-                             day=1, service=False)
+                             day=1, service=False,
+                             is_it_for_master=True, master_id=message.chat.id)
     await AdminCheckLog.CheckMonths.set()
 
 
@@ -289,5 +290,6 @@ async def choice_range_log(call: CallbackQuery, state: FSMContext):
                                  year=current_date.year,
                                  month=current_date.month,
                                  day=current_date.day,
-                                 service=False)
+                                 service=False,
+                                 is_it_for_master=True)
         await state.update_data({'current_kb': 'month'})

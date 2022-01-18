@@ -88,10 +88,17 @@ async def return_kb_mes_services(message, state):
     # return res_message, choice_service_kb
 
 
-async def date_process_enter(state, year, month, day, service=True, call=None, message=None):
+async def date_process_enter(state, year, month, day, service=True, call=None, message=None, is_it_for_master=False,
+                             master_id=None):
     response = call.message if call else message
     data = await state.get_data()
     c = calendar.TextCalendar(calendar.MONDAY)
+    master = await db.get_master_by_id(master_id) if master_id else await db.get_master_by_id(response.chat.id)
+    # date = datetime.datetime(year=year, month=month, day=day).date()
+    # today_master_recs = [rec.date for rec in await db.get_master_today_recs(master_user_id=master_id,
+    #                                                                         date=date)] if is_it_for_master else None
+    # print(day_date_recs)
+    all_date_recs = [rec.date for rec in await db.get_all_master_recs(master.master_name)] if is_it_for_master else None
     if service:
         service = await db.get_service(data.get('service'))
     # current_date = datetime.datetime.now(tz_ulyanovsk)
@@ -112,7 +119,11 @@ async def date_process_enter(state, year, month, day, service=True, call=None, m
         if service:
             inline_calendar.add(InlineKeyboardButton('<', callback_data='month_previous_appointment'))
         else:
-            inline_calendar.add(InlineKeyboardButton('<', callback_data='month_previous_checks'))
+            if master_id:
+                inline_calendar.add(InlineKeyboardButton('<',
+                                                         callback_data=f'month_previous_del_{master_id}'))
+            else:
+                inline_calendar.add(InlineKeyboardButton('<', callback_data='month_previous_checks'))
     data['current_choice_month'] = month
     data['current_choice_year'] = year
     await state.update_data(data)
@@ -121,7 +132,11 @@ async def date_process_enter(state, year, month, day, service=True, call=None, m
     if service:
         inline_calendar.insert(InlineKeyboardButton('>', callback_data='month_next_appointment'))
     else:
-        inline_calendar.insert(InlineKeyboardButton('>', callback_data='month_next_checks'))
+        if master_id:
+            inline_calendar.insert(InlineKeyboardButton('>',
+                                                        callback_data=f'month_next_del_{master_id}'))
+        else:
+            inline_calendar.insert(InlineKeyboardButton('>', callback_data='month_next_checks'))
     for week_day in [item for item in print_c.split()][2:9]:
         if week_day == 'Mo':
             inline_calendar.add(InlineKeyboardButton(days.get(week_day), callback_data=days.get(week_day)))
@@ -139,8 +154,15 @@ async def date_process_enter(state, year, month, day, service=True, call=None, m
             continue
         day_obj = datetime.datetime(year=day_cal[0], month=day_cal[1], day=day_cal[2])
         day_stamp = int(datetime.datetime.timestamp(day_obj))
-        inline_calendar.insert(InlineKeyboardButton(day_cal[2], callback_data=f'date_{day_stamp}'))
-    # inline_calendar.add(InlineKeyboardButton('Отмена записи', callback_data='cancel_appointment'))
+        if is_it_for_master and day_obj.date() in all_date_recs:
+            inline_calendar.insert(InlineKeyboardButton(f'{day_cal[2]} +',
+                                                        callback_data=f'date_{day_stamp}_{master_id}'))
+        else:
+            if master_id:
+                inline_calendar.insert(InlineKeyboardButton(day_cal[2],
+                                                            callback_data=f'date_{day_stamp}_{master_id}'))
+            else:
+                inline_calendar.insert(InlineKeyboardButton(day_cal[2], callback_data=f'date_{day_stamp}'))
     if service:
         await response.answer(f'Ваше Фамилия и Имя: "{data.get("name_client")}". '
                               f'\nМастер: "{data.get("name_master")}"'

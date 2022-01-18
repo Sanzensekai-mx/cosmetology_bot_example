@@ -46,6 +46,7 @@ async def process_choice_master_date_del_log(call: CallbackQuery, state: FSMCont
     data = await state.get_data()
     choice_master = call.data.split('_')[1]
     data['name_master'] = choice_master
+    master = await db.get_master(choice_master)
     await state.update_data(data)
     # await AdminCheckLog.CheckMonths.set()
     await AdminDelLog.ChoiceDate.set()
@@ -54,21 +55,23 @@ async def process_choice_master_date_del_log(call: CallbackQuery, state: FSMCont
     await date_process_enter(call=call, state=state,
                              year=current_date.year,
                              month=current_date.month,
-                             day=current_date.day)
+                             day=current_date.day,
+                             is_it_for_master=True,
+                             master_id=master.master_user_id)
     # data = await state.get_data()
     # print(data.get('current_choice_month'))
     # print(data.get('current_choice_year'))
 
 
-async def process_choice_day(call, date):
+async def process_choice_day(call, date, state):
+    data = await state.get_data()
     current_date = date
     c = calendar.TextCalendar(calendar.MONDAY)
     datetime_with_weekdays = \
         [d for d in c.itermonthdates(current_date.year, current_date.month) if d.day == current_date.day][0]
     # today_datetime_log = await db.get_datetime()
     print(get_key(await db.get_master_and_id(), str(call.message.chat.id)))
-    all_today_recs = await db.get_recs_only_date(datetime_with_weekdays,
-                                                 get_key(await db.get_master_and_id(), str(call.message.chat.id)))
+    all_today_recs = await db.get_recs_only_date(datetime_with_weekdays, data.get('name_master'))
     # result_message_list = []
 
     if all_today_recs:
@@ -89,13 +92,13 @@ async def process_choice_day(call, date):
 
 
 @dp.callback_query_handler(state=AdminDelLog.ChoiceDate, text_contains='date_')
-async def process_choice_day_of_month(call: CallbackQuery):
+async def process_choice_day_of_month(call: CallbackQuery, state: FSMContext):
     await call.answer(cache_time=60)
     # print(call.data.split('_')[1])
     date = call.data.split('_')[1]
     # print(date)
     choice_day = datetime.datetime.fromtimestamp(int(date))
-    await process_choice_day(call=call, date=choice_day)
+    await process_choice_day(call=call, date=choice_day, state=state)
 
 
 @dp.callback_query_handler(text_contains='admin:datetime_', chat_id=masters_id,
@@ -164,7 +167,7 @@ async def back_to_date_timetable(call: CallbackQuery, state: FSMContext):
     date = datetime.datetime.fromtimestamp(int(call.data.split('_')[1])).date()
     # await bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id - 1)
     # await bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id)
-    await process_choice_day(call, date)
+    await process_choice_day(call, date, state=state)
     await AdminDelLog.ChoiceTime.set()
 
 
@@ -175,9 +178,12 @@ async def process_back_to_calendar(call: CallbackQuery, state: FSMContext):
     # await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id - 2)
     # await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id - 1)
     data = await state.get_data()
+    master = await db.get_master(data.get('name_master'))
     await date_process_enter(call=call,
                              state=state,
                              year=data.get('current_choice_year'),
                              month=data.get('current_choice_month'),
-                             day=1, service=False)
+                             day=1, service=False,
+                             is_it_for_master=True,
+                             master_id=master.master_user_id)
     await AdminDelLog.ChoiceDate.set()

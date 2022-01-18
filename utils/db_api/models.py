@@ -248,6 +248,16 @@ class DBCommands:
         await new_rec.create()
         return new_rec
 
+    async def get_master_today_recs(self, master_user_id, date):
+        master = await self.get_master_by_id(master_user_id)
+        recs = await Records.query.where(Records.name_master == master.master_name).where(Records.date == date).gino.all()
+        return recs
+
+    @staticmethod
+    async def get_all_master_recs(master_name):
+        recs = await Records.query.where(Records.name_master == master_name).gino.all()
+        return recs
+
     # Мeтоды для таблицы datetime
     @staticmethod
     async def get_timetable(datetime_one, master):
@@ -319,6 +329,11 @@ class DBCommands:
     @staticmethod
     async def get_master(master_name):
         master = await Master.query.where(Master.master_name == master_name).gino.first()
+        return master
+
+    @staticmethod
+    async def get_master_by_id(master_chat_id):
+        master = await Master.query.where(Master.master_user_id == int(master_chat_id)).gino.first()
         return master
 
     async def is_this_master_in_db(self, master_name):
