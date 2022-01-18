@@ -114,7 +114,7 @@ async def process_choice_time(call: CallbackQuery, state: FSMContext):
     date_to = datetime_obj.date()
     await call.message.answer(
         f'''
-Время - {rec.time}\n
+Время - {rec.time.strftime("%H:%M")}\n
 Дата -  {date.day}.{str(date.month).ljust(2, '0')}.{date.year}\n
 Мастер - {rec.name_master}\n
 Клиент - {rec.name_client}\n
@@ -146,14 +146,14 @@ async def process_del_rec(call: CallbackQuery, state: FSMContext):
     # отбивка пользователю об удалении его записи
     await bot.send_message(chat_id=rec_obj.user_id, text=f'Ваша запись:\n'
                                                          f'Дата: {datetime_obj.day}.{str(datetime_obj.month).ljust(2, "0")}.{datetime_obj.year}\n'
-                                                         f'Время: {choice_time}\n'
+                                                         f'Время: {choice_time.strftime("%H:%M")}\n'
                                                          f'Была удалена.')
     # отбивка мастера об удалении записи к нему
     await bot.send_message(chat_id=master_obj.master_user_id, text=f'Запись к вам:\n'
-                                                               f'Дата: {datetime_obj.day}.{str(datetime_obj.month).ljust(2, "0")}.{datetime_obj.year}\n'
-                                                               f'Время: {choice_time}\n'
-                                                               f'Клиент: {rec_obj.name_client}\n'
-                                                               f'Была удалена администратором.')
+                                                                   f'Дата: {datetime_obj.day}.{str(datetime_obj.month).ljust(2, "0")}.{datetime_obj.year}\n'
+                                                                   f'Время: {choice_time.strftime("%H:%M")}\n'
+                                                                   f'Клиент: {rec_obj.name_client}\n'
+                                                                   f'Была удалена администратором.')
     await state.reset_state()
 
 
