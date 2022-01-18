@@ -5,7 +5,7 @@ from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters import Text
 from aiogram.types import Message, ReplyKeyboardRemove, InlineKeyboardMarkup, \
     InlineKeyboardButton, CallbackQuery
-from loader import dp
+from loader import dp, bot
 from utils.db_api.models import DBCommands
 from states.admin_states import AdminDelLog
 from keyboards.default import main_menu_admin, admin_default_cancel_del_log
@@ -39,9 +39,6 @@ async def start_del_log(message: Message, state: FSMContext):
          }
     )
 
-
-# 'current_choice_month': '',
-# 'current_choice_year': '',
 
 @dp.callback_query_handler(text_contains='m_', chat_id=admins, state=AdminDelLog.ChoiceMaster)
 async def process_choice_master_date_del_log(call: CallbackQuery, state: FSMContext):
@@ -139,12 +136,24 @@ async def process_del_rec(call: CallbackQuery, state: FSMContext):
     full_datetime, master_username = callback_data[1], callback_data[2]
     datetime_obj = datetime.datetime.fromtimestamp(int(full_datetime))
     datetime_one = await db.get_rec_by_full_datetime(datetime_obj, master_username)
-    # datetime_obj = await db.get_datetime(datetime_one, master_username)
+    rec_obj = await db.get_rec_by_full_datetime(datetime_obj, master_username)
+    master_obj = await db.get_master(master_username)
     await db.del_rec(datetime_obj, master_username)
     choice_time = datetime_obj.time()
     # await db.del_datetime(datetime_one, master_username)
     await db.add_update_date(date=datetime_one.date, time=choice_time, master=master_username)
     await call.message.answer('Запись удалена', reply_markup=main_menu_admin)
+    # отбивка пользователю об удалении его записи
+    await bot.send_message(chat_id=rec_obj.user_id, text=f'Ваша запись:\n'
+                                                         f'Дата: {datetime_obj.day}.{str(datetime_obj.month).ljust(2, "0")}.{datetime_obj.year}\n'
+                                                         f'Время: {choice_time}\n'
+                                                         f'Была удалена.')
+    # отбивка мастера об удалении записи к нему
+    await bot.send_message(chat_id=master_obj.master_user_id, text=f'Запись к вам:\n'
+                                                               f'Дата: {datetime_obj.day}.{str(datetime_obj.month).ljust(2, "0")}.{datetime_obj.year}\n'
+                                                               f'Время: {choice_time}\n'
+                                                               f'Клиент: {rec_obj.name_client}\n'
+                                                               f'Была удалена администратором.')
     await state.reset_state()
 
 
