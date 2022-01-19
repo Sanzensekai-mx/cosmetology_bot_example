@@ -224,7 +224,7 @@ async def process_choice_week(state, call=None, message=None):
             kb_week.insert(InlineKeyboardButton(' ', callback_data=f'wrong_date'))
             continue
         date_to = datetime.datetime.timestamp((datetime.datetime(year=current_date.year, month=current_date.month,
-                                                                 day=current_date.day, hour=00, minute=00)))
+                                                                 day=day, hour=00, minute=00)))
         kb_week.insert(
             InlineKeyboardButton(day,
                                  callback_data=f'date_{int(date_to)}'))
