@@ -58,7 +58,9 @@ async def open_appointment_start(message: Message, state: FSMContext):
          'date': '',
          'time': '',
          'phone_number': '',
-         'is_this_log_5_in_db': ''
+         'is_this_log_5_in_db': '',
+         'current_choice_month': '',
+         'current_choice_year': ''
          }
     )
 
@@ -134,33 +136,48 @@ async def choice_master(call: CallbackQuery, state: FSMContext):
         await confirm_or_change(data, call.message)
 
 
-# Сделать
-async def date_process_enter(call, state):
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Сделать, сзязь с БД, новая таблица в БД datetime?
+async def date_process_enter(call, state, year, month, day):
     data = await state.get_data()
+    c = calendar.LocaleTextCalendar(calendar.MONDAY, locale='Russian_Russia')
     service = await db.get_service(data.get('service'))
-    c = calendar.TextCalendar(calendar.MONDAY)
     current_date = datetime.date.today()
-    print_c = c.formatmonth(current_date.year, current_date.month)
+    # print(c.formatyear(current_date.year))
+    print_c = c.formatmonth(year, month)
     # time_service = service.time
     inline_calendar = InlineKeyboardMarkup(row_width=7)
-    # inline_calendar.add(InlineKeyboardButton('<', callback_data='month_previous'))
-    inline_calendar.insert(InlineKeyboardButton(f'{print_c.split()[0]} {print_c.split()[1]}', callback_data='month'))
+    if (month != current_date.month and year == current_date.year) \
+            or (month != current_date.month and year != current_date.year):
+        inline_calendar.add(InlineKeyboardButton('<', callback_data='month_previous'))
+    data['current_choice_month'] = month
+    data['current_choice_year'] = year
+    await state.update_data(data)
+    inline_calendar.insert(InlineKeyboardButton(f'{print_c.split()[0]} {print_c.split()[1]}', callback_data=' '))
     inline_calendar.insert(InlineKeyboardButton('>', callback_data='month_next'))
     for week_day in [item for item in print_c.split()][2:9]:
-        if week_day == 'Mo':
+        if week_day == 'Пн':
             inline_calendar.add(InlineKeyboardButton(week_day, callback_data=week_day))
             continue
         inline_calendar.insert(InlineKeyboardButton(week_day, callback_data=week_day))
-    for day in [date for date in c.itermonthdays(current_date.year, current_date.month)]:
-        if day == 0 or current_date.day > day:
+    for day_cal in [date for date in c.itermonthdays4(year, month)]:
+        # Исключает дни другого месяца, прошедшие дни и выходные дни (Суббота, Воскресенье)
+        if day_cal[2] == 0 \
+                or day > day_cal[2] \
+                or day_cal[2] in [date[0] for date
+                                  in c.itermonthdays2(year, month)
+                                  if date[1] in [5, 6]]\
+                or day_cal[1] != month:
             inline_calendar.insert(InlineKeyboardButton(' ', callback_data=f'wrong_date'))
             continue
-        inline_calendar.insert(InlineKeyboardButton(day, callback_data=f'date_{day}'))
+        inline_calendar.insert(InlineKeyboardButton(day_cal[2], callback_data=f'date_{day_cal}'))
     inline_calendar.add(InlineKeyboardButton('Отмена записи', callback_data='cancel_appointment'))
-    # print(type([date for date in c.itermonthdays(current_date.year, current_date.month)]))
-    print(print_c)
+    # print([date[0] for date in c.itermonthdays2(current_date.year, current_date.month) if date[1] in [5, 6]])
+    # print([date for date in c.itermonthdays(current_date.year, current_date.month)])
+    # print([date for date in c.itermonthdays2(current_date.year, current_date.month)])
+    # print([date for date in c.itermonthdays3(current_date.year, current_date.month)])
+    print([date for date in c.itermonthdays4(year, month)])
+    # print(print_c)
     # print(print_c.split())
-    # await call.message.answer('Календарь', reply_markup=inline_calendar)
     await call.message.answer(f'Ваше Фамилия и Имя: "{data.get("name_client")}". '
                               f'\nМастер: "{data.get("name_master")}"'
                               f'\nУслуга: "{service.name}"', reply_markup=inline_calendar)
@@ -179,7 +196,11 @@ async def choice_master(call: CallbackQuery, state: FSMContext):
         # print(await state.get_data())
         await UserAppointment.Date.set()
         # Выбор даты, функция
-        await date_process_enter(call, state)
+        current_date = datetime.date.today()
+        await date_process_enter(call, state,
+                                 year=current_date.year,
+                                 month=current_date.month,
+                                 day=current_date.day)
     else:
         data['service'] = service
         await state.update_data(data)
@@ -192,6 +213,42 @@ async def time_process_enter(call, state):
                               f'\nМастер: "{data.get("name_master")}"'
                               f'\nУслуга: "{data.get("service")}"'
                               f'\nДата: {data.get("date")}')
+
+
+@dp.callback_query_handler(state=UserAppointment.Date, text_contains='month_')
+async def change_month_process(call: CallbackQuery, state: FSMContext):
+    data = await state.get_data()
+    await call.answer(cache_time=60)
+    current_date = datetime.date.today()
+    result = call.data.split('_')[1]
+    choice_year = data.get('current_choice_year')
+    choice_month = data.get('current_choice_month')
+    if result == 'next':
+        if choice_month == 12:
+            choice_year = current_date.year + 1
+            choice_month = 1
+        else:
+            choice_month = int(choice_month) + 1
+        data['current_choice_year'] = choice_year
+        data['current_choice_month'] = choice_month
+        await state.update_data()
+        await date_process_enter(call, state,
+                                 year=choice_year,
+                                 month=choice_month,
+                                 day=1)
+    elif result == 'previous':
+        if choice_month == 12:
+            choice_year = current_date.year - 1
+            choice_month = 1
+        else:
+            choice_month = int(choice_month) - 1
+        data['current_choice_year'] = choice_year
+        data['current_choice_month'] = choice_month
+        await state.update_data()
+        await date_process_enter(call, state,
+                                 year=choice_year,
+                                 month=choice_month,
+                                 day=1)
 
 
 @dp.callback_query_handler(state=UserAppointment.Date, text_contains='wrong_date')
