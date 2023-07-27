@@ -171,7 +171,8 @@ async def process_choice_day(call, date, kb=None):
     current_date = date
     year, month, day = current_date.year, current_date.month, current_date.day
     c = calendar.TextCalendar(calendar.MONDAY)
-    datetime_with_weekdays = [date for date in c.itermonthdates(year, month) if date.day == day][0]
+    datetime_with_weekdays = \
+    [date for date in c.itermonthdates(year, month) if date.day == day and date.month == month][0]
     # today_datetime_log = await db.get_datetime()
     # print(get_key(await db.get_master_and_id(), str(call.message.chat.id)))
 
