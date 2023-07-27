@@ -68,7 +68,8 @@ async def process_choice_day(call, date, state):
     current_date = date
     c = calendar.TextCalendar(calendar.MONDAY)
     datetime_with_weekdays = \
-        [d for d in c.itermonthdates(current_date.year, current_date.month) if d.day == current_date.day][0]
+        [d for d in c.itermonthdates(current_date.year, current_date.month) if
+         d.day == current_date.day and d.month == current_date.month][0]
     # today_datetime_log = await db.get_datetime()
     print(get_key(await db.get_master_and_id(), str(call.message.chat.id)))
     all_today_recs = await db.get_recs_only_date(datetime_with_weekdays, data.get('name_master'))
